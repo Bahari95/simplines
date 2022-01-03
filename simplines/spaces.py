@@ -17,7 +17,7 @@ __all__ = ['SplineSpace', 'TensorSpace']
 # =================================================================================================
 class SplineSpace(object):
     def __init__(self, degree, nelements=None, grid=None, nderiv=1,
-                 periodic=False, normalization=False):
+                 periodic=False, normalization=False, mixed = False):
 
         if (nelements is None) and (grid is None):
             raise ValueError('Either nelements or grid must be provided')
@@ -41,7 +41,10 @@ class SplineSpace(object):
         # we compute the non-vanishing B-Splines
         basis = basis_ders_on_quad_grid( knots, degree, points, nderiv,
                                         normalization=normalization )
-
+        if mixed is True :
+           degree = degree-1
+           basis = basis_ders_on_quad_grid( knots, degree, points, nderiv,
+                                        normalization=normalization )
         self._periodic = periodic
         self._knots = knots
         self._spans = spans
