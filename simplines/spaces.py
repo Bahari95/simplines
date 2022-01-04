@@ -33,7 +33,8 @@ class SplineSpace(object):
 
         # create the gauss-legendre rule, on [-1, 1]
         u, w = gauss_legendre( degree )
-
+        if mixed is True :
+            u, w = gauss_legendre( degree + 1)
         # for each element on the grid, we create a local quadrature grid
         points, weights = quadrature_grid( grid, u, w )
 
@@ -41,10 +42,7 @@ class SplineSpace(object):
         # we compute the non-vanishing B-Splines
         basis = basis_ders_on_quad_grid( knots, degree, points, nderiv,
                                         normalization=normalization )
-        if mixed is True :
-           degree = degree-1
-           basis = basis_ders_on_quad_grid( knots, degree, points, nderiv,
-                                        normalization=normalization )
+
         self._periodic = periodic
         self._knots = knots
         self._spans = spans
