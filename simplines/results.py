@@ -184,9 +184,9 @@ def sol_field_2d(Npoints,  uh , knots, degree):
     nu = len(Tu) - pu - 1
     nv = len(Tv) - pv - 1
 
-    xs = linspace(Tu[0], Tu[nu+pu], nx)
+    xs = linspace(Tu[pu], Tu[-pu-1], nx)
     
-    ys = linspace(Tv[0], Tv[nv+pv], ny)
+    ys = linspace(Tv[pv], Tv[-pv-1], ny)
     P = zeros((nu, nv,1))
     
     i = list(range(nu))
