@@ -43,7 +43,7 @@ def assemble_matrix(core, V, fields=None, out=None):
     return out
 
 #==============================================================================
-def assemble_vector(core, V, fields=None, values = None, out=None):
+def assemble_vector(core, V, fields=None, value = None, out=None):
     if out is None:
         out = StencilVector(V.vector_space)
 
@@ -71,8 +71,8 @@ def assemble_vector(core, V, fields=None, values = None, out=None):
 
         args += [x._data for x in fields]
 
-    if not(values is None):
-        args += [x for x in values]
+    if not(value is None):
+        args += [value]
 
     core( *args, out._data )
 
