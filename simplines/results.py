@@ -175,19 +175,30 @@ from numpy import zeros, linspace, meshgrid, asarray
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def sol_field_2d(Npoints,  uh , knots, degree):
     # Using computed control points U we compute solution
-    # in new discretisation by Npoints 
-
+    # in new discretisation by Npoints    
     pu, pv = degree
-    nx, ny = Npoints
     Tu, Tv = knots
 
     nu = len(Tu) - pu - 1
-    nv = len(Tv) - pv - 1
+    nv = len(Tv) - pv - 1    
 
-    xs = linspace(Tu[pu], Tu[-pu-1], nx)
+    if Npoints is None:
+
+      nx = nu-pu+1
+      ny = nv-pv+1
     
-    ys = linspace(Tv[pv], Tv[-pv-1], ny)
-    P = zeros((nu, nv,1))
+      xs = Tu[pu:-pu] #linspace(Tu[pu], Tu[-pu-1], nx)
+    
+      ys = Tv[pv:-pv] #linspace(Tv[pv], Tv[-pv-1], ny)
+      
+    else :
+      nx, ny = Npoints
+
+      xs = linspace(Tu[pu], Tu[-pu-1], nx)
+    
+      ys = linspace(Tv[pv], Tv[-pv-1], ny)
+
+    P = zeros((nu, nv,1))     
     
     i = list(range(nu))
     for j in range(nv):
