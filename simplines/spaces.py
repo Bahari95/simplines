@@ -17,7 +17,7 @@ __all__ = ['SplineSpace', 'TensorSpace']
 # =================================================================================================
 class SplineSpace(object):
     def __init__(self, degree, nelements=None, grid=None, nderiv=1,
-                 periodic=False, normalization=False, mixed = False):
+                 periodic=False, normalization=False, mixed = False, quad_degree = None):
 
         if (nelements is None) and (grid is None):
             raise ValueError('Either nelements or grid must be provided')
@@ -35,6 +35,8 @@ class SplineSpace(object):
         u, w = gauss_legendre( degree )
         if mixed is True :
             u, w = gauss_legendre( degree + 1)
+        if quad_degree is not None :
+            u, w = gauss_legendre( quad_degree)
         # for each element on the grid, we create a local quadrature grid
         points, weights = quadrature_grid( grid, u, w )
 
