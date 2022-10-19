@@ -236,7 +236,68 @@ def pyccel_sol_field_2d(Npoints,  uh , knots, degree):
 
     Q    = zeros((nx, ny, 3)) 
     f90_sol_field_2d(nx, ny, xs, ys, uh, Tu, Tv, pu, pv, Q)
-    
+
     X, Y = meshgrid(xs, ys)
 
     return Q[:,:,0], Q[:,:,1], Q[:,:,2], X, Y
+    
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Computes L2 projection of 1D function
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+def least_square_Bspline(degree, knots, f, V_mae = None, x_mae = None, vec_in = None, y = None):
+    from numpy     import zeros, linspace
+    from .bsplines import find_span
+    from .bsplines import basis_funs
+    from scipy.sparse import csc_matrix, linalg as sla
+    
+    n       = len(knots) - degree - 1
+    m       = n + degree + 100 
+    Tu      = knots[degree:degree+n]
+    u_k     = linspace(knots[0], knots[degree+n], m)
+
+    #...x_mae is not None implies that the Boudary conditions are fulfilled after applying the optimal mapping to the boundary points
+    if x_mae is not None :
+       if y is None:
+            u_kmae = pyccel_sol_field_2d((m,m),  x_mae , V_mae.knots, V_mae.degree)[0][vec_in,:]
+       else :
+            u_kmae = pyccel_sol_field_2d((m,m),  x_mae , V_mae.knots, V_mae.degree)[0][:,vec_in]
+
+    # ...
+    Pc      = zeros(n)
+    Q       = zeros(m)
+    if x_mae is not None :
+       for i in range(0,m):
+           Q[i] = f(u_kmae[i])
+    else :
+       for i in range(0,m):
+           Q[i] = f(u_k[i])
+    Pc[0]   = Q[0]
+    Pc[n-1] = Q[m-1]  
+    #... Assembles matrix N of non vanishing basis functions in each u_k value
+    N       = zeros((m-2,n-2))
+    for k in range(1, m-1):
+       span                           = find_span( knots, degree, u_k[k] )
+       b                              = basis_funs( knots, degree, u_k[k], span )
+       if span-degree ==0 :
+          N[k-1,span-degree:span]     = b[1:]
+       elif span+1 == n :
+          N[k-1,span-degree-1:span-1] = b[:-1]
+       else :
+          N[k-1,span-degree-1:span]   = b
+
+    #... Right hand side of least square Approximation
+    R       = zeros(m-2)
+    for k in range(1,m-1) : 
+       span            = find_span( knots, degree, u_k[k] )
+       b               = basis_funs( knots, degree, u_k[k], span )
+       R[k-1] = Q[k]
+       if span - degree == 0 :
+          R[k-1]      -= b[0]*Q[0]
+       if span + 1 == n :
+          R[k-1]      -= b[degree]*Q[m-1]
+    R      = N.T.dot(R)
+    M      = (N.T).dot(N)
+    #print(N,'\n M = ',M)
+    lu       = sla.splu(csc_matrix(M))
+    Pc[1:-1] = lu.solve(R)    
+    return Pc
