@@ -240,3 +240,458 @@ def apply_dirichlet(V, x):
 
     else:
         raise TypeError('Expecting StencilMatrix or StencilVector')
+
+
+#==============================================================================
+def apply_periodic(V, x, periodic = None, update = None):
+       
+  if update is None :
+    if isinstance(x, StencilMatrix):
+        x          = x.tosparse()
+        x          = x.toarray()
+        if V.dim == 1:
+            p  = V.degree
+            n1 = V.nbasis
+
+            #... eliminate ghost regions
+            li            = np.zeros((2*p, n1))
+            li[:p,:]      = x[-p:,:]
+            li[p:p+p,-p:] = x[-2*p:-p,-p:]
+
+            x    = x[:-p,:-p] 
+            for i in range(p):
+                x[i,:]     += li[i,:-p]
+                x[i,:p]    += li[i,-p:]       
+                x[-1-i,:p] += li[2*p-1-i,-p:]
+
+            return x
+
+        elif V.dim == 2:
+          x          = x.reshape((V.nbasis[0],V.nbasis[1], V.nbasis[0], V.nbasis[1]) )
+          if periodic == [True, True] :
+            p1,p2  = V.degree
+            n1,n2  = V.nbasis
+            #... eliminate ghost regions
+            lix                       = np.zeros((2*p1, n2, n1, n2))
+            lix[:p1,:, :, :]          = x[-p1:,:, :,:]
+            lix[p1:p1+p1, :, -p1:, :] = x[-2*p1:-p1,:, -p1:, :]
+            
+            x    = x[:-p1,:,:-p1,:] 
+            for i in range(p1):
+                  x[i, :, :, :]      += lix[i, :, :-p1, :]
+                  x[i, :, :p1, :]    += lix[i, :,-p1:, :]       
+                  x[-1-i, :, :p1, :] += lix[2*p1-1-i, :, -p1:, :]
+
+            liy                       = np.zeros((n1-p1, 2*p2, n1-p1, n2))
+            liy[:,:p2,:,:]            = x[:,-p2:, :,:]
+            liy[:,p1:p1+p1,:,-p1:]    = x[:, -2*p2:-p2, :, -p2:]
+ 
+            x    = x[:,:-p2, :,:-p2] 
+            for j in range(p2):
+                x[:, j, :, :]      += liy[:, j, :, :-p2]
+                x[:, j, :, :p2]    += liy[:, j, :, -p2:]       
+                x[:, -1-j, :, :p2] += liy[:, 2*p2-1-j, :, -p2:]
+            x          = x.reshape(( (n1-p1)*(n2-p2),(n1-p1)*(n2-p2) ))                
+            return x
+          if periodic == [True, False] :
+            p1,p2  = V.degree
+            n1,n2  = V.nbasis
+
+            #... eliminate ghost regions
+            lix                       = np.zeros((2*p1, n2, n1, n2))
+            lix[:p1,:, :, :]          = x[-p1:,:, :,:]
+            lix[p1:p1+p1, :, -p1:, :] = x[-2*p1:-p1,:, -p1:, :]
+            
+            x    = x[:-p1,:,:-p1,:] 
+            for i in range(p1):
+                x[i, :, :, :]      += lix[i, :, :-p1, :]
+                x[i, :, :p1, :]    += lix[i,  :,-p1:, :]       
+                x[-1-i, :, :p1, :] += lix[2*p1-1-i, :, -p1:, :]
+
+            x          = x.reshape(( (n1-p1)*(n2),(n1-p1)*(n2) ))
+            return x
+
+          elif periodic == [False, True] :
+            p1,p2  = V.degree
+            n1,n2  = V.nbasis
+            #... eliminate ghost regions
+
+            liy                       = np.zeros((n1, 2*p2, n1, n2))
+            liy[:,:p2,:,:]            = x[:,-p2:, :,:]
+            liy[:,p2:p2+p2,:,-p2:]    = x[:, -2*p2:-p2, :, -p2:]
+                        
+            x    = x[:,:-p2,:,:-p2] 
+            for j in range(p2):
+                x[:, j, :, :]      += liy[:, j, :, :-p2]
+                x[:, j, :, :p2]    += liy[:, j, :, -p2:]       
+                x[:, -1-j, :, :p2] += liy[:, 2*p2-1-j, :, -p2:]
+
+            x          = x.reshape(( (n1)*(n2-p2),(n1)*(n2-p2) ))                
+            return x
+        # ... TODO
+        elif V.dim == 3:
+            p1,p2,p3 = V.degree
+            #... eliminate ghost regions
+
+            return x
+        else :
+            raise NotImplementedError('Only 1d, 2d and 3d are available')
+
+    elif isinstance(x, StencilVector):
+        x          = x.toarray()
+        x          = x.reshape(V.nbasis)
+        if V.dim == 1:
+            #... eliminate ghost regions
+            p    = V.degree
+
+            a    = np.zeros(x.shape[0])
+            a[:] = x[:]
+
+            x  = x[:-p]
+            for i in range(p):
+                x[i]             += a[-p+i]
+            return x
+
+        elif V.dim == 2:
+          if periodic == [True, True] :
+            #... eliminate ghost regions
+            p1,p2  = V.degree
+
+            a      = np.zeros(x.shape)
+            a[:,:] = x[:,:]
+            
+            x     = x[:-p1,:-p2]
+            for i in range(p1):
+               for j in range(p2):            
+                   x[i,j]            += a[i,-p2+j] + a[-p1+i,j] + a[-p1+i,-p2+j]
+            for i in range(p1):
+                x[i,p2:]             += a[-p1+i,p2:-p2]
+            for j in range(p2):
+                x[p1:,j]             += a[p1:-p1,-p2+j]
+            x          = x.reshape(( (V.nbasis[0]-p1)*(V.nbasis[1]-p2) ))
+            return x
+
+          elif periodic == [True, False] :
+            #... eliminate ghost regions
+            p1,p2  = V.degree
+
+            a      = np.zeros(x.shape)
+            a[:,:] = x[:,:]
+            
+            x     = x[:-p1,:]
+            for i in range(p1):
+                x[i,:]             += a[-p1+i,:]
+            x          = x.reshape(( (V.nbasis[0]-p1)*(V.nbasis[1]) ))
+            return x
+            
+          elif  periodic == [False, True] :
+            #... eliminate ghost regions
+            p1,p2  = V.degree
+
+            a      = np.zeros(x.shape)
+            a[:,:] = x[:,:]
+            
+            x     = x[:,:-p2]
+            for j in range(p2):
+                x[:,j]             += a[:,-p2+j]
+            x          = x.reshape(( (V.nbasis[0])*(V.nbasis[1]-p2) ))                                            
+            return x
+          else:
+             raise NotImplementedError('Only if there is a periodic boundary at least in one dimension')                
+
+        # ... TODO not sure
+        elif V.dim == 3:
+          if periodic == [True, True, True] :
+            #... eliminate ghost regions
+            p1, p2, p3 = V.degree
+
+            a          = np.zeros(x.shape)
+            a[:,:,:]   = x[:,:,:]
+            
+            x          = x[:-p1,:-p2,:-p3]
+            for i in range(p1):
+              for j in range(p2):
+                for k in range(p3):
+                    x[i,j,k]             += a[i,j,-p3+k] + a[i,-p2+j,k]  + a[i,-p2+j,-p3+k] + a[-p1+i,j,k]  + a[-p1+i,j,-p3+k] + a[-p1+i,-p2+j,k] + a[-p1+i,-p2+j,-p3+k]
+            x          = x.reshape(( (V.nbasis[0]-p1)*(V.nbasis[1]-p2)*(V.nbasis[2]-p3) ))
+            return x
+          elif periodic == [True, True, False] :
+            #... eliminate ghost regions
+            p1, p2, p3 = V.degree
+
+            a          = np.zeros(x.shape)
+            a[:,:,:]   = x[:,:,:]
+            
+            x          = x[:-p1,:-p2,:]
+            for i in range(p1):
+              for j in range(p2):
+                for k in range(p3):
+                    x[i,j,k]                += a[i,-p2+i,i]  + a[-p1+i,j,k] + a[-p1+i,-p2+j,k]
+            x          = x.reshape(( (V.nbasis[0]-p1)*(V.nbasis[1]-p2)*(V.nbasis[2]) ))
+            return x                
+
+          elif periodic == [True, False, True] :
+            #... eliminate ghost regions
+            p1, p2, p3 = V.degree
+
+            a          = np.zeros(x.shape)
+            a[:,:,:]   = x[:,:,:]
+            
+            x          = x[:-p1,:,:-p3]
+            for i in range(p1):
+              for j in range(p2):
+                for k in range(p3):
+                    x[i,j,k]               += a[i,j,-p3+k] + a[-p1+i,j,k]  + a[-p1+i,j,-p3+k]
+            x          = x.reshape(( (V.nbasis[0]-p1)*(V.nbasis[1])*(V.nbasis[2]-p3) ))
+            return x
+          elif periodic == [False, True, True] :
+            #... eliminate ghost regions
+            p1, p2, p3 = V.degree
+
+            a          = np.zeros(x.shape)
+            a[:,:,:]   = x[:,:,:]
+            
+            x          = x[:,:-p2,:-p3]
+            for i in range(p1):
+              for j in range(p2):
+                for k in range(p3):
+                    x[i,j,k]             += a[i,j,-p3+k] + a[i,-p2+j,k]  + a[i,-p2+j,-p3+k]                 
+            x          = x.reshape(( (V.nbasis[0])*(V.nbasis[1]-p2)*(V.nbasis[2]-p3) ))
+            return x
+          elif periodic == [False, False, True] :
+            #... eliminate ghost regions
+            p1, p2, p3 = V.degree
+
+            a          = np.zeros(x.shape)
+            a[:,:,:]   = x[:,:,:]
+            
+            x          = x[:,:,:-p3]
+            for i in range(p1):
+              for j in range(p2):
+                for k in range(p3):
+                    x[i,j,k]             += a[i,j,-p3+k] 
+            x          = x.reshape(( (V.nbasis[0])*(V.nbasis[1])*(V.nbasis[2]-p3) ))
+            return x
+          elif periodic == [False, True, False] :
+            #... eliminate ghost regions
+            p1, p2, p3 = V.degree
+
+            a          = np.zeros(x.shape)
+            a[:,:,:]   = x[:,:,:]
+            
+            x          = x[:,:-p2,:]
+            for i in range(p1):
+              for j in range(p2):
+                for k in range(p3):
+                    x[i,j,k]             +=  a[i,-p2+j,k]                    
+
+            x          = x.reshape(( (V.nbasis[0])*(V.nbasis[1]-p2)*(V.nbasis[2]) ))
+            return x
+          elif periodic == [True, False, False] :
+            #... eliminate ghost regions
+            p1, p2, p3 = V.degree
+
+            a          = np.zeros(x.shape)
+            a[:,:,:]   = x[:,:,:]
+            
+            x          = x[:-p1,:,:]
+            for i in range(p1):
+              for j in range(p2):
+                for k in range(p3):
+                    x[i,j,k]             +=  a[-p1+i,j,k]
+                    
+            x          = x.reshape(( (V.nbasis[0]-p1)*(V.nbasis[1])*(V.nbasis[2]) ))
+            return x
+          else:
+             raise NotImplementedError('Only if there is a periodic boundary at least in one dimension')                
+                             
+        else:
+            raise NotImplementedError('Only 1d, 2d and 3d are available')
+
+    else:
+        raise TypeError('ERROR 1 ! Expecting StencilMatrix or StencilVector')
+
+  
+  else :
+        if V.dim == 1:
+            #... update ghost regions
+            p       = V.degree
+            n1      = x.shape[0] + p
+            
+            a       = np.zeros(n1)
+            for i in range(p):
+                a[-p-i] = x[i]
+
+            return a
+
+        elif V.dim == 2:
+          if periodic == [True, True] :
+            #... eliminate ghost regions
+            p1,p2   = V.degree
+            n1      = x.shape[0] + p1
+            n2      = x.shape[1] + p2
+                        
+            a       = np.zeros((n1, n2) )           
+            a[:-p1,:-p2]  = x[:,:]
+            for i in range(p1):
+               for j in range(p2):            
+                   a[i,-p2+j]     = x[i,j]
+                   a[-p1+i,j]     = x[i,j] 
+                   a[-p1+i,-p2+j] = x[i,j]
+
+            for i in range(p1):
+                a[-p1+i,p2:-p2] = x[i,p2:]
+
+            for j in range(p2):
+                a[p1:-p1,-p2+j] = x[p1:,j]                  
+
+            return a
+
+          elif periodic == [True, False] :
+            #... eliminate ghost regions
+            p1,p2      = V.degree
+            n1         = x.shape[0] + p1
+            n2         = x.shape[1]
+                        
+            a          = np.zeros((n1, n2))
+            a[:-p1,:]  = x[:,:]
+            for i in range(p1):
+                a[-p1+i,:]   = x[i,:]
+
+            return a
+
+          elif  periodic == [False, True] :
+            #... eliminate ghost regions
+            p1,p2      = V.degree
+            n1         = x.shape[0]
+            n2         = x.shape[1] + p2
+                        
+            a          = np.zeros((n1, n2))
+            a[:,:-p2]  = x[:,:]
+            for j in range(p2):
+                a[:,-p2+j]   = x[:,j]                                            
+            return a
+          else:
+             raise NotImplementedError('Only if there is a periodic boundary at least in one dimension')      
+
+        # ... TODO not sure
+        elif V.dim == 3:
+          if periodic == [True, True, True] :
+            #... eliminate ghost regions
+            p1, p2, p3 = V.degree
+            n1      = x.shape[0] + p1
+            n2      = x.shape[1] + p2
+            n3      = x.shape[2] + p3
+                                    
+            a       = np.zeros((n1, n2, n3))
+            a[:-p1,:-p2,:-p3]  = x[:,:,:]            
+            for i in range(p1):
+              for j in range(p2):
+                for k in range(p3):
+                    a[i,j,-p3+k]          = x[i,j,k]
+                    a[i,-p2+j,k]          = x[i,j,k]
+                    a[i,-p2+j,-p3+k]      = x[i,j,k]
+                    a[-p1+i,j,k]          = x[i,j,k]
+                    a[-p1+i,j,-p3+k]      = x[i,j,k]
+                    a[-p1+i,-p2+j,k]      = x[i,j,k]
+                    a[-p1+i,-p2+j,-p3+k]  = x[i,j,k]
+
+            return a
+          elif periodic == [True, True, False] :
+            #... eliminate ghost regions
+            p1, p2, p3 = V.degree
+            n1      = x.shape[0] + p1
+            n2      = x.shape[1] + p2
+            n3      = x.shape[2]
+                                    
+            a       = np.zeros((n1, n2, n3))
+            a[:-p1,:-p2,:]  = x[:,:,:]            
+            for i in range(p1):
+              for j in range(p2):
+                for k in range(p3):
+                    a[i,-p2+i,i]     = x[i,j,k]
+                    a[-p1+i,j,k]     = x[i,j,k]
+                    a[-p1+i,-p2+j,k] = x[i,j,k]
+            return a
+
+          elif periodic == [True, False, True] :
+            #... eliminate ghost regions
+            p1, p2, p3 = V.degree
+            n1      = x.shape[0] + p1
+            n2      = x.shape[1] 
+            n3      = x.shape[2] + p3
+                                    
+            a       = np.zeros((n1, n2, n3))
+            a[:-p1,:,:-p3]  = x[:,:,:]            
+            for i in range(p1):
+              for j in range(p2):
+                for k in range(p3):
+                    a[i,j,-p3+k]     = x[i,j,k]
+                    a[-p1+i,j,k]     = x[i,j,k]
+                    a[-p1+i,j,-p3+k] = x[i,j,k]
+            return a
+          elif periodic == [False, True, True] :
+            #... eliminate ghost regions
+            p1, p2, p3 = V.degree
+            n1      = x.shape[0]
+            n2      = x.shape[1] + p2
+            n3      = x.shape[2] + p3
+                                    
+            a       = np.zeros((n1, n2, n3))
+            a[:,:-p2,:-p3]  = x[:,:,:]            
+            for i in range(p1):
+              for j in range(p2):
+                for k in range(p3):
+                    a[i,j,-p3+k]     = x[i,j,k]
+                    a[i,-p2+j,k]     = x[i,j,k]
+                    a[i,-p2+j,-p3+k] = x[i,j,k]         
+            return a
+          elif periodic == [False, False, True] :
+            #... eliminate ghost regions
+            p1, p2, p3 = V.degree
+            n1      = x.shape[0] 
+            n2      = x.shape[1]
+            n3      = x.shape[2] + p3
+                                    
+            a       = np.zeros((n1, n2, n3))
+            a[:,:,:-p3]  = x[:,:,:]            
+            for i in range(p1):
+              for j in range(p2):
+                for k in range(p3):
+                    a[i,j,-p3+k] = x[i,j,k]
+            return a
+
+          elif periodic == [False, True, False] :
+            #... eliminate ghost regions
+            p1, p2, p3 = V.degree
+            n1      = x.shape[0] 
+            n2      = x.shape[1] + p2
+            n3      = x.shape[2]
+                                    
+            a       = np.zeros((n1, n2, n3))
+            a[:,:-p2,:]  = x[:,:,:]            
+            for i in range(p1):
+              for j in range(p2):
+                for k in range(p3):
+                    a[i,-p2+j,k] = x[i,j,k]
+            return a
+            
+          elif periodic == [True, False, False] :
+            #... eliminate ghost regions
+            p1, p2, p3 = V.degree
+            n1      = x.shape[0] + p1
+            n2      = x.shape[1] 
+            n3      = x.shape[2]
+                                    
+            a       = np.zeros((n1, n2, n3))
+            a[:-p1,:,:]  = x[:,:,:]            
+            for i in range(p1):
+              for j in range(p2):
+                for k in range(p3):
+                    a[-p1+i,j,k] = x[i,j,k]
+            return a
+          else:
+             raise NotImplementedError('Only if there is a periodic boundary at least in one dimension')                
+
+        else:
+            raise NotImplementedError('Only 1d, 2d and 3d are available')
