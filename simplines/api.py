@@ -268,72 +268,84 @@ def apply_periodic(V, x, periodic = None, update = None):
 
         elif V.dim == 2:
           x          = x.reshape((V.nbasis[0],V.nbasis[1], V.nbasis[0], V.nbasis[1]) )
-          if periodic == [True, True] :
+          if True in periodic:
             p1,p2  = V.degree
             n1,n2  = V.nbasis
             #... eliminate ghost regions
-            lix                       = np.zeros((2*p1, n2, n1, n2))
-            lix[:p1,:, :, :]          = x[-p1:,:, :,:]
-            lix[p1:p1+p1, :, -p1:, :] = x[-2*p1:-p1,:, -p1:, :]
             
-            x    = x[:-p1,:,:-p1,:] 
-            for i in range(p1):
+            if periodic[0] == True:
+               lix                       = np.zeros((2*p1, n2, n1, n2))
+               lix[:p1,:, :, :]          = x[-p1:,:, :,:]
+               lix[p1:p1+p1, :, -p1:, :] = x[-2*p1:-p1,:, -p1:, :]
+            
+               x    = x[:-p1,:,:-p1,:] 
+               for i in range(p1):
                   x[i, :, :, :]      += lix[i, :, :-p1, :]
                   x[i, :, :p1, :]    += lix[i, :,-p1:, :]       
                   x[-1-i, :, :p1, :] += lix[2*p1-1-i, :, -p1:, :]
-
-            liy                       = np.zeros((n1-p1, 2*p2, n1-p1, n2))
-            liy[:,:p2,:,:]            = x[:,-p2:, :,:]
-            liy[:,p1:p1+p1,:,-p1:]    = x[:, -2*p2:-p2, :, -p2:]
+               n1 = n1 - p1
+            if periodic[1] == True:
+               liy                       = np.zeros((n1, 2*p2, n1, n2))
+               liy[:,:p2,:,:]            = x[:,-p2:, :,:]
+               liy[:,p1:p1+p1,:,-p1:]    = x[:, -2*p2:-p2, :, -p2:]
  
-            x    = x[:,:-p2, :,:-p2] 
-            for j in range(p2):
-                x[:, j, :, :]      += liy[:, j, :, :-p2]
-                x[:, j, :, :p2]    += liy[:, j, :, -p2:]       
-                x[:, -1-j, :, :p2] += liy[:, 2*p2-1-j, :, -p2:]
-            x          = x.reshape(( (n1-p1)*(n2-p2),(n1-p1)*(n2-p2) ))                
+               x    = x[:,:-p2, :,:-p2] 
+               for j in range(p2):
+                  x[:, j, :, :]      += liy[:, j, :, :-p2]
+                  x[:, j, :, :p2]    += liy[:, j, :, -p2:]       
+                  x[:, -1-j, :, :p2] += liy[:, 2*p2-1-j, :, -p2:]
+               n2 = n2 - p2
+            x          = x.reshape(( n1*n2,n1*n2 ))                
             return x
-          if periodic == [True, False] :
-            p1,p2  = V.degree
-            n1,n2  = V.nbasis
+          else:
+             raise NotImplementedError('Only if there is a periodic boundary at least in one dimension')
 
-            #... eliminate ghost regions
-            lix                       = np.zeros((2*p1, n2, n1, n2))
-            lix[:p1,:, :, :]          = x[-p1:,:, :,:]
-            lix[p1:p1+p1, :, -p1:, :] = x[-2*p1:-p1,:, -p1:, :]
-            
-            x    = x[:-p1,:,:-p1,:] 
-            for i in range(p1):
-                x[i, :, :, :]      += lix[i, :, :-p1, :]
-                x[i, :, :p1, :]    += lix[i,  :,-p1:, :]       
-                x[-1-i, :, :p1, :] += lix[2*p1-1-i, :, -p1:, :]
-
-            x          = x.reshape(( (n1-p1)*(n2),(n1-p1)*(n2) ))
-            return x
-
-          elif periodic == [False, True] :
-            p1,p2  = V.degree
-            n1,n2  = V.nbasis
-            #... eliminate ghost regions
-
-            liy                       = np.zeros((n1, 2*p2, n1, n2))
-            liy[:,:p2,:,:]            = x[:,-p2:, :,:]
-            liy[:,p2:p2+p2,:,-p2:]    = x[:, -2*p2:-p2, :, -p2:]
-                        
-            x    = x[:,:-p2,:,:-p2] 
-            for j in range(p2):
-                x[:, j, :, :]      += liy[:, j, :, :-p2]
-                x[:, j, :, :p2]    += liy[:, j, :, -p2:]       
-                x[:, -1-j, :, :p2] += liy[:, 2*p2-1-j, :, -p2:]
-
-            x          = x.reshape(( (n1)*(n2-p2),(n1)*(n2-p2) ))                
-            return x
-        # ... TODO
         elif V.dim == 3:
-            p1,p2,p3 = V.degree
+          x          = x.reshape((V.nbasis[0],V.nbasis[1],V.nbasis[2], V.nbasis[0],V.nbasis[1],V.nbasis[2]) )
+          if True in periodic:
+            print('wayi')
+            p1,p2,p3   = V.degree
+            n1,n2, n3  = V.nbasis
             #... eliminate ghost regions
-
+            if periodic[0]==True :
+               li                         = np.zeros((2*p1,n2,n3, n1,n2,n3))
+               li[:p1,:,:, :,:,:]         = x[-p1:,:,:, :,:,:]
+               li[p1:p1+p1,:,:, -p1:,:,:] = x[-2*p1:-p1,:,:, -p1:,:,:]
+            
+               x    = x[:-p1,:,:, :-p1,:,:] 
+               for i in range(p1):
+                  x[i,:,:, :,:,:]      += li[i,:,:, :-p1,:,:]
+                  x[i,:,:, :p1,:,:]    += li[i,:,:, -p1:,:,:]       
+                  x[-1-i,:,:,:p1,:,:]  += li[2*p1-1-i,:,:, -p1:,:,:]
+               n1 = n1 - p1
+            if periodic[1]==True :
+               #...
+               li                            = np.zeros((n1,2*p2,n3, n1,n2,n3))
+               li[:,:p2,:, :,:,:]            = x[:,-p2:,:, :,:,:]
+               li[:,p2:p2+p2,:, :,-p2:,:]    = x[:,-2*p2:-p2,:, :,-p2:,:]
+ 
+               x    = x[:,:-p2,:, :,:-p2,:] 
+               for j in range(p2):
+                  x[:,j,:, :,:,:]      += li[:,j,:, :,:-p2,:]
+                  x[:,j,:, :,:p2,:]    += li[:,j,:, :,-p2:,:]       
+                  x[:,-1-j,:, :,:p2,:] += li[:,2*p2-1-j,:, :,-p2:,:]
+               n2 = n2 - p2
+            if periodic[2]==True :
+               #...
+               li                            = np.zeros((n1,n2,2*p3, n1,n2,n3))
+               li[:,:,:p3, :,:,:]            = x[:,:,-p3:, :,:,:]
+               li[:,:,p3:p3+p3, :,:,-p3:]    = x[:,:,-2*p3:-p3, :,:,-p3:]
+ 
+               x    = x[:,:,:-p3, :,:,:-p3] 
+               for k in range(p3):
+                  x[:,:,k, :,:,:]      += li[:,:,k, :,:,:-p3]
+                  x[:,:,k, :,:,:p3]    += li[:,:,k, :,:,-p3:]       
+                  x[:,:,-1-k, :,:,:p3] += li[:,:,2*p3-1-k, :,:,-p3:]
+               n3 = n3 - p3                
+            x          = x.reshape(( n1*n2*n3, n1*n2*n3 ))                
             return x
+          else:
+             raise NotImplementedError('Only if there is a periodic boundary at least in one direction')
         else :
             raise NotImplementedError('Only 1d, 2d and 3d are available')
 
@@ -397,7 +409,7 @@ def apply_periodic(V, x, periodic = None, update = None):
             x          = x.reshape(( (V.nbasis[0])*(V.nbasis[1]-p2) ))                                            
             return x
           else:
-             raise NotImplementedError('Only if there is a periodic boundary at least in one dimension')                
+             raise NotImplementedError('Only if there is a periodic boundary at least in one direction')                
 
         # ... TODO not sure
         elif V.dim == 3:
@@ -503,7 +515,7 @@ def apply_periodic(V, x, periodic = None, update = None):
             x          = x.reshape(( (V.nbasis[0]-p1)*(V.nbasis[1])*(V.nbasis[2]) ))
             return x
           else:
-             raise NotImplementedError('Only if there is a periodic boundary at least in one dimension')                
+             raise NotImplementedError('Only if there is a periodic boundary at least in one direction')                
                              
         else:
             raise NotImplementedError('Only 1d, 2d and 3d are available')
@@ -521,7 +533,6 @@ def apply_periodic(V, x, periodic = None, update = None):
             a       = np.zeros(n1)
             for i in range(p):
                 a[-p-i] = x[i]
-
             return a
 
         elif V.dim == 2:
@@ -572,7 +583,7 @@ def apply_periodic(V, x, periodic = None, update = None):
                 a[:,-p2+j]   = x[:,j]                                            
             return a
           else:
-             raise NotImplementedError('Only if there is a periodic boundary at least in one dimension')      
+             raise NotImplementedError('Only if there is a periodic boundary at least in one direction')      
 
         # ... TODO not sure
         elif V.dim == 3:
@@ -691,7 +702,7 @@ def apply_periodic(V, x, periodic = None, update = None):
                     a[-p1+i,j,k] = x[i,j,k]
             return a
           else:
-             raise NotImplementedError('Only if there is a periodic boundary at least in one dimension')                
+             raise NotImplementedError('Only if there is a periodic boundary at least in one direction')                
 
         else:
             raise NotImplementedError('Only 1d, 2d and 3d are available')
