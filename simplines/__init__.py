@@ -72,6 +72,7 @@ from simplines.utilities import ( plot_field_1d,
 from simplines.results import ( sol_field_2d)
 
 from simplines.results_f90 import ( pyccel_sol_field_2d,
+                                    pyccel_sol_field_3d, 
                                     least_square_Bspline)
 
 from simplines.api import (assemble_matrix, assemble_vector, assemble_scalar, compile_kernel, apply_dirichlet, apply_periodic)
