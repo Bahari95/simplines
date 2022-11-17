@@ -287,7 +287,7 @@ def apply_periodic(V, x, periodic = None, update = None):
             if periodic[1] == True:
                liy                       = np.zeros((n1, 2*p2, n1, n2))
                liy[:,:p2,:,:]            = x[:,-p2:, :,:]
-               liy[:,p1:p1+p1,:,-p1:]    = x[:, -2*p2:-p2, :, -p2:]
+               liy[:,p2:p2+p2,:,-p2:]    = x[:, -2*p2:-p2, :, -p2:]
  
                x    = x[:,:-p2, :,:-p2] 
                for j in range(p2):
@@ -303,7 +303,6 @@ def apply_periodic(V, x, periodic = None, update = None):
         elif V.dim == 3:
           x          = x.reshape((V.nbasis[0],V.nbasis[1],V.nbasis[2], V.nbasis[0],V.nbasis[1],V.nbasis[2]) )
           if True in periodic:
-            print('wayi')
             p1,p2,p3   = V.degree
             n1,n2, n3  = V.nbasis
             #... eliminate ghost regions
@@ -372,7 +371,7 @@ def apply_periodic(V, x, periodic = None, update = None):
             a      = np.zeros(x.shape)
             a[:,:] = x[:,:]
             
-            x     = x[:-p1,:-p2]
+            x      = x[:-p1,:-p2]
             for i in range(p1):
                for j in range(p2):            
                    x[i,j]            += a[i,-p2+j] + a[-p1+i,j] + a[-p1+i,-p2+j]
@@ -380,7 +379,7 @@ def apply_periodic(V, x, periodic = None, update = None):
                 x[i,p2:]             += a[-p1+i,p2:-p2]
             for j in range(p2):
                 x[p1:,j]             += a[p1:-p1,-p2+j]
-            x          = x.reshape(( (V.nbasis[0]-p1)*(V.nbasis[1]-p2) ))
+            x      = x.reshape(( (V.nbasis[0]-p1)*(V.nbasis[1]-p2) ))
             return x
 
           elif periodic == [True, False] :
@@ -390,10 +389,10 @@ def apply_periodic(V, x, periodic = None, update = None):
             a      = np.zeros(x.shape)
             a[:,:] = x[:,:]
             
-            x     = x[:-p1,:]
+            x      = x[:-p1,:]
             for i in range(p1):
                 x[i,:]             += a[-p1+i,:]
-            x          = x.reshape(( (V.nbasis[0]-p1)*(V.nbasis[1]) ))
+            x      = x.reshape(( (V.nbasis[0]-p1)*(V.nbasis[1]) ))
             return x
             
           elif  periodic == [False, True] :
@@ -406,12 +405,12 @@ def apply_periodic(V, x, periodic = None, update = None):
             x     = x[:,:-p2]
             for j in range(p2):
                 x[:,j]             += a[:,-p2+j]
-            x          = x.reshape(( (V.nbasis[0])*(V.nbasis[1]-p2) ))                                            
+            x     = x.reshape(( (V.nbasis[0])*(V.nbasis[1]-p2) ))                                            
             return x
           else:
              raise NotImplementedError('Only if there is a periodic boundary at least in one direction')                
 
-        # ... TODO not sure
+        # ... 
         elif V.dim == 3:
           if periodic == [True, True, True] :
             #... eliminate ghost regions
@@ -425,6 +424,24 @@ def apply_periodic(V, x, periodic = None, update = None):
               for j in range(p2):
                 for k in range(p3):
                     x[i,j,k]             += a[i,j,-p3+k] + a[i,-p2+j,k]  + a[i,-p2+j,-p3+k] + a[-p1+i,j,k]  + a[-p1+i,j,-p3+k] + a[-p1+i,-p2+j,k] + a[-p1+i,-p2+j,-p3+k]
+            # ...
+            for i in range(p1):
+              for j in range(p2):
+                    x[i,j,p3:]           += a[i,-p2+j,p3:-p3] + a[-p1+i,j,p3:-p3]  + a[-p1+i,-p2+j,p3:-p3]
+            for i in range(p1):
+                for k in range(p3):
+                    x[i,p2:,k]           += a[i,p2:-p2,-p3+k] + a[-p1+i,p2:-p2,k]  + a[-p1+i,p2:-p2,-p3+k]
+            for j in range(p2):
+                for k in range(p3):
+                    x[p1:,j,k]           += a[p1:-p1,j,-p3+k] + a[p1:-p1,-p2+j,k]  + a[p1:-p1,-p2+j,-p3+k]
+            # ...
+            for i in range(p1):
+                    x[i,p2:,p3:]         += a[-p1+i,p2:-p2,p3:-p3]
+            for j in range(p2):
+                    x[p1:,j,p3:]         += a[p1:-p1,-p2+j,p3:-p3]
+            for k in range(p3):
+                    x[p1:,p2:,k]         += a[p1:-p1,p2:-p2,-p3+k]
+                                                                                
             x          = x.reshape(( (V.nbasis[0]-p1)*(V.nbasis[1]-p2)*(V.nbasis[2]-p3) ))
             return x
           elif periodic == [True, True, False] :
@@ -437,8 +454,12 @@ def apply_periodic(V, x, periodic = None, update = None):
             x          = x[:-p1,:-p2,:]
             for i in range(p1):
               for j in range(p2):
-                for k in range(p3):
-                    x[i,j,k]                += a[i,-p2+i,i]  + a[-p1+i,j,k] + a[-p1+i,-p2+j,k]
+                    x[i,j,:]             += a[i,-p2+j,:] + a[-p1+i,j,:]  + a[-p1+i,-p2+j,:]
+            # ...
+            for i in range(p1):
+                    x[i,p2:,:]           += a[-p1+i,p2:-p2,:]
+            for j in range(p2):
+                    x[p1:,j,:]           += a[p1:-p1,-p2+j,:]
             x          = x.reshape(( (V.nbasis[0]-p1)*(V.nbasis[1]-p2)*(V.nbasis[2]) ))
             return x                
 
@@ -451,9 +472,13 @@ def apply_periodic(V, x, periodic = None, update = None):
             
             x          = x[:-p1,:,:-p3]
             for i in range(p1):
-              for j in range(p2):
                 for k in range(p3):
-                    x[i,j,k]               += a[i,j,-p3+k] + a[-p1+i,j,k]  + a[-p1+i,j,-p3+k]
+                    x[i,:,k]             += a[i,:,-p3+k] + a[-p1+i,:,k]  + a[-p1+i,:,-p3+k]
+            # ...
+            for i in range(p1):
+                    x[i,:,p3:]           += a[-p1+i,:,p3:-p3]
+            for k in range(p3):
+                    x[p1:,:,k]           += a[p1:-p1,:,-p3+k]
             x          = x.reshape(( (V.nbasis[0]-p1)*(V.nbasis[1])*(V.nbasis[2]-p3) ))
             return x
           elif periodic == [False, True, True] :
@@ -464,10 +489,15 @@ def apply_periodic(V, x, periodic = None, update = None):
             a[:,:,:]   = x[:,:,:]
             
             x          = x[:,:-p2,:-p3]
-            for i in range(p1):
-              for j in range(p2):
+            for j in range(p2):
                 for k in range(p3):
-                    x[i,j,k]             += a[i,j,-p3+k] + a[i,-p2+j,k]  + a[i,-p2+j,-p3+k]                 
+                    x[:,j,k]             += a[:,j,-p3+k] + a[:,-p2+j,k]  + a[:,-p2+j,-p3+k]   
+            # ...
+            for j in range(p2):
+                    x[:,j,p3:]           += a[:,-p2+j,p3:-p3]
+            for k in range(p3):
+                    x[:,p2:,k]           += a[:,p2:-p2,-p3+k]
+                    
             x          = x.reshape(( (V.nbasis[0])*(V.nbasis[1]-p2)*(V.nbasis[2]-p3) ))
             return x
           elif periodic == [False, False, True] :
@@ -478,10 +508,8 @@ def apply_periodic(V, x, periodic = None, update = None):
             a[:,:,:]   = x[:,:,:]
             
             x          = x[:,:,:-p3]
-            for i in range(p1):
-              for j in range(p2):
-                for k in range(p3):
-                    x[i,j,k]             += a[i,j,-p3+k] 
+            for k in range(p3):
+                    x[:,:,k]             += a[:,:,-p3+k] 
             x          = x.reshape(( (V.nbasis[0])*(V.nbasis[1])*(V.nbasis[2]-p3) ))
             return x
           elif periodic == [False, True, False] :
@@ -492,10 +520,8 @@ def apply_periodic(V, x, periodic = None, update = None):
             a[:,:,:]   = x[:,:,:]
             
             x          = x[:,:-p2,:]
-            for i in range(p1):
-              for j in range(p2):
-                for k in range(p3):
-                    x[i,j,k]             +=  a[i,-p2+j,k]                    
+            for j in range(p2):
+                    x[:,j,:]             +=  a[:,-p2+j,:]                    
 
             x          = x.reshape(( (V.nbasis[0])*(V.nbasis[1]-p2)*(V.nbasis[2]) ))
             return x
@@ -508,9 +534,7 @@ def apply_periodic(V, x, periodic = None, update = None):
             
             x          = x[:-p1,:,:]
             for i in range(p1):
-              for j in range(p2):
-                for k in range(p3):
-                    x[i,j,k]             +=  a[-p1+i,j,k]
+                    x[i,:,:]             +=  a[-p1+i,:,:]
                     
             x          = x.reshape(( (V.nbasis[0]-p1)*(V.nbasis[1])*(V.nbasis[2]) ))
             return x
@@ -526,7 +550,7 @@ def apply_periodic(V, x, periodic = None, update = None):
   
   else :
         if V.dim == 1:
-            #... update ghost regions
+            #... update the eliminated ghost regions
             p       = V.degree
             n1      = x.shape[0] + p
             
@@ -537,7 +561,7 @@ def apply_periodic(V, x, periodic = None, update = None):
 
         elif V.dim == 2:
           if periodic == [True, True] :
-            #... eliminate ghost regions
+            #... update the eliminated ghost regions
             p1,p2   = V.degree
             n1      = x.shape[0] + p1
             n2      = x.shape[1] + p2
@@ -559,7 +583,7 @@ def apply_periodic(V, x, periodic = None, update = None):
             return a
 
           elif periodic == [True, False] :
-            #... eliminate ghost regions
+            #... update the eliminated ghost regions
             p1,p2      = V.degree
             n1         = x.shape[0] + p1
             n2         = x.shape[1]
@@ -572,7 +596,7 @@ def apply_periodic(V, x, periodic = None, update = None):
             return a
 
           elif  periodic == [False, True] :
-            #... eliminate ghost regions
+            #... update the eliminated ghost regions
             p1,p2      = V.degree
             n1         = x.shape[0]
             n2         = x.shape[1] + p2
@@ -585,10 +609,10 @@ def apply_periodic(V, x, periodic = None, update = None):
           else:
              raise NotImplementedError('Only if there is a periodic boundary at least in one direction')      
 
-        # ... TODO not sure
+        # ... 
         elif V.dim == 3:
           if periodic == [True, True, True] :
-            #... eliminate ghost regions
+            #... update the eliminated ghost regions
             p1, p2, p3 = V.degree
             n1      = x.shape[0] + p1
             n2      = x.shape[1] + p2
@@ -606,10 +630,33 @@ def apply_periodic(V, x, periodic = None, update = None):
                     a[-p1+i,j,-p3+k]      = x[i,j,k]
                     a[-p1+i,-p2+j,k]      = x[i,j,k]
                     a[-p1+i,-p2+j,-p3+k]  = x[i,j,k]
-
+            # ...
+            for i in range(p1):
+              for j in range(p2):
+                    a[i,-p2+j,p3:-p3]     = x[i,j,p3:]
+                    a[-p1+i,j,p3:-p3]     = x[i,j,p3:]
+                    a[-p1+i,-p2+j,p3:-p3] = x[i,j,p3:]
+            for i in range(p1):
+                for k in range(p3):
+                    a[i,p2:-p2,-p3+k]     = x[i,p2:,k]
+                    a[-p1+i,p2:-p2,k]     = x[i,p2:,k]
+                    a[-p1+i,p2:-p2,-p3+k] = x[i,p2:,k]
+            for j in range(p2):
+                for k in range(p3):
+                    a[p1:-p1,j,-p3+k]     = x[p1:,j,k]
+                    a[p1:-p1,-p2+j,k]     = x[p1:,j,k]
+                    a[p1:-p1,-p2+j,-p3+k] = x[p1:,j,k]
+            # ...
+            for i in range(p1):
+                    a[-p1+i,p2:-p2,p3:-p3] = x[i,p2:,p3:]
+            for j in range(p2):
+                    a[p1:-p1,-p2+j,p3:-p3] = x[p1:,j,p3:]
+            for k in range(p3):
+                    a[p1:-p1,p2:-p2,-p3+k] = x[p1:,p2:,k]
             return a
+
           elif periodic == [True, True, False] :
-            #... eliminate ghost regions
+            #... update the eliminated ghost regions
             p1, p2, p3 = V.degree
             n1      = x.shape[0] + p1
             n2      = x.shape[1] + p2
@@ -619,14 +666,18 @@ def apply_periodic(V, x, periodic = None, update = None):
             a[:-p1,:-p2,:]  = x[:,:,:]            
             for i in range(p1):
               for j in range(p2):
-                for k in range(p3):
-                    a[i,-p2+i,i]     = x[i,j,k]
-                    a[-p1+i,j,k]     = x[i,j,k]
-                    a[-p1+i,-p2+j,k] = x[i,j,k]
+                    a[i,-p2+i,:]     = x[i,j,:]
+                    a[-p1+i,j,:]     = x[i,j,:]
+                    a[-p1+i,-p2+j,:] = x[i,j,:]
+            # ...
+            for i in range(p1):
+                    a[-p1+i,p2:-p2,:] = x[i,p2:,:]
+            for j in range(p2):
+                    a[p1:-p1,-p2+j,:] = x[p1:,j,:]
             return a
 
           elif periodic == [True, False, True] :
-            #... eliminate ghost regions
+            #... update the eliminated ghost regions
             p1, p2, p3 = V.degree
             n1      = x.shape[0] + p1
             n2      = x.shape[1] 
@@ -635,14 +686,19 @@ def apply_periodic(V, x, periodic = None, update = None):
             a       = np.zeros((n1, n2, n3))
             a[:-p1,:,:-p3]  = x[:,:,:]            
             for i in range(p1):
-              for j in range(p2):
                 for k in range(p3):
-                    a[i,j,-p3+k]     = x[i,j,k]
-                    a[-p1+i,j,k]     = x[i,j,k]
-                    a[-p1+i,j,-p3+k] = x[i,j,k]
-            return a
+                    a[i,:,-p3+k]      = x[i,:,k]
+                    a[-p1+i,:,k]      = x[i,:,k]
+                    a[-p1+i,:,-p3+k]  = x[i,:,k]
+            # ...
+            for i in range(p1):
+                    a[-p1+i,:,p3:-p3] = x[i,:,p3:]
+            for k in range(p3):
+                    a[p1:-p1,:,-p3+k] = x[p1:,:,k]
+            return a 
+
           elif periodic == [False, True, True] :
-            #... eliminate ghost regions
+            #... update the eliminated ghost regions
             p1, p2, p3 = V.degree
             n1      = x.shape[0]
             n2      = x.shape[1] + p2
@@ -650,15 +706,20 @@ def apply_periodic(V, x, periodic = None, update = None):
                                     
             a       = np.zeros((n1, n2, n3))
             a[:,:-p2,:-p3]  = x[:,:,:]            
-            for i in range(p1):
-              for j in range(p2):
+            for j in range(p2):
                 for k in range(p3):
-                    a[i,j,-p3+k]     = x[i,j,k]
-                    a[i,-p2+j,k]     = x[i,j,k]
-                    a[i,-p2+j,-p3+k] = x[i,j,k]         
+                    a[:,j,-p3+k]      = x[:,j,k]
+                    a[:,-p2+j,k]      = x[:,j,k]
+                    a[:,-p2+j,-p3+k]  = x[:,j,k]         
+            # ...
+            for j in range(p2):
+                    a[:,-p2+j,p3:-p3] = x[:,j,p3:]
+            for k in range(p3):
+                    a[:,p2:-p2,-p3+k] = x[:,p2:,k]
             return a
+            
           elif periodic == [False, False, True] :
-            #... eliminate ghost regions
+            #... update the eliminated ghost regions
             p1, p2, p3 = V.degree
             n1      = x.shape[0] 
             n2      = x.shape[1]
@@ -666,14 +727,12 @@ def apply_periodic(V, x, periodic = None, update = None):
                                     
             a       = np.zeros((n1, n2, n3))
             a[:,:,:-p3]  = x[:,:,:]            
-            for i in range(p1):
-              for j in range(p2):
-                for k in range(p3):
-                    a[i,j,-p3+k] = x[i,j,k]
+            for k in range(p3):
+                    a[:,:,-p3+k] = x[:,:,k]
             return a
 
           elif periodic == [False, True, False] :
-            #... eliminate ghost regions
+            #... update the eliminated ghost regions
             p1, p2, p3 = V.degree
             n1      = x.shape[0] 
             n2      = x.shape[1] + p2
@@ -681,14 +740,12 @@ def apply_periodic(V, x, periodic = None, update = None):
                                     
             a       = np.zeros((n1, n2, n3))
             a[:,:-p2,:]  = x[:,:,:]            
-            for i in range(p1):
-              for j in range(p2):
-                for k in range(p3):
-                    a[i,-p2+j,k] = x[i,j,k]
+            for j in range(p2):
+                    a[:,-p2+j,:] = x[:,j,:]
             return a
             
           elif periodic == [True, False, False] :
-            #... eliminate ghost regions
+            #... update the eliminated ghost regions
             p1, p2, p3 = V.degree
             n1      = x.shape[0] + p1
             n2      = x.shape[1] 
@@ -697,9 +754,7 @@ def apply_periodic(V, x, periodic = None, update = None):
             a       = np.zeros((n1, n2, n3))
             a[:-p1,:,:]  = x[:,:,:]            
             for i in range(p1):
-              for j in range(p2):
-                for k in range(p3):
-                    a[-p1+i,j,k] = x[i,j,k]
+                    a[-p1+i,:,:] = x[i,:,:]
             return a
           else:
              raise NotImplementedError('Only if there is a periodic boundary at least in one direction')                
