@@ -10,7 +10,7 @@ from .spaces import TensorSpace
 __all__ = ['assemble_matrix', 'assemble_vector', 'assemble_scalar', 'compile_kernel', 'apply_dirichlet']
 
 #==============================================================================
-def assemble_matrix(core, V, fields=None, out=None):
+def assemble_matrix(core, V, fields=None, value = None, out=None):
     if out is None:
         out = StencilMatrix(V.vector_space, V.vector_space)
 
@@ -37,7 +37,11 @@ def assemble_matrix(core, V, fields=None, out=None):
         assert(isinstance(fields, (list, tuple)))
 
         args += [u._data for u in fields]
+    # ...
 
+    if not(value is None):
+        args += [value]
+        
     core( *args, out._data )
 
     return out
