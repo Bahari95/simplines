@@ -38,10 +38,10 @@ def assemble_matrix(core, V, fields=None, value = None, out=None):
 
         args += [u._data for u in fields]
     # ...
-
+        
     if not(value is None):
         args += [value]
-        
+
     core( *args, out._data )
 
     return out
@@ -130,121 +130,262 @@ def compile_kernel(core, arity, pyccel=True):
 
 
 #==============================================================================
-def apply_dirichlet(V, x):
-    if isinstance(x, StencilMatrix):
-        if V.dim == 1:
-            n1 = V.nbasis
+def apply_dirichlet(V, x, dirichlet = None):
+    if dirichlet is None :
+        if isinstance(x, StencilMatrix):
+            if V.dim == 1:
+                n1 = V.nbasis
 
-            # ... resetting bnd dof to 0
-            x[0,:] = 0.
-            x[n1-1,:] = 0.
-            # ...
+                # ... resetting bnd dof to 0
+                x[0,:] = 0.
+                x[n1-1,:] = 0.
+                # ...
 
-            # boundary x = 0
-            x[0,0] = 1.
+                # boundary x = 0
+                x[0,0] = 1.
 
-            # boundary x = 1
-            x[n1-1,0] = 1.
+                # boundary x = 1
+                x[n1-1,0] = 1.
 
-            return x
+                return x
 
-        elif V.dim == 2:
-            n1,n2 = V.nbasis
+            elif V.dim == 2:
+                n1,n2 = V.nbasis
 
-            # ... resetting bnd dof to 0
-            x[0,:,:,:] = 0.
-            x[n1-1,:,:,:] = 0.
-            x[:,0,:,:] = 0.
-            x[:,n2-1,:,:] = 0.
-            # ...
+                # ... resetting bnd dof to 0
+                x[0,:,:,:] = 0.
+                x[n1-1,:,:,:] = 0.
+                x[:,0,:,:] = 0.
+                x[:,n2-1,:,:] = 0.
+                # ...
 
-            # boundary x = 0
-            x[0,:,0,0] = 1.
+                # boundary x = 0
+                x[0,:,0,0] = 1.
 
-            # boundary x = 1
-            x[n1-1,:,0,0] = 1.
+                # boundary x = 1
+                x[n1-1,:,0,0] = 1.
 
-            # boundary y = 0
-            x[:,0,0,0] = 1.
+                # boundary y = 0
+                x[:,0,0,0] = 1.
 
-            # boundary y = 1
-            x[:,n2-1,0,0] = 1.
+                # boundary y = 1
+                x[:,n2-1,0,0] = 1.
 
-            return x
+                return x
 
-        elif V.dim == 3:
-            n1,n2,n3 = V.nbasis
+            elif V.dim == 3:
+                n1,n2,n3 = V.nbasis
 
-            # ... resetting bnd dof to 0
-            x[0,:,:,:,:,:] = 0.
-            x[n1-1,:,:,:,:,:] = 0.
-            x[:,0,:,:,:,:] = 0.
-            x[:,n2-1,:,:,:,:] = 0.
-            x[:,:,0,:,:,:] = 0.
-            x[:,:,n3-1,:,:,:] = 0.
-            # ...
+                # ... resetting bnd dof to 0
+                x[0,:,:,:,:,:] = 0.
+                x[n1-1,:,:,:,:,:] = 0.
+                x[:,0,:,:,:,:] = 0.
+                x[:,n2-1,:,:,:,:] = 0.
+                x[:,:,0,:,:,:] = 0.
+                x[:,:,n3-1,:,:,:] = 0.
+                # ...
 
-            # boundary x = 0
-            x[0,:,:, 0,0,0] = 1.
+                # boundary x = 0
+                x[0,:,:, 0,0,0] = 1.
+    
+                # boundary x = 1
+                x[n1-1,:,:, 0,0,0] = 1.
 
-            # boundary x = 1
-            x[n1-1,:,:, 0,0,0] = 1.
+                # boundary y = 0
+                x[:,0,:, 0,0,0] = 1.
 
-            # boundary y = 0
-            x[:,0,:, 0,0,0] = 1.
+                # boundary y = 1
+                x[:,n2-1,:, 0,0,0] = 1.
 
-            # boundary y = 1
-            x[:,n2-1,:, 0,0,0] = 1.
+                # boundary z = 0
+                x[:,:,0, 0,0,0] = 1.
 
-            # boundary z = 0
-            x[:,:,0, 0,0,0] = 1.
+                # boundary z = 1
+                x[:,:,n3-1, 0,0,0] = 1.
 
-            # boundary z = 1
-            x[:,:,n3-1, 0,0,0] = 1.
+                return x
+            else :
+                raise NotImplementedError('Only 1d, 2d and 3d are available')
 
-            return x
-        else :
-            raise NotImplementedError('Only 1d, 2d and 3d are available')
+        elif isinstance(x, StencilVector):
+            if V.dim == 1:
+                n1 = V.nbasis
 
-    elif isinstance(x, StencilVector):
-        if V.dim == 1:
-            n1 = V.nbasis
+                x[0] = 0.
+                x[n1-1] = 0.
 
-            x[0] = 0.
-            x[n1-1] = 0.
+                return x
 
-            return x
+            elif V.dim == 2:
+                n1,n2 = V.nbasis
 
-        elif V.dim == 2:
-            n1,n2 = V.nbasis
+                x[0,:] = 0.
+                x[n1-1,:] = 0.
+                x[:,0] = 0.
+                x[:,n2-1] = 0.
 
-            x[0,:] = 0.
-            x[n1-1,:] = 0.
-            x[:,0] = 0.
-            x[:,n2-1] = 0.
+                return x
 
-            return x
+            elif V.dim == 3:
+                n1, n2, n3 = V.nbasis
 
-        elif V.dim == 3:
-            n1, n2, n3 = V.nbasis
+                x[0,:,:] = 0.
+                x[n1-1,:,:] = 0.
 
-            x[0,:,:] = 0.
-            x[n1-1,:,:] = 0.
+                x[:,0,:] = 0.
+                x[:,n2-1,:] = 0.
 
-            x[:,0,:] = 0.
-            x[:,n2-1,:] = 0.
+                x[:,:,0] = 0.
+                x[:,:,n3-1] = 0.
 
-            x[:,:,0] = 0.
-            x[:,:,n3-1] = 0.
+                return x
 
-            return x
+            else:
+                raise NotImplementedError('Only 1d, 2d and 3d are available')
 
         else:
-            raise NotImplementedError('Only 1d, 2d and 3d are available')
+            raise TypeError('Expecting StencilMatrix or StencilVector')
+    else :
+        if isinstance(x, StencilMatrix):
+            if V.dim == 1:
+                print('warning /!\ there is no specific case for 1D: Dirichlet is applied in both sides of the interval') 
+                n1 = V.nbasis
 
-    else:
-        raise TypeError('Expecting StencilMatrix or StencilVector')
+                # ... resetting bnd dof to 0
+                x[0,:] = 0.
+                x[n1-1,:] = 0.
+                # ...
 
+                # boundary x = 0
+                x[0,0] = 1.
+
+                # boundary x = 1
+                x[n1-1,0] = 1.
+
+                return x
+
+            elif V.dim == 2:
+                n1,n2 = V.nbasis
+
+                # ... resetting bnd dof to 0
+                if dirichlet[0] == True :
+
+                     x[0,:,:,:]    = 0.
+                     x[n1-1,:,:,:] = 0.
+                     
+                if dirichlet[1] == True :
+
+                     x[:,0,:,:]    = 0.
+                     x[:,n2-1,:,:] = 0.
+                # ...
+
+                # boundary x = 0 , 1
+                if dirichlet[0] == True :
+
+                     # boundary x = 0
+                     x[0,:,0,0]   = 1.
+                     # boundary x = 1
+                     x[n1-1,:,0,0] = 1.
+                     
+                # boundary y = 0 , 1
+                if dirichlet[1] == True :
+
+                     # boundary y = 0
+                     x[:,0,0,0]   = 1.
+                     # boundary y = 1
+                     x[:,n2-1,0,0] = 1.
+
+                return x
+
+            elif V.dim == 3:
+                n1,n2,n3 = V.nbasis
+
+                # ... resetting bnd dof to 0
+                if dirichlet[0] == True :
+                     x[0,:,:,:,:,:]    = 0.
+                     x[n1-1,:,:,:,:,:] = 0.
+
+                if dirichlet[1] == True :
+                     x[:,0,:,:,:,:]    = 0.
+                     x[:,n2-1,:,:,:,:] = 0.
+
+                if dirichlet[2] == True :
+                     x[:,:,0,:,:,:]    = 0.
+                     x[:,:,n3-1,:,:,:] = 0.
+                # ...
+                # boundary x = 0, 1
+                if dirichlet[0] == True :
+
+                     # boundary x = 0
+                     x[0,:,:, 0,0,0] = 1.
+                     # boundary x = 1
+                     x[n1-1,:,:, 0,0,0] = 1.
+
+                # boundary y = 0, 1
+                if dirichlet[1] == True :
+
+                     # boundary y = 0
+                     x[:,0,:, 0,0,0] = 1.
+                     # boundary y = 1
+                     x[:,n2-1,:, 0,0,0] = 1.
+
+                # boundary z = 0, 1
+                if dirichlet[2] == True :
+  
+                     # boundary z = 0
+                     x[:,:,0, 0,0,0] = 1.
+                     # boundary z = 1
+                     x[:,:,n3-1, 0,0,0] = 1.
+
+                return x
+            else :
+                raise NotImplementedError('Only 1d, 2d and 3d are available')
+
+        elif isinstance(x, StencilVector):
+            if V.dim == 1:
+                print('warning /!\ there is no specific case for 1D: Dirichlet is applied in both sides of the interval') 
+                n1 = V.nbasis
+
+                x[0] = 0.
+                x[n1-1] = 0.
+
+                return x
+
+            elif V.dim == 2:
+                n1,n2 = V.nbasis
+
+                if dirichlet[0] == True :
+                    x[0,:]    = 0.
+                    x[n1-1,:] = 0.
+
+                if dirichlet[1] == True :
+                    x[:,0]    = 0.
+                    x[:,n2-1] = 0.
+
+                return x
+
+            elif V.dim == 3:
+                n1, n2, n3 = V.nbasis
+
+                if dirichlet[0] == True :
+                    x[0,:,:] = 0.
+                    x[n1-1,:,:] = 0.
+
+                if dirichlet[1] == True :
+                    x[:,0,:] = 0.
+                    x[:,n2-1,:] = 0.
+
+                if dirichlet[2] == True :
+                    x[:,:,0] = 0.
+                    x[:,:,n3-1] = 0.
+
+                return x
+
+            else:
+                raise NotImplementedError('Only 1d, 2d and 3d are available')
+
+        else:
+            raise TypeError('Expecting StencilMatrix or StencilVector')
 
 #==============================================================================
 def apply_periodic(V, x, periodic = None, update = None):
