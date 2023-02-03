@@ -47,29 +47,48 @@ def assemble_matrix(core, V, fields=None, value = None, out=None):
     return out
 
 #==============================================================================
-def assemble_vector(core, V, fields=None, value = None, out=None):
+def assemble_vector(core, V, fields=None, knots = None, value = None, out=None):
     if out is None:
         out = StencilVector(V.vector_space)
 
     # ...
     args = []
-    if isinstance(V, TensorSpace):
-        args += list(V.nelements)
-        args += list(V.degree)
-        args += list(V.spans)
-        args += list(V.basis)
-        args += list(V.weights)
-        args += list(V.points)
+    if knots is None :
+       if isinstance(V, TensorSpace):
+           args += list(V.nelements)
+           args += list(V.degree)
+           args += list(V.spans)   
+           args += list(V.basis)
+           args += list(V.weights)
+           args += list(V.points)
 
-    else:
-        args = [V.nelements,
-                V.degree,
-                V.spans,
-                V.basis,
-                V.weights,
-                V.points]
+       else:
+           args = [V.nelements,
+                   V.degree,
+                   V.spans,
+                   V.basis,
+                   V.weights,
+                   V.points]
     # ...
+    else :
+       if isinstance(V, TensorSpace):
+           args += list(V.nelements)
+           args += list(V.degree)
+           args += list(V.spans)
+           args += list(V.basis)
+           args += list(V.weights)
+           args += list(V.points)
+           args += list(V.knots)
 
+       else:
+           args = [V.nelements,
+                   V.degree,
+                   V.spans,
+                   V.basis,
+                   V.weights,
+                   V.points,
+                   V.knots]
+                
     if not(fields is None):
         assert(isinstance(fields, (list, tuple)))
 
