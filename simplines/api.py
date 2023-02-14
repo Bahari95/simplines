@@ -95,7 +95,8 @@ def assemble_vector(core, V, fields=None, knots = None, value = None, out=None):
         args += [x._data for x in fields]
 
     if not(value is None):
-        args += [value]
+        for x_value in value:
+               args += [x_value]
 
     core( *args, out._data )
 
