@@ -40,7 +40,8 @@ def assemble_matrix(core, V, fields=None, value = None, out=None):
     # ...
         
     if not(value is None):
-        args += [value]
+        for x_value in value:
+               args += [x_value]
 
     core( *args, out._data )
 
