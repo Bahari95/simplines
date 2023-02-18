@@ -529,7 +529,7 @@ def pyccel_sol_field_2d(Npoints,  uh , knots, degree):
 
     X, Y = meshgrid(xs, ys)
 
-    return Q[:,:,0], Q[:,:,1], Q[:,:,2], X, Y
+    return Q[:,:,0], Q[:,:,1], Q[:,:,2], X.T, Y.T
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Computes Solution and its gradien In two dimension
