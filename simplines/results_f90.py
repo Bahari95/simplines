@@ -569,35 +569,47 @@ def pyccel_sol_field_3d(Npoints,  uh , knots, degree):
 
     return Q[:,:,:,0], Q[:,:,:,1], Q[:,:,:,2], Q[:,:,:,3], Q[:,:,:,4], Q[:,:,:,5], Q[:,:,:,6]
     
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Computes L2 projection of 1D function
-def least_square_Bspline(degree, knots, f, V_mae = None, x_mae = None, vec_in = None, y = None):
+def least_square_Bspline(degree, knots, f, V_mae = None, x_mae = None, vec_in = None, y = None, m = None):
     from numpy     import zeros, linspace
     from .bsplines import find_span
     from .bsplines import basis_funs
     from scipy.sparse import csc_matrix, linalg as sla
     
     n       = len(knots) - degree - 1
-    m       = n + degree + 100 
     Tu      = knots[degree:degree+n]
-    u_k     = linspace(knots[0], knots[degree+n], m)
+    
+    if m is None : 
+        # ... in the case where f is a function
 
-    #...x_mae is not None implies that the Boudary conditions are fulfilled after applying the optimal mapping to the boundary points
-    if x_mae is not None :
-       if y is None:
-            u_kmae = pyccel_sol_field_2d((m,m),  x_mae , V_mae.knots, V_mae.degree)[0][vec_in,:]
-       else :
-            u_kmae = pyccel_sol_field_2d((m,m),  x_mae , V_mae.knots, V_mae.degree)[0][:,vec_in]
+        m       = n + degree + 100 
+        u_k     = linspace(knots[0], knots[degree+n], m)
+        #...x_mae is not None implies that the Boudary conditions are fulfilled after applying the optimal mapping to the boundary points
+        if x_mae is not None :
+           if y is None:
+                u_kmae = pyccel_sol_field_2d((m,m),  x_mae , V_mae.knots, V_mae.degree)[0][vec_in,:]
+           else :
+                u_kmae = pyccel_sol_field_2d((m,m),  x_mae , V_mae.knots, V_mae.degree)[0][:,vec_in]
 
-    # ...
-    Pc      = zeros(n)
-    Q       = zeros(m)
-    if x_mae is not None :
-       for i in range(0,m):
-           Q[i] = f(u_kmae[i])
-    else :
-       for i in range(0,m):
-           Q[i] = f(u_k[i])
+        # ...
+        Pc      = zeros(n)
+        Q       = zeros(m)
+        if x_mae is not None :
+           for i in range(0,m):
+               Q[i] = f(u_kmae[i])
+        else :
+           for i in range(0,m):
+               Q[i] = f(u_k[i])
+    else : 
+        # .. in the case of f is a vector
+        # ...
+        u_k     = linspace(knots[0], knots[degree+n], m)
+        Pc      = zeros(n)
+        Q       = zeros(m)
+        Q[:]    = f[:]
+    
     Pc[0]   = Q[0]
     Pc[n-1] = Q[m-1]  
     #... Assembles matrix N of non vanishing basis functions in each u_k value
