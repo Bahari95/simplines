@@ -145,7 +145,7 @@ def basis_funs_all_ders( knots, degree, x, span, n ):
 def point_on_bspline_surface(Tu, Tv, P, u, v):
     pu = len(Tu) - P.shape[0] - 1
     pv = len(Tv) - P.shape[1] - 1
-    d = P.shape[-1]
+    d  = P.shape[-1]
 
     span_u = find_span( Tu, pu, u )
     span_v = find_span( Tv, pv, v )
@@ -163,9 +163,9 @@ def point_on_bspline_surface(Tu, Tv, P, u, v):
     cy = np.zeros(d)
     for ku in range(0, pu+1):
         for kv in range(0, pv+1):
-            c[:] += bu[ku]*bv[kv]*P[span_u-pu+ku, span_v-pv+kv,:]
-            cx[:] += derbu[ku]*bv[kv]*P[span_u-pu+ku, span_v-pv+kv,:]
-            cy[:] += bu[ku]*derbv[kv]*P[span_u-pu+ku, span_v-pv+kv,:]
+            c[:]  += bu[ku]    * bv[kv]    * P[span_u-pu+ku, span_v-pv+kv,:]
+            cx[:] += derbu[ku] * bv[kv]    * P[span_u-pu+ku, span_v-pv+kv,:]
+            cy[:] += bu[ku]    * derbv[kv] * P[span_u-pu+ku, span_v-pv+kv,:]
 
     return c, cx, cy
 

@@ -17,7 +17,7 @@ __all__ = ['SplineSpace', 'TensorSpace']
 # =================================================================================================
 class SplineSpace(object):
     def __init__(self, degree, nelements=None, grid=None, nderiv=1,
-                 periodic=False, normalization=False, mixed = False, quad_degree = None):
+                 periodic=False, normalization=False,  sharing_grid = None, mixed = False, quad_degree = None):
 
         if (nelements is None) and (grid is None):
             raise ValueError('Either nelements or grid must be provided')
@@ -26,35 +26,46 @@ class SplineSpace(object):
             grid  = linspace(0., 1., nelements+1)
 
         knots = make_knots(grid, degree, periodic=periodic)
-        spans = elements_spans(knots, degree)
 
-        nelements = len(grid) - 1
         nbasis    = len(knots) - degree - 1
-
+        
+        # .. for assembling integrals
         # create the gauss-legendre rule, on [-1, 1]
         u, w = gauss_legendre( degree )
         if mixed is True :
             u, w = gauss_legendre( degree + 1)
         if quad_degree is not None :
             u, w = gauss_legendre( quad_degree)
-        # for each element on the grid, we create a local quadrature grid
-        points, weights = quadrature_grid( grid, u, w )
 
-        # for each element and a quadrature points,
-        # we compute the non-vanishing B-Splines
-        basis = basis_ders_on_quad_grid( knots, degree, points, nderiv,
+        if sharing_grid is None :
+              spans        = elements_spans(knots, degree)
+              nelements    = len(grid)-1
+
+              # for each element on the grid, we create a local quadrature grid
+              points, weights = quadrature_grid( grid, u, w )
+
+              # for each element and a quadrature points,
+              # we compute the non-vanishing B-Splines
+              basis = basis_ders_on_quad_grid( knots, degree, points, nderiv,
                                         normalization=normalization )
-
-        self._periodic = periodic
-        self._knots = knots
-        self._spans = spans
-        self._grid = grid
-        self._degree = degree
+        else :
+              # for each element on the grid, we create a local quadrature grid
+              points, weights = quadrature_grid( sharing_grid, u, w )
+              basis, spans = basis_ders_on_quad_grid( knots, degree, points, nderiv,
+                                        normalization=normalization, sharing_grid = True)
+              nelements    = len(sharing_grid)-1
+              grid         = sharing_grid
+              
+        self._periodic  = periodic
+        self._knots     = knots
+        self._spans     = spans
+        self._grid      = grid
+        self._degree    = degree
         self._nelements = nelements
-        self._nbasis = nbasis
-        self._points = points
-        self._weights = weights
-        self._basis = basis
+        self._nbasis    = nbasis
+        self._points    = points
+        self._weights   = weights
+        self._basis     = basis
 
         self._vector_space = StencilVectorSpace([nbasis], [degree], [periodic])
 
@@ -105,7 +116,6 @@ class SplineSpace(object):
     @property
     def dim(self):
         return 1
-
 # =================================================================================================
 class TensorSpace(object):
     def __init__( self, *args ):

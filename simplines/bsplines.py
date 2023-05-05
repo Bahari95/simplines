@@ -745,7 +745,7 @@ def quadrature_grid( breaks, quad_rule_x, quad_rule_w ):
     return quad_x, quad_w
 
 #==============================================================================
-def basis_ders_on_quad_grid(knots, degree, quad_grid, nders, normalization):
+def basis_ders_on_quad_grid(knots, degree, quad_grid, nders, normalization, sharing_grid = False):
     """
     Evaluate B-Splines and their derivatives on the quadrature grid.
 
@@ -781,22 +781,24 @@ def basis_ders_on_quad_grid(knots, degree, quad_grid, nders, normalization):
 
     """
     # TODO: add example to docstring
-
     ne,nq = quad_grid.shape
     basis = np.zeros((ne, degree+1, nders+1, nq))
-
+    spans = np.zeros((ne, nq), dtype=int )
+    
     if normalization == 'M':
         scaling = 1. / basis_integrals(knots, degree)
 
     for ie in range(ne):
         xx = quad_grid[ie, :]
         for iq, xq in enumerate(xx):
-            span = find_span(knots, degree, xq)
+            span      = find_span(knots, degree, xq)
+            spans[ie, iq] = span
             ders = basis_funs_all_ders(knots, degree, xq, span, nders)
             if normalization == 'M':
                 ders *= scaling[None, span-degree:span+1]
             basis[ie, :, :, iq] = ders.transpose()
-
+    if sharing_grid is True:
+        return basis, spans
     return basis
 
 #==============================================================================
