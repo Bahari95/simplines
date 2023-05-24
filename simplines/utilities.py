@@ -11,11 +11,13 @@ from .bsplines import hrefinement_matrix
 __all__ = ['plot_field_1d', 'plot_field_2d', 'prolongation_matrix']
 
 # ==========================================================
-def plot_field_1d(knots, degree, u, nx=101, color='b'):
+def plot_field_1d(knots, degree, u, nx=101, color='b', xmin = None, xmax = None):
     n = len(knots) - degree - 1
 
-    xmin = knots[degree]
-    xmax = knots[-degree-1]
+    if xmin is None :
+        xmin = knots[degree]
+    if xmax is None :
+        xmax = knots[-degree-1]
 
     xs = np.linspace(xmin, xmax, nx)
 
