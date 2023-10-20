@@ -27,7 +27,7 @@ def plot_field_1d(knots, degree, u, nx=101, color='b', xmin = None, xmax = None)
     for i,x in enumerate(xs):
         Q[i,:] = point_on_bspline_curve(knots, P, x)
 
-    plt.plot(xs, Q[:,0], '-'+color)
+    plt.plot(xs, Q[:,0], color = color)
 
 # ==========================================================
 def plot_field_2d(knots, degrees, u, nx=101, ny=101):
