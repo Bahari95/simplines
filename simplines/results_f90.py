@@ -703,10 +703,12 @@ f90_sol_field_3d = epyccel(sol_field_3D)
 from numpy import zeros, linspace, meshgrid
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Computes Solution and its gradien In two dimension
-def pyccel_sol_field_2d( Npoints, uh, knots, degree, meshes = None):
+def pyccel_sol_field_2d( Npoints, uh, knots, degree, meshes = None, bound_val = None):
     '''
     Using computed control points uh we compute solution
-    in new discretisation by Npoints    
+    in new discretisation by Npoints
+    The solution can be determined within the provided mesh
+    The solution can be calculated within a particular domain : bound_val    
     '''
     pu, pv = degree
     Tu, Tv = knots
@@ -721,29 +723,46 @@ def pyccel_sol_field_2d( Npoints, uh, knots, degree, meshes = None):
 	       nx = nu-pu+1
 	       ny = nv-pv+1
 	    
-	       xs = Tu[pu:-pu] #linspace(Tu[pu], Tu[-pu-1], nx)
-	    
-	       ys = Tv[pv:-pv] #linspace(Tv[pv], Tv[-pv-1], ny)
+	       xs = Tu[pu:-pu] 
+	       ys = Tv[pv:-pv] 
 	      
 	    else :
-	       nx, ny = Npoints
+	       '''
+	       x0_v  : min val in x direction
+	       x1_v  : max val in x direction
+	       y0_v  : min val in y direction
+	       y1_v  : max val in y direction
+	       '''
+	       nx, ny  = Npoints
+	       if bound_val is not None:
 
-	       xs = linspace(Tu[pu], Tu[-pu-1], nx)
-	    
-	       ys = linspace(Tv[pv], Tv[-pv-1], ny)
+		       x0_v = bound_val[0]
+		       x1_v = bound_val[1] 
+		       y0_v = bound_val[2] 
+		       y1_v = bound_val[3]
 
+	       else :
+		       x0_v = Tu[pu]
+		       x1_v = Tu[-pu-1]
+		       y0_v = Tv[pv]
+		       y1_v = Tv[-pv-1]
+	    # ...
+	    xs                     = linspace(x0_v, x1_v, nx)
+	    ys                     = linspace(y0_v, y1_v, ny)
+	    # ...
 	    Q    = zeros((nx, ny, 3)) 
 	    f90_sol_field_2d(nx, ny, xs, ys, uh, Tu, Tv, pu, pv, Q)
+	    # ...
 	    X, Y = meshgrid(xs, ys)
 	    return Q[:,:,0], Q[:,:,1], Q[:,:,2], X.T, Y.T
     else :
        xs, ys = meshes
-       #print(xs)
+       # ...
        nx, ny = xs.shape
        Xs     = linspace(Tu[pu], Tu[-pu-1], nx)    
        Ys     = linspace(Tv[pv], Tv[-pv-1], ny)
        X, Y   = meshgrid(Xs, Ys)
-       #print(X)
+       # ...
        X[:,:] = xs[:,:]
        Y[:,:] = ys[:,:]
        Q      = zeros((nx, ny, 3)) 
@@ -753,8 +772,11 @@ def pyccel_sol_field_2d( Npoints, uh, knots, degree, meshes = None):
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Computes Solution and its gradien In two dimension
 def pyccel_sol_field_3d(Npoints,  uh , knots, degree):
-    # Using computed control points U we compute solution
-    # in new discretisation by Npoints    
+    '''
+    Using computed control points U we compute solution
+    in new discretisation by Npoints    
+    '''
+
     pu, pv, pz = degree
     Tu, Tv, Tz = knots
 
