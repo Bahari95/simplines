@@ -124,24 +124,44 @@ def assemble_vector(core, V, fields=None, knots = None, value = None, out=None):
     return out
 
 #==============================================================================
-def assemble_scalar(core, V, fields=None, values = None):
+def assemble_scalar(core, V, fields=None, knots = None, value = None):
     # ...
     args = []
-    if isinstance(V, TensorSpace):
-        args += list(V.nelements)
-        args += list(V.degree)
-        args += list(V.spans)
-        args += list(V.basis)
-        args += list(V.weights)
-        args += list(V.points)
+    if knots is None :
+       if isinstance(V, TensorSpace):
+           args += list(V.nelements)
+           args += list(V.degree)
+           args += list(V.spans)   
+           args += list(V.basis)
+           args += list(V.weights)
+           args += list(V.points)
 
-    else:
-        args = [V.nelements,
-                V.degree,
-                V.spans,
-                V.basis,
-                V.weights,
-                V.points]
+       else:
+           args = [V.nelements,
+                   V.degree,
+                   V.spans,
+                   V.basis,
+                   V.weights,
+                   V.points]
+    # ...
+    else :
+       if isinstance(V, TensorSpace):
+           args += list(V.nelements)
+           args += list(V.degree)
+           args += list(V.spans)
+           args += list(V.basis)
+           args += list(V.weights)
+           args += list(V.points)
+           args += list(V.knots)
+
+       else:
+           args = [V.nelements,
+                   V.degree,
+                   V.spans,
+                   V.basis,
+                   V.weights,
+                   V.points,
+                   V.knots]
     # ...
 
     if not(fields is None):
@@ -149,8 +169,9 @@ def assemble_scalar(core, V, fields=None, values = None):
 
         args += [x._data for x in fields]
     
-    if not(values is None):
-        args += [x for x in values]
+    if not(value is None):
+        for x_value in value:
+               args += [x_value]
     return core( *args )
 
 #==============================================================================
