@@ -448,7 +448,7 @@ def assemble_basis_spans_in_adquadrature_same_space(ne1, ne2, ne3, ne4, p1, p2, 
                  basis_ad2[ie1, ie2, :, 2, g1, g2] = ders[2,:]
                  
 
-class quadratur_in_admesh(object):
+class quadratures_in_admesh(object):
 	'''
 	The provided code calculates B-spline functions and their corresponding spans within the quadrature image using optimal mapping. 
 	This mapping transforms a uniform mesh into an adaptive mesh within a unit square.
@@ -484,7 +484,7 @@ class quadratur_in_admesh(object):
 		self.nb_vec1 = (nx, ny, p2+1, nders+1, k1, k2)
 		self.ns_vec  = (nx, ny, k1, k2)
 				
-	def ad_quadrature(self, u01_mae, u10_mae):
+	def ad_quadratures(self, u01_mae, u10_mae):
 		
 		# ...
 		if isinstance(u01_mae, StencilVector):
