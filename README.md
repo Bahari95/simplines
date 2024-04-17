@@ -15,3 +15,6 @@ python3 -m pip install .
 ```shell
 python3 -m pip install --user -e .
 ```
+and
+**Pyccel**
+pyccel ad_mesh_core.ppy
