@@ -19,6 +19,5 @@ and
 **Pyccel**
 ```shell
 cd simplines
-
 pyccel ad_mesh_core.ppy
 ```
