@@ -47,9 +47,9 @@ def pyccel_sol_field_2d( Npoints, uh, knots, degree, meshes = None, bound_val = 
 		       x1_v = Tu[-pu-1]
 		       y0_v = Tv[pv]
 		       y1_v = Tv[-pv-1]
-	    # ...
-	    xs                     = linspace(x0_v, x1_v, nx)
-	    ys                     = linspace(y0_v, y1_v, ny)
+	       # ...
+	       xs                     = linspace(x0_v, x1_v, nx)
+	       ys                     = linspace(y0_v, y1_v, ny)
 	    # ...
 	    Q    = zeros((nx, ny, 3)) 
 	    core.sol_field_2D(nx, ny, xs, ys, uh, Tu, Tv, pu, pv, Q)
@@ -102,7 +102,7 @@ def pyccel_sol_field_3d(Npoints,  uh , knots, degree, meshes = None):
             zs = linspace(Tz[pz], Tz[-pz-1], nz)
        Q    = zeros((nx, ny, nz, 7)) 
        core.sol_field_3D(nx, ny, nz, xs, ys, zs, uh, Tu, Tv, Tz, pu, pv, pz, Q)
-       return Q[:,:,:,0], Q[:,:,:,1], Q[:,:,:,2], Q[:,:,:,3], Q[:,:,:,4], Q[:,:,:,5], Q[:,:,:,6],
+       return Q[:,:,:,0], Q[:,:,:,1], Q[:,:,:,2], Q[:,:,:,3], Q[:,:,:,4], Q[:,:,:,5], Q[:,:,:,6]
     else :
        nx, ny, nz = Npoints
        # ...
@@ -151,7 +151,11 @@ def least_square_Bspline(degree, knots, f, V_mae = None, x_mae = None, vec_in = 
         u_k     = linspace(knots[0], knots[degree+n], m)
         Pc      = zeros(n)
         Q       = zeros(m)
-        Q[:]    = f[:]
+        if x_mae is not None:
+           for i in range(0,m):
+               Q[i] = f(x_mae[i])
+        else :        
+               Q[:] = f[:]
     
     Pc[0]   = Q[0]
     Pc[n-1] = Q[m-1]  

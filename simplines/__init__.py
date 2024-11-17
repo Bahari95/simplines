@@ -8,6 +8,7 @@ from simplines import api
 from simplines import results
 from simplines import results_f90
 from simplines import ad_mesh_tools
+from simplines import fast_diag
 
 __all__ = ['bsplines', 'cad',
            'spaces', 'linalg',
@@ -74,6 +75,8 @@ from simplines.utilities import ( plot_field_1d,
 from simplines.results import ( sol_field_2d)
 
 from simplines.ad_mesh_tools import ( quadratures_in_admesh)
+
+from simplines.fast_diag import ( Poisson)
 
 from simplines.results_f90 import ( pyccel_sol_field_2d,
                                     pyccel_sol_field_3d, 

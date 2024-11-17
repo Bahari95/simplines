@@ -179,7 +179,7 @@ def compile_kernel(core, arity, pyccel=True):
     assert(arity in [0,1,2])
 
     if pyccel:
-        core = epyccel(core)
+        core = epyccel(core, accelerators = 'mpi') #libs = ["/usr/lib/gcc/x86_64-linux-gnu/9", "-gfortran", "-lm"] )#, language = 'c')
 
     if arity == 2:
         return partial(assemble_matrix, core)

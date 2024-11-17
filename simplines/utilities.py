@@ -11,7 +11,7 @@ from .bsplines import hrefinement_matrix
 __all__ = ['plot_field_1d', 'plot_field_2d', 'prolongation_matrix']
 
 # ==========================================================
-def plot_field_1d(knots, degree, u, nx=101, color='b', xmin = None, xmax = None):
+def plot_field_1d(knots, degree, u, nx=101, color='b', xmin = None, xmax = None, label = None):
     n = len(knots) - degree - 1
 
     if xmin is None :
@@ -26,8 +26,13 @@ def plot_field_1d(knots, degree, u, nx=101, color='b', xmin = None, xmax = None)
     Q = np.zeros((nx, 1))
     for i,x in enumerate(xs):
         Q[i,:] = point_on_bspline_curve(knots, P, x)
-
-    plt.plot(xs, Q[:,0], color = color)
+    if color is None :
+        if label is not None :
+            plt.plot(xs, Q[:,0], label = label)
+        else :
+            plt.plot(xs, Q[:,0])
+    else :    
+        plt.plot(xs, Q[:,0], color=color)
 
 # ==========================================================
 def plot_field_2d(knots, degrees, u, nx=101, ny=101):
