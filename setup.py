@@ -3,6 +3,9 @@
 
 from pathlib import Path
 from setuptools import setup, find_packages
+# added to run some files with pyccel : @bahari
+from setuptools.command.install import install
+import subprocess
 
 # ...
 # Read library version into '__version__' variable
@@ -39,6 +42,28 @@ packages = find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"])
 install_requires = [
     'numpy',
     ]
+
+# List of files to process with pyccel @bahari
+files_to_process = [
+    'simplines/ad_mesh_core.py',
+    'simplines/results_f90_core.py',
+    'simplines/fast_diag_core.py',
+]
+# @bahari
+class CustomInstallCommand(install):
+    """Custom installation command to run pyccel on multiple files."""
+    def run(self):
+        # Run the standard install process
+        install.run(self)
+        # Process each file with pyccel
+        for file in files_to_process:
+            print(f"Running pyccel on {file}...")
+            try:
+                subprocess.check_call(['pyccel', file])
+            except subprocess.CalledProcessError as e:
+                print(f"Error occurred while processing {file}: {e}")
+                raise
+
 
 def setup_package():
     setup(packages=packages, \
