@@ -134,4 +134,7 @@ simplines/tests/__epyccel__
 simplines/tests/__pycache__
 simplines/tests/figs
 simplines/.lock_acquisition.lock
+r_adaptive_refinement/__epyccel__
+r_adaptive_refinement/__pycache__
+r_adaptive_refinement/figs
 [figs]
