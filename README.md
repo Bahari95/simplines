@@ -2,6 +2,9 @@
 
 Simple and minimalistic library for B-Splines for IGA and CAD
 
+The code is available through Git
+
+    git clone https://github.com/Bahari95/simplines.git
 
 ## Install
 
