@@ -64,6 +64,9 @@ class CustomInstallCommand(install):
                 print(f"Error occurred while processing {file}: {e}")
                 raise
 
+import os
+# Create the folder
+os.makedirs("newFolder", exist_ok=True)  # 'exist_ok=True' prevents errors if the folder already exists
 
 def setup_package():
     setup(packages=packages, \
