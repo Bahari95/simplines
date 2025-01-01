@@ -139,3 +139,6 @@ r_adaptive_refinement/__pycache__
 r_adaptive_refinement/figs
 [figs]
 /newFolder
+cad/__pycache__
+cad/__epyccel__
+cad/figs
