@@ -1,7 +1,7 @@
 """
-parameterize_analyticboundary.py
+cadboundary.py
 
-# compute the interpolate spline function for tyhe Dirichlet boundary condition
+# Suitable parameterization from anamytic CAD boundary information
 
 @author : M. BAHARI
 """
