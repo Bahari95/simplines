@@ -207,8 +207,24 @@ def picard(V1, V2, V, u01, u10, u_01= None, u_10= None, x0 = None, y0 = None, ni
     return u_01, u_10, Mx, My, i, l2_residual
 
 # Check if the user provided the expressions as arguments
-print("Usage: python3 cadboundary.py '0.1*sin(3.*(1.75)*pi*(y+0.1))*(x+0.5)+x' '0.1*cos(4.*pi*(x+0.1))*(y+0.5)+y'")
-
+print("Usage: python3 cadboundary.py --expr1 'x' --expr2 'y'")
+#..general geomitry 00 rho = 1.
+"""
+# Example 1
+'0.15*sin(2.*pi*(y+0.1))*(x)+x' ' 0.15*sin(2.*pi*(x+0.1))*(y)+y
+# Example 2
+'0.15*sin(2.*pi*(y+0.1))*(x+0.5)+x' '0.15*cos(2.*pi*(x+0.1))*(y+0.5)+y'
+# Example 3
+'0.1*sin(3.*pi*(y+0.1))*(x+0.5)+x' '0.1*sin(3.*pi*(x+0.1))*(y+0.5)+y'
+# Example 4
+'0.15*sin(1.65*pi*(y+0.1))*(x+0.3)+x+0.3' '0.15*sin(1.65*pi*(x+0.1))*(y+0.3)+y+0.3'
+# Example 5
+'0.15*sin(2.75*pi*(y+0.1))*(x)+x' '0.15*sin(2.75*pi*(x+0.1))*(y)+y'
+# Example 6
+'0.18*sin(2.*pi*(y+0.1))*(x)+x' '0.18*sin(2.*pi*(x+0.1))*(y)+y'
+# Example 7
+'0.1*sin(3.*(1.75)*pi*(y+0.1))*(x+0.5)+x' '0.1*cos(4.*pi*(x+0.1))*(y+0.5)+y'
+"""
 parser = argparse.ArgumentParser(description="Control plot behavior and save control points.")
 parser.add_argument("--plot", action="store_true", help="Enable plotting and saving control points")
 parser.add_argument("--degree", type=int, default=2, help="Degree of the polynomial (default: 2)")
