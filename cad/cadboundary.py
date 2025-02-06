@@ -12,6 +12,7 @@ from simplines          import TensorSpace
 from simplines          import StencilVector
 from simplines          import pyccel_sol_field_2d
 from simplines          import least_square_Bspline
+from simplines          import save_geometry_to_xml
 
 from gallery_section_04 import assemble_stiffnessmatrix1D
 from gallery_section_04 import assemble_massmatrix1D
@@ -39,6 +40,7 @@ import argparse
 import os
 # Create the folder
 os.makedirs("figs", exist_ok=True)  # 'exist_ok=True' prevents errors if the folder already exists
+
 
 #.......Picard BFO ALGORITHM
 def picard(V1, V2, V, u01, u10, u_01= None, u_10= None, x0 = None, y0 = None, niter = None):
@@ -224,11 +226,16 @@ print("Usage: python3 cadboundary.py --expr1 'x' --expr2 'y'")
 '0.18*sin(2.*pi*(y+0.1))*(x)+x' '0.18*sin(2.*pi*(x+0.1))*(y)+y'
 # Example 7
 '0.1*sin(3.*(1.75)*pi*(y+0.1))*(x+0.5)+x' '0.1*cos(4.*pi*(x+0.1))*(y+0.5)+y'
+# Example 8 Quart annulus
+'(2.*x-1.)*sqrt(1.-(2.*y-1.)**2/2.0)' '(2.*y-1.)*sqrt(1.-(2.*x-1.)**2/2.0)'
+# Example 9 circle
+
 """
 parser = argparse.ArgumentParser(description="Control plot behavior and save control points.")
 parser.add_argument("--plot", action="store_true", help="Enable plotting and saving control points")
 parser.add_argument("--degree", type=int, default=2, help="Degree of the polynomial (default: 2)")
 parser.add_argument("--nelements", type=int, default=16, help="Number of elements (default: 16)")
+parser.add_argument("--name", type=str, default='Geometry', help="Name of geometry (default: Geometry)")
 parser.add_argument("--expr1", type=str, default="x", help="First mathematical expression (default: 'x')")
 parser.add_argument("--expr2", type=str, default="y", help="Second mathematical expression (default: 'y')")
 args = parser.parse_args()
@@ -362,10 +369,17 @@ if np.min(Z) < 0. :
 print( ' min of Jacobian in the intire unit square =', np.min(Z) )
 print( ' max of Jacobian in the intire unit square =', np.max(Z) )
 
-# ... save a control points
+# ... save data
+#np.savetxt('figs/filex_'+str(degree)+'_'+str(nelements)+'.txt', x11uh, fmt='%.20e')
+#np.savetxt('figs/filey_'+str(degree)+'_'+str(nelements)+'.txt', x12uh, fmt='%.20e')
+Gmap  = np.zeros((V1.nbasis*V2.nbasis,2))
+x11uh = x11uh.reshape(V1.nbasis*V2.nbasis)
+x12uh = x12uh.reshape(V1.nbasis*V2.nbasis)
+Gmap[:,0] = x11uh[:]
+Gmap[:,1] = x12uh[:]
+save_geometry_to_xml(Vh, Gmap, name = args.name)
+#np.savetxt('figs/Geom_'+str(degree)+'_'+str(nelements)+'.txt', Gmap, fmt='%.20e')
 if args.plot :
-    np.savetxt('figs/filex_'+str(degree)+'_'+str(nelements)+'.txt', x11uh, fmt='%.20e')
-    np.savetxt('figs/filey_'+str(degree)+'_'+str(nelements)+'.txt', x12uh, fmt='%.20e')
     #---------------------------------------------------------
     fig =plt.figure() 
     for i in range(nbpts):

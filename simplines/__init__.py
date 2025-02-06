@@ -57,7 +57,9 @@ from simplines.cad import ( point_on_bspline_curve,
                             rotate_bspline_surface,
                             rotate_nurbs_surface,
                             homothetic_bspline_surface,
-                            homothetic_nurbs_surface )
+                            homothetic_nurbs_surface,
+                            getGeometryMap,
+                            save_geometry_to_xml )
 
 from simplines.spaces import ( SplineSpace,
                                TensorSpace )

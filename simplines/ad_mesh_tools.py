@@ -8,9 +8,12 @@ class quadratures_in_admesh(object):
 	The provided code calculates B-spline functions and their corresponding spans within the quadrature image using optimal mapping. 
 	This mapping transforms a uniform mesh into an adaptive mesh within a unit square.
 	'''
-	def __init__(self, V) :
+	def __init__(self, V, reparameterization = False) :
 		# ...
-		if V.dim == 2 :
+		if reparameterization is True : 
+			# ... L2(gradient) mapping
+			self.basis_spans_in_adquadrature_2d = core.assemble_basis_spans_in_adquadrature_L2map
+		elif V.dim == 2 :
 			# ... gradient mapping
 			self.basis_spans_in_adquadrature_2d = core.assemble_basis_spans_in_adquadrature_gradmap
 		elif V.dim == 6 :

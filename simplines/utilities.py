@@ -26,13 +26,11 @@ def plot_field_1d(knots, degree, u, nx=101, color='b', xmin = None, xmax = None,
     Q = np.zeros((nx, 1))
     for i,x in enumerate(xs):
         Q[i,:] = point_on_bspline_curve(knots, P, x)
-    if color is None :
-        if label is not None :
-            plt.plot(xs, Q[:,0], label = label)
-        else :
-            plt.plot(xs, Q[:,0])
-    else :    
-        plt.plot(xs, Q[:,0], color=color)
+
+    if label is not None :
+        plt.plot(xs, Q[:,0], label = label)
+    else :
+        plt.plot(xs, Q[:,0])
 
 # ==========================================================
 def plot_field_2d(knots, degrees, u, nx=101, ny=101):

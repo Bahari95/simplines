@@ -146,11 +146,33 @@ class Poisson(object):
 
         return s
 
+    def _project_2d(self, b):
+        # ...
+        r_tilde = self.forward @ b
+        # ...
+        s = self.backward @ r_tilde
+        return s
+
+    def _project_3d(self, b):
+        # ...
+        r_tilde = self.forward @ b
+        s = self.backward @ r_tilde
+        # ...
+
+        return s
+
+    
     def solve(self, b):
         if self.rdim == 2:
             return self._solve_2d(b)
         else:
             return self._solve_3d(b)
+
+    def project(self, b):
+        if self.rdim == 2:
+            return self._project_2d(b)
+        else:
+            return self._project_3d(b)
             
             
             

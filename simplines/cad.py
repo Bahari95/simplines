@@ -582,3 +582,120 @@ def homothetic_bspline_surface(Tu, Tv, P, alpha, center=[0.,0.]):
 def homothetic_nurbs_surface(Tu, Tv, P, W, alpha, center=[0.,0.]):
     Tu, Tv, Q = homothetic_bspline_surface(Tu, Tv, P, alpha, center=center)
     return Tu, Tv, Q, W
+
+
+
+import xml.etree.ElementTree as ET
+import numpy as np
+
+def save_geometry_to_xml(V, Gmap, name = 'Geometry'):
+    filename = f'./figs/'+name+'.xml'
+    
+    # Root element
+    root = ET.Element('xml')
+    root.text  = '\n'
+    
+    # Geometry element
+    geometry    = ET.SubElement(root, 'Geometry', type='TensorNurbs2', id='0')
+    geometry.text = '\n'
+    basis_outer = ET.SubElement(geometry, 'Basis', type='TensorNurbsBasis2')
+    basis_outer.text = '\n'
+    basis_inner = ET.SubElement(basis_outer, 'Basis', type='TensorBSplineBasis2')
+    basis_inner.text = '\n'
+
+    # Add basis elements
+    for i in range(2):
+        basis            = ET.SubElement(basis_inner, 'Basis', type='BSplineBasis', index=str(i))
+        basis.text       = '\n'
+        knot_vector      = ET.SubElement(basis, 'KnotVector', degree=str(V.degree[0]))
+        knot_vector.text = '\n' + ' '.join(map(str, V.knots[i])) + '\n'
+    
+    # Add coefficients (control points)
+    coefs      = ET.SubElement(basis_inner, 'coefs', geoDim='2')
+    coefs.text = '\n' + '\n'.join(' '.join(f'{v:.20e}' for v in row) for row in Gmap) + '\n'
+
+    # Close inner Basis element properly
+    basis_inner.tail = '\n'
+    basis_outer.tail = '\n'
+
+    # MultiPatch element
+    multipatch   = ET.SubElement(root, 'MultiPatch', parDim='2', id='1')
+    multipatch.text = '\n'
+    patches      = ET.SubElement(multipatch, 'patches', type='id_range')
+    patches.text = '\n0 0\n'
+    
+    # Boundary conditions
+    boundary      = ET.SubElement(multipatch, 'boundary')
+    boundary.text = '\n  0 1\n  0 2\n  0 3\n  0 4\n '
+    boundary.tail = '\n'
+    
+    # Convert to XML string with declaration
+    xml_string = ET.tostring(root, encoding='utf-8').decode('utf-8')
+    xml_string = '<?xml version="1.0" encoding="UTF-8"?>\n' \
+                 '<!--This file was created by simplines -->\n' \
+                 '<!--Geometry in two dimensions -->\n' + xml_string
+    
+    # Save to file
+    with open(filename, 'w', encoding='utf-8') as f:
+        f.write(xml_string)
+    
+    print(f"File saved as {filename}")
+
+class getGeometryMap:
+    """
+    Python class that extracts the coefficients table, knots table, and degree from an XML file based on a given id.
+    """
+    def __init__(self, filename, element_id):
+      print("""Initialize with the XML filename.""", filename)
+      root            = ET.parse(filename).getroot()
+      """Retrieve coefs table, knots table, and degree for a given id."""
+      # Find the Geometry element by id
+      GeometryMap = root.find(f".//*[@id='{element_id}']")        
+      if GeometryMap is None:
+         raise RuntimeError(f"No element found with id {element_id}")
+
+      # Extract knots data and degree
+      knots_data  = []
+      degree_data = []
+      for basis in GeometryMap.findall(".//Basis[@type='BSplineBasis']"):
+         knot_vector = basis.find("KnotVector")
+         if knot_vector is not None:
+               degree_data.append(int(knot_vector.get("degree", -1)))  # Default to -1 if not found
+               knots = list(map(float, knot_vector.text.strip().split()))
+               knots_data.append(knots)
+
+      dim              = np.asarray(knots_data).shape[0]
+      n = 0
+      print(len(np.asarray(knots_data)[n,:]) - degree_data[n]-1)
+      nbasis           = [len(np.asarray(knots_data)[n,:]) - degree_data[n]-1 for n in range(dim)]
+      # Extract coefs data
+      coefs_element = GeometryMap.find(".//coefs")
+      coefs_data    = None
+      if coefs_element is not None:
+         coefs_text = coefs_element.text.strip()
+         coefs_data = np.array([
+               list(map(float, line.split())) for line in coefs_text.split("\n")
+         ])
+
+      self.root        = root
+      self.GeometryMap = GeometryMap
+      self.knots_data  = knots_data
+      self._degree     = degree_data
+      self._coefs      = [coefs_data[:,n].reshape(nbasis) for n in range(dim)]
+      self._dim        = dim
+      self._nbasis        = nbasis
+
+    @property
+    def nbasis(self):
+        return self._nbasis
+    @property
+    def dim(self):
+        return self._dim
+    @property
+    def knots(self):
+        return self.knots_data
+    @property
+    def degree(self):
+        return self._degree
+    def coefs(self):
+        return self._coefs
