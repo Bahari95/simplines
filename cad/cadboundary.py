@@ -238,17 +238,47 @@ parser.add_argument("--nelements", type=int, default=16, help="Number of element
 parser.add_argument("--name", type=str, default='Geometry', help="Name of geometry (default: Geometry)")
 parser.add_argument("--expr1", type=str, default="x", help="First mathematical expression (default: 'x')")
 parser.add_argument("--expr2", type=str, default="y", help="Second mathematical expression (default: 'y')")
+#.. If the boundary is given by four curves insted of analytic tranfsormation
+parser.add_argument("--Xx0", type=str, default=None, help="mathematical expression in x direction (default: 'None')")
+parser.add_argument("--Xx1", type=str, default=None, help="mathematical expression in x direction (default: 'None')")
+parser.add_argument("--Xy0", type=str, default=None, help="mathematical expression in x direction (default: 'None')")
+parser.add_argument("--Xy1", type=str, default=None, help="mathematical expression in x direction (default: 'None')")
+parser.add_argument("--Yx0", type=str, default=None, help="mathematical expression in y direction (default: 'None')")
+parser.add_argument("--Yx1", type=str, default=None, help="mathematical expression in y direction (default: 'None')")
+parser.add_argument("--Yy0", type=str, default=None, help="mathematical expression in y direction (default: 'None')")
+parser.add_argument("--Yy1", type=str, default=None, help="mathematical expression in y direction (default: 'None')")
 args = parser.parse_args()
 
 # Get the mathematical expressions and integers from the command-line arguments
-expression1 = args.expr1
-expression2 = args.expr2
 degree      = args.degree
 nelements   = args.nelements
 
-# Create the two functions dynamically
-sol_dx = lambda x,y : eval(expression1)
-sol_dy = lambda x,y : eval(expression2)
+if args.Xx0 is None:
+    # Create the two functions dynamically
+    print("Random analytic mapping")
+    sol_dx = lambda x,y : eval(args.expr1)
+    sol_dy = lambda x,y : eval(args.expr2)
+    #__
+    fx0 = lambda y : sol_dx(0.,y) 
+    fy0 = lambda x : sol_dx(x,0.)
+    fy1 = lambda x : sol_dx(x,1.)
+    fx1 = lambda y : sol_dx(1.,y) 
+    #__
+    gx0 = lambda y : sol_dy(0.,y) 
+    gy0 = lambda x : sol_dy(x,0.)
+    gy1 = lambda x : sol_dy(x,1.)
+    gx1 = lambda y : sol_dy(1.,y)
+else :
+    #__
+    fx0 = lambda y : eval(args.Xx0)
+    fy0 = lambda x : eval(args.Xy0)
+    fy1 = lambda x : eval(args.Xy1)
+    fx1 = lambda y : eval(args.Xx1)
+    #___
+    gx0 = lambda y : eval(args.Yx0)
+    gy0 = lambda x : eval(args.Yy0)
+    gy1 = lambda x : eval(args.Yy1)
+    gx1 = lambda y : eval(args.Yx1)  
 
 #..... Initialisation and computing optimal mapping for 16*16
 #----------------------
@@ -258,17 +288,6 @@ V2 = SplineSpace(degree=degree, nelements= nelements, nderiv = 2)
 
 # create the tensor space
 Vh = TensorSpace(V1, V2)
-
-#__
-fx0 = lambda y : sol_dx(0.,y) 
-fy0 = lambda x : sol_dx(x,0.)
-fy1 = lambda x : sol_dx(x,1.)
-fx1 = lambda y : sol_dx(1.,y) 
-#__
-gx0 = lambda y : sol_dy(0.,y) 
-gy0 = lambda x : sol_dy(x,0.)
-gy1 = lambda x : sol_dy(x,1.)
-gx1 = lambda y : sol_dy(1.,y)
 
 u01   = StencilVector(Vh.vector_space)
 u10   = StencilVector(Vh.vector_space)
