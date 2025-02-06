@@ -589,6 +589,9 @@ import xml.etree.ElementTree as ET
 import numpy as np
 
 def save_geometry_to_xml(V, Gmap, name = 'Geometry'):
+    """
+    save_geometry_to_xml : save the coefficients table, knots table, and degree in an XML file.
+    """
     filename = f'./figs/'+name+'.xml'
     
     # Root element
@@ -632,7 +635,7 @@ def save_geometry_to_xml(V, Gmap, name = 'Geometry'):
     # Convert to XML string with declaration
     xml_string = ET.tostring(root, encoding='utf-8').decode('utf-8')
     xml_string = '<?xml version="1.0" encoding="UTF-8"?>\n' \
-                 '<!--This file was created by simplines -->\n' \
+                 '<!--This file was created by bahari95/simplines -->\n' \
                  '<!--Geometry in two dimensions -->\n' + xml_string
     
     # Save to file
@@ -643,7 +646,7 @@ def save_geometry_to_xml(V, Gmap, name = 'Geometry'):
 
 class getGeometryMap:
     """
-    Python class that extracts the coefficients table, knots table, and degree from an XML file based on a given id.
+    getGeometryMap : extracts the coefficients table, knots table, and degree from an XML file based on a given id.
     """
     def __init__(self, filename, element_id):
       print("""Initialize with the XML filename.""", filename)
