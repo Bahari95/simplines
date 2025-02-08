@@ -588,12 +588,14 @@ def homothetic_nurbs_surface(Tu, Tv, P, W, alpha, center=[0.,0.]):
 import xml.etree.ElementTree as ET
 import numpy as np
 
-def save_geometry_to_xml(V, Gmap, name = 'Geometry'):
+def save_geometry_to_xml(V, Gmap, name = 'Geometry', locname = None):
     """
     save_geometry_to_xml : save the coefficients table, knots table, and degree in an XML file.
     """
-    filename = f'./figs/'+name+'.xml'
-    
+    if locname is None :
+        filename = f'./figs/'+name+'.xml'
+    else :
+        filename = locname+'.xml'
     # Root element
     root = ET.Element('xml')
     root.text  = '\n'
@@ -649,7 +651,7 @@ class getGeometryMap:
     getGeometryMap : extracts the coefficients table, knots table, and degree from an XML file based on a given id.
     """
     def __init__(self, filename, element_id):
-      print("""Initialize with the XML filename.""", filename)
+      #print("""Initialize with the XML filename.""", filename)
       root            = ET.parse(filename).getroot()
       """Retrieve coefs table, knots table, and degree for a given id."""
       # Find the Geometry element by id
@@ -666,10 +668,9 @@ class getGeometryMap:
                degree_data.append(int(knot_vector.get("degree", -1)))  # Default to -1 if not found
                knots = list(map(float, knot_vector.text.strip().split()))
                knots_data.append(knots)
-
+      #....dimension
       dim              = np.asarray(knots_data).shape[0]
-      n = 0
-      print(len(np.asarray(knots_data)[n,:]) - degree_data[n]-1)
+      #....number of basis functions
       nbasis           = [len(np.asarray(knots_data)[n,:]) - degree_data[n]-1 for n in range(dim)]
       # Extract coefs data
       coefs_element = GeometryMap.find(".//coefs")
@@ -686,7 +687,7 @@ class getGeometryMap:
       self._degree     = degree_data
       self._coefs      = [coefs_data[:,n].reshape(nbasis) for n in range(dim)]
       self._dim        = dim
-      self._nbasis        = nbasis
+      self._nbasis     = nbasis
 
     @property
     def nbasis(self):
@@ -701,4 +702,4 @@ class getGeometryMap:
     def degree(self):
         return self._degree
     def coefs(self):
-        return self._coefs
+        return self._coefs   

@@ -142,3 +142,6 @@ r_adaptive_refinement/figs
 cad/__pycache__
 cad/__epyccel__
 cad/figs
+examples/__epyccel__
+examples/__pycache__
+examples/figs
