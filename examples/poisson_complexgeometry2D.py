@@ -111,7 +111,7 @@ VH00       = TensorSpace(VH1, VH2)
 #..... Parameterization from 16*16 elements
 #----------------------------------------
 # ... Circle
-geometry = '../fields/circle.xml'
+geometry = '../fields/DDM.xml'
 print('#---IN-UNIFORM--MESH-Poisson equation', geometry)
 
 # ... Assembling mapping
