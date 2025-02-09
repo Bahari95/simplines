@@ -67,36 +67,63 @@ def Elasticity_solve(V1, V2 , V, En, nu, Tx, u11_mae = None, u12_mae = None):
     lanbda_3d       = nu*En/((1+nu)*(1-2.*nu))
     lanbda          = 2.*lanbda_3d*mu/(lanbda_3d+2.*mu)
     # ...
+    n_basis         = V1.nbasis*(V2.nbasis-1+1)
+    V_basis         = (V1.nbasis,V2.nbasis-1+1)
     u1              = StencilVector(V.vector_space)
     u2              = StencilVector(V.vector_space)
     # ...
-    stiffness11     = StencilMatrix(V.vector_space, V.vector_space)
-    stiffness11     = assemble11_stiffness(V, fields=[u11_mae, u12_mae], value = [ mu, (2.*mu+lanbda)], out = stiffness11)
-    stiffness11     = apply_dirichlet(V, stiffness11, dirichlet = [[False,False], [False,True]])
+    stiffness11     = assemble11_stiffness(V, fields=[u11_mae, u12_mae], value = [ mu, (2.*mu+lanbda)])
+    # stiffness11     = (stiffness11.tosparse()).toarray()
+    # stiffness11     = stiffness11.reshape((V1.nbasis,V2.nbasis,V1.nbasis,V2.nbasis))
+    # stiffness11     = stiffness11[:,:-1,:,:-1]
+    # stiffness11     = stiffness11.reshape((n_basis,n_basis))
+    stiffness11     = apply_dirichlet(V, stiffness11, dirichlet = [[False,False], [False,True]])    
 
-    stiffness12     = StencilMatrix(V.vector_space, V.vector_space)
-    stiffness12     = assemble12_stiffness(V, fields=[u11_mae, u12_mae], value = [ mu, lanbda], out = stiffness12)
+    stiffness12     = assemble12_stiffness(V, fields=[u11_mae, u12_mae], value = [ mu, lanbda])
+    # stiffness12     = (stiffness12.tosparse()).toarray()
+    # stiffness12     = stiffness12.reshape((V1.nbasis,V2.nbasis,V1.nbasis,V2.nbasis))
+    # stiffness12     = stiffness12[:,:-1,:,:-1]
+    # stiffness12     = stiffness12.reshape((n_basis,n_basis))
     stiffness12     = apply_zeros(V, stiffness12, app_zeros = [[False,False], [False,True]])
-    
-    stiffness21     = StencilMatrix(V.vector_space, V.vector_space)
-    stiffness21     = assemble12_stiffness(V, fields=[u11_mae, u12_mae], value = [ lanbda, mu], out = stiffness21)
+
+
+    stiffness21     = assemble12_stiffness(V, fields=[u11_mae, u12_mae], value = [ lanbda, mu])
+    # stiffness21     = (stiffness21.tosparse()).toarray()
+    # stiffness21     = stiffness21.reshape((V1.nbasis,V2.nbasis,V1.nbasis,V2.nbasis))
+    # stiffness21     = stiffness21[:,1:,:,1:]
+    # stiffness21     = stiffness21.reshape((n_basis,n_basis))
     stiffness21     = apply_zeros(V, stiffness21, app_zeros = [[False,False], [True,False]])
 
-    stiffness22     = StencilMatrix(V.vector_space, V.vector_space)
-    stiffness22     = assemble11_stiffness(V, fields=[u11_mae, u12_mae], value = [ (2.*mu+lanbda), mu], out = stiffness22)
+    stiffness22     = assemble11_stiffness(V, fields=[u11_mae, u12_mae], value = [ (2.*mu+lanbda), mu])
+    # stiffness22     = (stiffness22.tosparse()).toarray()
+    # stiffness22     = stiffness22.reshape((V1.nbasis,V2.nbasis,V1.nbasis,V2.nbasis))
+    # stiffness22     = stiffness22[:,1:,:,1:]
+    # stiffness22     = stiffness22.reshape((n_basis,n_basis))
     stiffness22     = apply_dirichlet(V, stiffness22, dirichlet = [[False,False], [True,False]])
+
     #...
-    rhs1            = StencilVector(  V.vector_space)
-    rhs1            = assemble12_rhs( V, fields=[u11_mae, u12_mae], value = [Tx], out = rhs1 )
+    rhs1            = assemble12_rhs( V, fields=[u11_mae, u12_mae], value = [Tx])
+    # rhs1            = rhs1.toarray()
+    # rhs1            = rhs1.reshape((V.nbasis))
+    # rhs1            = rhs1[:,:-1]
+    # rhs1            = rhs1.reshape(n_basis)
     rhs1            = apply_dirichlet(V, rhs1, dirichlet = [[False,False], [False,True]])
-    
-    rhs2            = StencilVector(V.vector_space)
-    rhs2            = assemble22_rhs( V, fields=[u11_mae, u12_mae], value = [Tx], out = rhs2 )
+
+
+    rhs2            = assemble22_rhs( V, fields=[u11_mae, u12_mae], value = [Tx])
+    # rhs2            = rhs2.toarray()
+    # rhs2            = rhs2.reshape(V.nbasis)
+    # rhs2            = rhs2[:,1:]
+    # rhs2            = rhs2.reshape(n_basis)
     rhs2            = apply_dirichlet(V, rhs2, dirichlet = [[False,False], [True,False]])
 
     #  ---- Assembles a global linear system
-    n_basis                    = V1.nbasis*V2.nbasis
     M                          = zeros((n_basis*2,n_basis*2))
+    # M[:n_basis,:n_basis]       = stiffness11
+    # M[:n_basis,n_basis:]       = stiffness12
+    # # ...
+    # M[n_basis:,:n_basis]       = stiffness21
+    # M[n_basis:,n_basis:]       = stiffness22
     M[:n_basis,:n_basis]       = (stiffness11.tosparse()).toarray()[:,:]
     M[:n_basis,n_basis:]       = (stiffness12.tosparse()).toarray()[:,:]
     # ...
@@ -104,9 +131,10 @@ def Elasticity_solve(V1, V2 , V, En, nu, Tx, u11_mae = None, u12_mae = None):
     M[n_basis:,n_basis:]       = (stiffness22.tosparse()).toarray()[:,:]
     # ..
     b                          = zeros(n_basis*2)
+    # b[:n_basis]                = rhs1[:] 
+    # b[n_basis:]                = rhs2[:]
     b[:n_basis]                = rhs1.toarray()[:] 
     b[n_basis:]                = rhs2.toarray()[:]
-
 
     #------Solve a linear system
     cond_M        = linalg.cond(M)
@@ -121,18 +149,19 @@ def Elasticity_solve(V1, V2 , V, En, nu, Tx, u11_mae = None, u12_mae = None):
         x, inf       = sla.cg(csc_matrix(M),b, tol=1e-10)
 
     # ------
-    x1            = (x[:n_basis]).reshape(V.nbasis)
+    x1             = zeros(V.nbasis)
+    x1[:,:]      = (x[:n_basis]).reshape(V_basis)
     u1.from_array(V, x1)
     #u1            = apply_dirichlet(V, u1, dirichlet = [[False,False], [True,False]])    
     #x1            = (u1.toarray()).reshape(V.nbasis)
-    
-    x2            = (x[n_basis:]).reshape(V.nbasis)
+
+    x2             = zeros(V.nbasis)    
+    x2[:,:]       = (x[n_basis:]).reshape(V_basis)
     u2.from_array(V, x2)
     #u2            = apply_dirichlet(V, u2, dirichlet = [[False,False], [False,True]])    
     #x2            = (u2.toarray()).reshape(V.nbasis)
     # -----
-    Norm          = StencilVector(V.vector_space)
-    Norm          = assemble2_norm_l2(V, fields=[u11_mae, u12_mae, u1, u2], value = [ mu, lanbda, Tx], out = Norm) 
+    Norm          = assemble2_norm_l2(V, fields=[u11_mae, u12_mae, u1, u2], value = [ mu, lanbda, Tx]) 
     norm          = Norm.toarray()[0]
 
     # ------
@@ -180,7 +209,7 @@ print("	\\begin{tabular}{r c c c c c}")
 print("		\hline")
 print("		$\#$cells &  CPU-time (s) & $l^2$-err-r & order &$\min~\\text{Jac}(\PsiPsi)$ &$\max ~\\text{Jac}(\PsiPsi)$\\\\")
 print("		\hline")
-for nb_ne in range(4,5):
+for nb_ne in range(4,6):
     
     nelements       =  2**nb_ne
     #+++++++++++++++++++++++++++++++++++++++++++++++++++++

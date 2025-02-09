@@ -52,28 +52,38 @@ def poisson_solve(V1, V2 , V, x_d = None, u_d = None):
        u   = StencilVector(V.vector_space)
 
        stiffness           = assemble_stiffness2D(V)
-       stiffness           = apply_dirichlet(V, stiffness)
+       stiffness     = (stiffness.tosparse()).toarray()
+       stiffness     = stiffness.reshape((V1.nbasis,V2.nbasis,V1.nbasis,V2.nbasis))
+       stiffness     = stiffness[1:-1,1:-1,1:-1,1:-1]
+       stiffness     = stiffness.reshape(((V1.nbasis-2)*(V2.nbasis-2),(V1.nbasis-2)*(V2.nbasis-2)))
+       #stiffness           = apply_dirichlet(V, stiffness)
        #--Assembles matrix
-       M                   = stiffness.tosparse()
-       lu                  = sla.splu(csc_matrix(M))
+       #stiffness             = stiffness.tosparse()
+       lu                  = sla.splu(csc_matrix(stiffness))
        #--Assembles right hand side of Poisson equation
        rhs                 = assemble_rhs( V, fields = [u_d] )
-       rhs                 = apply_dirichlet(V, rhs)
-       b                   = rhs.toarray()
+       rhs            = rhs.toarray()
+       rhs            = rhs.reshape((V1.nbasis,V2.nbasis))
+       rhs            = rhs[1:-1,1:-1]
+       b              = rhs.reshape((V1.nbasis-2)*(V2.nbasis-2))
+       # rhs                 = apply_dirichlet(V, rhs)
+       #b                   = rhs.toarray()
        # ...
        x                   = lu.solve(b)       
-       x                   = x.reshape(V.nbasis)
-       
+       x                   = x.reshape((V1.nbasis-2, V2.nbasis-2))       
+
        # Rassembles Direcjlet boundary conditions
-       x[ : , : ]         += x_d[ : , : ]       
-       u.from_array(V, x)
+       xsol                = zeros(V.nbasis)
+       xsol[ 1: -1, 1: -1] = x[ : , : ]
+       xsol[ : , : ]      += x_d[ : , : ]       
+       u.from_array(V, xsol)
        #--Computes error l2 and H1
        Norm                = assemble_norm_l2(V, fields=[u])
        norm                = Norm.toarray()
        l2_norm             = norm[0]
        H1_norm             =  norm[1]
        print('<.> l2_norm = {}  ||u||_H1= {} using nelement={} degree={} '.format(l2_norm, H1_norm, V.nelements, V.degree))
-       return u, x, l2_norm, H1_norm
+       return u, xsol, l2_norm, H1_norm
 
 
 degree     = 4
