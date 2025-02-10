@@ -1,3 +1,10 @@
+"""
+poisson_complexgeometry2D.py
+
+# Poisson Equation Example: Solving Poisson's Equation on a Single Patch of a Complex Geometry
+
+@author : M. BAHARI
+"""
 from   simplines                    import compile_kernel
 from   simplines                    import apply_dirichlet
 

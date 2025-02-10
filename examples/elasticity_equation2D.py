@@ -139,13 +139,13 @@ def Elasticity_solve(V1, V2 , V, En, nu, Tx, u11_mae = None, u12_mae = None):
     #------Solve a linear system
     cond_M        = linalg.cond(M)
     if cond_M < 1e8 :
-        solver_n     = "GMRES"
+        # solver_n     = "GMRES"
         #--Solve a linear system
         M               =  csc_matrix(M)
         #+++ 
         x, inf          = sla.gmres(M, b, tol=1.e-10, maxiter=5000)
     else :
-        solver_n     = "conjugate gradient"
+        # solver_n     = "conjugate gradient"
         x, inf       = sla.cg(csc_matrix(M),b, tol=1e-10)
 
     # ------
