@@ -192,7 +192,8 @@ def compile_kernel(core, arity, pyccel=True):
 
 
 #==============================================================================
-def apply_dirichlet(V, x, dirichlet = None):
+def apply_dirichlet(V, x, dirichlet = None, eliminate = False):
+    #TODO : DIRICHLET BY ELIMINATION
     if dirichlet is None :
         if isinstance(x, StencilMatrix):
             if V.dim == 1:
@@ -606,6 +607,7 @@ def apply_dirichlet(V, x, dirichlet = None):
 
         else:
             raise TypeError('Expecting StencilMatrix or StencilVector')
+        
 
 #==============================================================================
 def apply_periodic(V, x, periodic = None, update = None):
