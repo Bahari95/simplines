@@ -1,3 +1,11 @@
+"""
+PMAE_fast_solver.py
+
+# Parabolic Monge-Ampere solver for fast diagonalization solver for Monge-Ampere equation
+
+@author : M. BAHARI
+"""
+
 from   simplines                    import compile_kernel
 from   simplines                    import SplineSpace
 from   simplines                    import TensorSpace

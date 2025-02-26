@@ -1,3 +1,11 @@
+"""
+fast_diag.py
+
+# fast diagonalization solver for Laplace equation
+
+@author : M. BAHARI
+"""
+
 import numpy         as np
 from scipy.linalg    import eigh
 from scipy.sparse    import csr_matrix, coo_matrix
@@ -14,7 +22,8 @@ class Poisson(object):
         assert(len(mats_1) == 2)
         assert(len(mats_2) == 2)
 
-        rdim = None
+
+        rdim  = None
         if mats_3 is None:
             rdim = 2
         else:
@@ -32,62 +41,42 @@ class Poisson(object):
         # ...
 
         # ... generalized eigenvalue decomposition
-        ds = []
-        Us = []
-        t_Us = []
+        nDoFs = []
+        ds    = []
+        Us    = []
         for M, K in zip(Ms, Ks):
             M = M.toarray()
             K = K.toarray()
 
             d, U = eigh(K, b=M)
 
-            t_U = U.T
             # trick to avoid F/C ordering with pyccel
-            U = csr_matrix(U).toarray()
-            t_U = csr_matrix(t_U).toarray()
+            U   = csr_matrix(U).toarray()
 
 
             ds.append(d)
             Us.append(U)
-            t_Us.append(t_U)
-        # ...
-
-        # ...
-        forward  = None
-        backward = None
-        if rdim == 2:
-            U1, U2 = Us[:]
-            t_U1, t_U2 = t_Us[:]
-
-            forward  = kron(csr_matrix(t_U1), csr_matrix(t_U2))
-            backward = kron(csr_matrix(U1), csr_matrix(U2))
-
-        elif rdim == 3:
-            U1, U2, U3 = Us[:]
-            t_U1, t_U2, t_U3 = t_Us[:]
-
-            forward  = kron(csr_matrix(t_U1), csr_matrix(t_U2), csr_matrix(t_U3))
-            backward = kron(csr_matrix(U1), csr_matrix(U2), csr_matrix(U3))
-        # ...
+            nDoFs.append(len(d))
 
         # ...
         self._mats_1 = mats_1
         self._mats_2 = mats_2
         self._mats_3 = mats_3
 
-        self._ds = ds
-        self._Us = Us
-        self._t_Us = t_Us
-        self._rdim = rdim
-        self._tau = tau
-
-        self._forward  = forward
-        self._backward = backward
+        self._ds    = ds
+        self._Us    = Us
+        self._rdim  = rdim
+        self._tau   = tau
+        self._nDoFs = nDoFs
         # ...
 
     @property
     def rdim(self):
         return self._rdim
+    
+    @property
+    def nDoFs(self):
+        return self._nDoFs
 
     @property
     def mats_1(self):
@@ -110,56 +99,71 @@ class Poisson(object):
         return self._Us
 
     @property
-    def t_Us(self):
-        return self._t_Us
-
-    @property
     def tau(self):
         return self._tau
 
-    @property
-    def forward(self):
-        return self._forward
-
-    @property
-    def backward(self):
-        return self._backward
-
     def _solve_2d(self, b):
-        # ...
-        s_tilde = np.zeros(len(b))
-        # ...
-        r_tilde = self.forward @ b
-        # ...
-        core.solve_unit_sylvester_system_2d(*self.ds, r_tilde, float(self.tau), s_tilde)
-        s = self.backward @ s_tilde
-        return s
+
+        # # ... Avoidding kron product
+        n1, n2  = self.nDoFs
+        s_tilde = b.reshape((n1,n2))
+        s_tilde = self.Us[0].T @ s_tilde @ self.Us[1]
+        core.solve_unit_sylvester_system_2d(*self.ds, s_tilde, float(self.tau), s_tilde)
+        s_tilde = self.Us[0] @ s_tilde @ self.Us[1].T
+        s_tilde = s_tilde.reshape(n1*n2)
+        # # ...
+        # s_tilde = np.zeros(len(b))
+        # # ...
+        # r_tilde = self.forward @ b
+        # # ...
+        # core.solve_unit_sylvester_system_2d(*self.ds, r_tilde, float(self.tau), s_tilde)
+        # s = self.backward @ s_tilde
+        return s_tilde
 
     def _solve_3d(self, b):
+        # ... Avoidding kron product TODO optimize and parallelize
+        n1, n2, n3 = self.nDoFs
+        s_tilde    = b.reshape(n1,n2*n3)
+        s_tilde    = s_tilde.T @ self.Us[0]
+        # matrix become (n2*n3, n1)
+        for i1 in range(n1):
+            r_tilde         = s_tilde[i1,:]
+            r_tilde         = r_tilde.reshape((n2, n3))
+            r_tilde         = self.Us[1].T @ r_tilde @ self.Us[2]
+            #... r_tilde(i2, i3) = r_tilde(i2, i3) / (ds[0](i1,0) + ds[1](i2,0) + ds[2](i3,0) + _tau);
+            core.solve_unit_sylvester_system_2d(self.ds[1],self.ds[2], r_tilde, float(self.tau+self.ds[0][i1]), s_tilde)
+            r_tilde         = self.Us[1] @ r_tilde @ self.Us[2].T
+            s_tilde[i1,:]   = r_tilde.reshape(n2*n3)
+        s_tilde = self.Us[0] @ s_tilde.T
+        s_tilde = s_tilde.reshape(n1*n2*n3)
         # ...
-        s_tilde = np.zeros(len(b))
-        # ...
-        r_tilde = self.forward @ b
-        core.solve_unit_sylvester_system_3d(*self.ds, r_tilde, float(self.tau), s_tilde)
-        s = self.backward @ s_tilde
-        # ...
-
-        return s
+        return s_tilde
 
     def _project_2d(self, b):
-        # ...
-        r_tilde = self.forward @ b
-        # ...
-        s = self.backward @ r_tilde
-        return s
+        # # ... Avoidding kron product
+        n1, n2  = self.nDoFs
+        s_tilde = b.reshape((n1,n2))
+        s_tilde = self.Us[0].T @ s_tilde @ self.Us[1]
+        s_tilde = self.Us[0] @ s_tilde @ self.Us[1].T
+        s_tilde = s_tilde.reshape(n1*n2)
+        return s_tilde
 
     def _project_3d(self, b):
+        # ... Avoidding kron product
+        n1, n2, n3 = self.nDoFs
+        s_tilde    = b.reshape(n1,n2*n3)
+        s_tilde    = s_tilde.T @ self.Us[0]
+        # matrix become (n2*n3, n1)
+        for i1 in range(n1):
+            r_tilde         = s_tilde[i1,:]
+            r_tilde         = r_tilde.reshape((n2, n3))
+            r_tilde         = self.Us[1].T @ r_tilde @ self.Us[2]
+            r_tilde         = self.Us[1] @ r_tilde @ self.Us[2].T
+            s_tilde[i1,:]   = r_tilde.reshape(n2*n3)
+        s_tilde = self.Us[0] @ s_tilde.T
+        s_tilde = s_tilde.reshape(n1*n2*n3)
         # ...
-        r_tilde = self.forward @ b
-        s = self.backward @ r_tilde
-        # ...
-
-        return s
+        return s_tilde
 
     
     def solve(self, b):

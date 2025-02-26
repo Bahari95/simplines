@@ -1,7 +1,7 @@
 """
 cadboundary.py
 
-# Suitable parameterization from anamytic CAD boundary information
+# Suitable parameterization from analytic CAD boundary information
 
 @author : M. BAHARI
 """
@@ -227,9 +227,9 @@ print("Usage: python3 cadboundary.py --expr1 'x' --expr2 'y'")
 # Example 7
 '0.1*sin(3.*(1.75)*pi*(y+0.1))*(x+0.5)+x' '0.1*cos(4.*pi*(x+0.1))*(y+0.5)+y'
 # Example 8 Quart annulus
-'(2.*x-1.)*sqrt(1.-(2.*y-1.)**2/2.0)' '(2.*y-1.)*sqrt(1.-(2.*x-1.)**2/2.0)'
+'(0.2+0.8*x)*sin(.5*pi*y)' '(0.2+0.8*x)*cos(.5*pi*y)' 
 # Example 9 circle
-
+'(2.*x-1.)*sqrt(1.-(2.*y-1.)**2/2.0)' '(2.*y-1.)*sqrt(1.-(2.*x-1.)**2/2.0)'
 """
 parser = argparse.ArgumentParser(description="Control plot behavior and save control points.")
 parser.add_argument("--plot", action="store_true", help="Enable plotting and saving control points")

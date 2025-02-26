@@ -1,3 +1,10 @@
+"""
+MFMAE_fast_solver.py
+
+# mixed variational formulation solver for fast diagonalization solver for Monge-Ampere equation
+
+@author : M. BAHARI
+"""
 from   simplines                    import compile_kernel
 from   simplines                    import SplineSpace
 from   simplines                    import TensorSpace
@@ -439,9 +446,9 @@ def  Monge_ampere_equation(nb_ne, geometry = '../fields/circle.xml', degree = No
 # # ........................................................
 # ....................For testing in one nelements
 # #.........................................................
-if True :
+if False :
 	# ... unite-squar 0.6
-	#geometry = '../fields/squar.xml'
+	geometry = '../fields/squar.xml'
 	
 	# ... Circular domain
 	#geometry = '../fields/circle.xml'
@@ -456,7 +463,7 @@ if True :
 	#geometry = '../fields/IP.xml'
 
 	# ... Butterfly
-	geometry = '../fields/butterfly.xml'
+	#geometry = '../fields/butterfly.xml'
 
 	# ... nelement = 2**nb_ne
 	nb_ne           = 6
@@ -503,7 +510,9 @@ if False :
 # # ........................................................
 # ....................For generating tables
 # #.........................................................
-if False :
+if True :
+   # ... unite-squar 0.6
+   geometry = '../fields/squar.xml'
    degree          = 3
    # ... new discretization for plot
    nbpts           = 100
@@ -512,9 +521,9 @@ if False :
    print("		\hline")
    print("		$\#$cells & Err & CPU-time (s) & Qual &$\min~\\text{Jac}(\PsiPsi)$ &$\max ~\\text{Jac}(\PsiPsi)$\\\\")
    print("		\hline")
-   for nb_ne in range(4,8):
-      
-      nelements, l2_Quality, MG_time, l2_displacement, x11uh , Vh01, x12uh , Vh10, xmp, ymp, Vhmp = Monge_ampere_equation(nb_ne, degree = degree)
+   for nb_ne in range(4,9):
+
+      nelements, l2_Quality, MG_time, l2_displacement, x11uh , Vh01, x12uh , Vh10, xmp, ymp, Vhmp = Monge_ampere_equation(nb_ne, geometry= geometry, degree = degree)
 
       #---Compute a solution
       sx, uxx, uxy, X, Y = pyccel_sol_field_2d((nbpts,nbpts),  x11uh , Vh01.knots, Vh01.degree)
@@ -531,7 +540,7 @@ if False :
       # ...
       det_min          = np.min( det[1:-1,1:-1])
       det_max          = np.max( det[1:-1,1:-1])
-      
+
       # ... scientific format
       l2_Quality       = np.format_float_scientific(l2_Quality, unique=False, precision=3)
       l2_displacement  = np.format_float_scientific( l2_displacement, unique=False, precision=3)
