@@ -446,9 +446,9 @@ def  Monge_ampere_equation(nb_ne, geometry = '../fields/circle.xml', degree = No
 # # ........................................................
 # ....................For testing in one nelements
 # #.........................................................
-if False :
+if True :
 	# ... unite-squar 0.6
-	geometry = '../fields/squar.xml'
+	geometry = '../fields/mhd.xml'
 	
 	# ... Circular domain
 	#geometry = '../fields/circle.xml'
@@ -510,7 +510,7 @@ if False :
 # # ........................................................
 # ....................For generating tables
 # #.........................................................
-if True :
+if False :
    # ... unite-squar 0.6
    geometry = '../fields/squar.xml'
    degree          = 3
