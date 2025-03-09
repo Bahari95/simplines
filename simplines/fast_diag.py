@@ -12,7 +12,7 @@ from scipy.sparse    import csr_matrix, coo_matrix
 
 from .               import fast_diag_core as core
 from scipy.sparse    import kron
-from scipy.sparse import csr_matrix
+from scipy.sparse    import csr_matrix
 from pyccel.epyccel  import epyccel
 
 # =========================================================================
@@ -111,13 +111,6 @@ class Poisson(object):
         core.solve_unit_sylvester_system_2d(*self.ds, s_tilde, float(self.tau), s_tilde)
         s_tilde = self.Us[0] @ s_tilde @ self.Us[1].T
         s_tilde = s_tilde.reshape(n1*n2)
-        # # ...
-        # s_tilde = np.zeros(len(b))
-        # # ...
-        # r_tilde = self.forward @ b
-        # # ...
-        # core.solve_unit_sylvester_system_2d(*self.ds, r_tilde, float(self.tau), s_tilde)
-        # s = self.backward @ s_tilde
         return s_tilde
 
     def _solve_3d(self, b):
@@ -125,15 +118,33 @@ class Poisson(object):
         n1, n2, n3 = self.nDoFs
         s_tilde    = b.reshape(n1,n2*n3)
         s_tilde    = s_tilde.T @ self.Us[0]
-        # matrix become (n2*n3, n1)
+        # matrix becomes (n2*n3, n1)
         for i1 in range(n1):
-            r_tilde         = s_tilde[i1,:]
+            r_tilde         = s_tilde[:,i1]
+            # ...
             r_tilde         = r_tilde.reshape((n2, n3))
             r_tilde         = self.Us[1].T @ r_tilde @ self.Us[2]
             #... r_tilde(i2, i3) = r_tilde(i2, i3) / (ds[0](i1,0) + ds[1](i2,0) + ds[2](i3,0) + _tau);
-            core.solve_unit_sylvester_system_2d(self.ds[1],self.ds[2], r_tilde, float(self.tau+self.ds[0][i1]), s_tilde)
+            core.solve_unit_sylvester_system_2d(self.ds[1],self.ds[2], r_tilde, float(self.tau+self.ds[0][i1]), r_tilde)
             r_tilde         = self.Us[1] @ r_tilde @ self.Us[2].T
-            s_tilde[i1,:]   = r_tilde.reshape(n2*n3)
+            s_tilde[:,i1]   = r_tilde.reshape(n2*n3)
+        '''
+        from joblib import Parallel, delayed
+
+        def process_column(i1):
+            r_tilde = s_tilde[:, i1].copy().reshape((n2, n3))
+            r_tilde = self.Us[1].T @ r_tilde @ self.Us[2]
+            core.solve_unit_sylvester_system_2d(self.ds[1], self.ds[2], r_tilde, float(self.tau + self.ds[0][i1]), r_tilde)
+            r_tilde = self.Us[1] @ r_tilde @ self.Us[2].T
+            return i1, r_tilde.reshape(n2 * n3)
+
+        # Run in parallel
+        results = Parallel(n_jobs=-1)(delayed(process_column)(i1) for i1 in range(n1))
+        # Store results
+        for i1, r_tilde in results:
+            s_tilde[:, i1] = r_tilde'
+        '''
+        #...
         s_tilde = self.Us[0] @ s_tilde.T
         s_tilde = s_tilde.reshape(n1*n2*n3)
         # ...
@@ -153,13 +164,13 @@ class Poisson(object):
         n1, n2, n3 = self.nDoFs
         s_tilde    = b.reshape(n1,n2*n3)
         s_tilde    = s_tilde.T @ self.Us[0]
-        # matrix become (n2*n3, n1)
+        # matrix becomes (n2*n3, n1)
         for i1 in range(n1):
-            r_tilde         = s_tilde[i1,:]
+            r_tilde         = s_tilde[:,i1]
             r_tilde         = r_tilde.reshape((n2, n3))
             r_tilde         = self.Us[1].T @ r_tilde @ self.Us[2]
             r_tilde         = self.Us[1] @ r_tilde @ self.Us[2].T
-            s_tilde[i1,:]   = r_tilde.reshape(n2*n3)
+            s_tilde[:,i1]   = r_tilde.reshape(n2*n3)
         s_tilde = self.Us[0] @ s_tilde.T
         s_tilde = s_tilde.reshape(n1*n2*n3)
         # ...

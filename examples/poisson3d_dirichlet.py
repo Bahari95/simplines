@@ -11,6 +11,7 @@ from simplines import TensorSpace
 from simplines import StencilMatrix
 from simplines import StencilVector
 from simplines import pyccel_sol_field_3d
+from simplines import Poisson
 
 # .. Matrices in 1D ..
 from gallery_section_03 import assemble_stiffnessmatrix1D
@@ -50,7 +51,11 @@ import timeit
 import time
 
 from tabulate import tabulate
-
+#==============================================================================
+#  for figures 
+import os
+# Create the folder
+os.makedirs("figs", exist_ok=True)  # 'exist_ok=True' prevents errors if the folder already exists
 
 #==============================================================================
 #.......Poisson ALGORITHM
@@ -94,8 +99,14 @@ def poisson_solve(V1, V2, V3, V):
        M3                  = csr_matrix(M3)
 
        # ...
-       M                   = kron(K1,kron(M2,M3))+kron(M1,kron(K2,M3))+kron(M1,kron(M2,K3))
-       lu                  = sla.splu(csc_matrix(M))
+       #M                   = kron(K1,kron(M2,M3))+kron(M1,kron(K2,M3))+kron(M1,kron(M2,K3))
+       #lu                  = sla.splu(csc_matrix(M))
+       mats_1              = [M1, K1]
+       mats_2              = [M2, K2]
+       mats_3              = [M3, K3]
+       # ...Fast Solver
+       poisson             = Poisson(mats_1, mats_2, mats_3)
+
        # ++++
        #--Assembles a right hand side of Poisson equation
        rhs                 = assemble_rhs( V )
@@ -104,7 +115,9 @@ def poisson_solve(V1, V2, V3, V):
        b                   = b[1:-1, 1:-1, 1:-1]      
        b                   = b.reshape((V1.nbasis-2)*(V2.nbasis-2)*(V3.nbasis-2))
        # ...
-       xkron               = lu.solve(b)       
+       #xkron               = lu.solve(b)       
+       xkron               = poisson.solve(b)
+       
        xkron               = xkron.reshape([V1.nbasis-2,V2.nbasis-2,V3.nbasis-2])
        # ...
        x                   = np.zeros(V.nbasis)
@@ -179,5 +192,5 @@ if True :
 	ax.set_xlabel('F1',  fontweight ='bold')
 	ax.set_ylabel('F2',  fontweight ='bold')
 	fig.colorbar(surf, shrink=0.5, aspect=25)
-	plt.savefig('Poisson3D.png')
+	plt.savefig('figs/Poisson3D.png')
 	plt.show()

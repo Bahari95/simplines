@@ -561,10 +561,10 @@ for i in range(nbpts):
 print('..../!\...: min~max value of the Jacobian function =', np.min(det),'~', np.max(det) )
 
 #         -++++++++++++++++++++++++++++++++++++++++++++++++++++ End of sharing part of any geometry-----------------------------------------------------------
-
+from numpy import pi, cos, sin, sqrt, arctan2, exp, cosh
 #.. Analytic Density function 
-rho = lambda x,y : 1.+ 9./(1.+(10.*sqrt((x-0.5-0.25*0.)**2+(y-0.5)**2)*cos(arctan2(y-0.5,x-0.5-0.25*0.) -10.*((x-0.5-0.25*0.)**2+(y-0.5)**2)))**2)
-
+#rho = lambda x,y : 1.+ 9./(1.+(10.*sqrt((x-0.5-0.25*0.)**2+(y-0.5)**2)*cos(arctan2(y-0.5,x-0.5-0.25*0.) -10.*((x-0.5-0.25*0.)**2+(y-0.5)**2)))**2)
+#rho = lambda x,y : (1. + 7./cosh( 5.*((x-sqrt(4)/2)**2+(y-0.5)**2 - (pi/2)**2) )**2 + 7./cosh( 5.*((x+sqrt(3)/2)**2+(y-0.5)**2 - (pi/2)**2) )**2)
 #rho = lambda x,y :1+5*np.exp(-100*np.abs((x-0.45)**2+(y-0.4)**2-0.09))+5.*np.exp(-100.*np.abs(x**2+y**2-0.2))+5.*np.exp(-100*np.abs((x+0.45)**2 +(y-0.4)**2-0.1))+7.*np.exp(-100.*np.abs(x**2+(y+1.25)**2-0.4))
 #.. Test 1  circle
 #def rho(x,y):
@@ -573,6 +573,11 @@ rho = lambda x,y : 1.+ 9./(1.+(10.*sqrt((x-0.5-0.25*0.)**2+(y-0.5)**2)*cos(arcta
 
 # ... test butterfly
 #rho       = lambda x,y : 2.+np.sin(10.*np.pi*np.sqrt((x-0.6)**2+(y-0.6)**2)) 
+
+
+#rho = lambda x,y : (1. + 7./cosh( 20.*((x-sqrt(4)/2)**2+(1.2*y-0.4)**2 - 2.)**2 ) + 7./cosh( 20.*((x+sqrt(3)/2)**2+(1.2*y-0.4)**2 - 2.)**2 ) )
+#rho = lambda x,y : 1.+ 5.*exp( -200.*((x-0.1)**2+(y*sin(pi*x)**2-0.5)**2 - 0.3)**2)
+rho = lambda x,y : 1.+ 10.*exp( -10.*(4.*(x-0.1)**2+2.*(y-0.35)**2 - 1.4)**2)
 
 fig =plt.figure() 
 for i in range(nbpts):

@@ -46,7 +46,11 @@ import timeit
 import time
 
 from tabulate import tabulate
-
+#==============================================================================
+#  for figures 
+import os
+# Create the folder
+os.makedirs("figs", exist_ok=True)  # 'exist_ok=True' prevents errors if the folder already exists
 
 #==============================================================================
 #.......Poisson ALGORITHM
@@ -161,5 +165,5 @@ ax.set_title('Exact Solution')
 ax.set_xlabel('F1',  fontweight ='bold')
 ax.set_ylabel('F2',  fontweight ='bold')
 fig.colorbar(surf, shrink=0.5, aspect=25)
-plt.savefig('Poisson3D.png')
+plt.savefig('figs/Poisson3D.png')
 plt.show()

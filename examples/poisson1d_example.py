@@ -52,7 +52,11 @@ import timeit
 import time
 
 from tabulate import tabulate
-
+#==============================================================================
+#  for figures 
+import os
+# Create the folder
+os.makedirs("figs", exist_ok=True)  # 'exist_ok=True' prevents errors if the folder already exists
 
 #==============================================================================
 #.......Poisson ALGORITHM
@@ -125,6 +129,6 @@ plt.yscale('log')
 #plt.ylabel('$\mathbf{L^2}$-norm',  fontweight ='bold', fontdict=font)
 #plt.legend(fontsize="15")
 #fig.tight_layout()
-plt.savefig('Error')
+plt.savefig('figs/Error')
 plt.show(block=True)
 plt.close()
