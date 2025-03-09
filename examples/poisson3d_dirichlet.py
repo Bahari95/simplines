@@ -14,19 +14,19 @@ from simplines import pyccel_sol_field_3d
 from simplines import Poisson
 
 # .. Matrices in 1D ..
-from gallery_section_03 import assemble_stiffnessmatrix1D
-from gallery_section_03 import assemble_massmatrix1D
-from gallery_section_03 import assemble_matrix_ex11
-from gallery_section_03 import assemble_matrix_ex12
+from examples.gallery.gallery_section_03 import assemble_stiffnessmatrix1D
+from examples.gallery.gallery_section_03 import assemble_massmatrix1D
+from examples.gallery.gallery_section_03 import assemble_matrix_ex11
+from examples.gallery.gallery_section_03 import assemble_matrix_ex12
 assemble_stiffness1D = compile_kernel( assemble_stiffnessmatrix1D, arity=2)
 assemble_mass1D      = compile_kernel( assemble_massmatrix1D, arity=2)
 assemble_matrix_ex01 = compile_kernel(assemble_matrix_ex11, arity=2)
 assemble_matrix_ex10 = compile_kernel(assemble_matrix_ex12, arity=2)
 
 #---In Poisson equation
-from gallery_section_03 import assemble_vector_ex01    #---1 : In uniform mesh
-from gallery_section_03 import assemble_matrix_un_ex01 #---1 : In uniform mesh
-from gallery_section_03 import assemble_norm_ex01      #---1 : In uniform mesh
+from examples.gallery.gallery_section_03 import assemble_vector_ex01    #---1 : In uniform mesh
+from examples.gallery.gallery_section_03 import assemble_matrix_un_ex01 #---1 : In uniform mesh
+from examples.gallery.gallery_section_03 import assemble_norm_ex01      #---1 : In uniform mesh
 
 assemble_stiffness2D = compile_kernel(assemble_matrix_un_ex01, arity=2)
 assemble_rhs         = compile_kernel(assemble_vector_ex01, arity=1)
@@ -153,44 +153,44 @@ nbpts = 100
 # # ........................................................
 # ....................For testing in one nelements
 # #.........................................................
-if True :
-	#---Compute a solution
-	u,   ux, uy, uz, X, Y, Z      = pyccel_sol_field_3d((nbpts, nbpts, nbpts),  xuh,   V.knots, V.degree)
-	
-	solut = lambda t, x, y : sin(pi*t)*x**2*y*3*sin(4.*pi*(1.-x))*(1.-y) 
-	#solut = lambda t, x, y :  sin( pi*t)* sin( pi*x)* sin( pi*y)
-	
-	# set up a figure twice as wide as it is tall
-	fig = plt.figure(figsize=plt.figaspect(0.5))
-	#===============
-	# First subplot
-	# set up the axes for the first plot
-	ax = fig.add_subplot(1, 2, 1, projection='3d')
-	# plot a 3D surface like in the example mplot3d/surface3d_demo
-	surf0 = ax.plot_surface(Y[0,:,:], Z[0,:,:], u[50,:,:], rstride=1, cstride=1, cmap=cm.coolwarm,
-		               linewidth=0, antialiased=False)
-	ax.set_xlim(0.0, 1.0)
-	ax.set_ylim(0.0, 1.0)
-	ax.zaxis.set_major_locator(LinearLocator(10))
-	ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
-	#ax.set_title('Approximate solution in uniform mesh')
-	ax.set_xlabel('X',  fontweight ='bold')
-	ax.set_ylabel('Y',  fontweight ='bold')
-	# Add a color bar which maps values to colors.
-	fig.colorbar(surf0, shrink=0.5, aspect=25)
+#---Compute a solution
+u,   ux, uy, uz, X, Y, Z      = pyccel_sol_field_3d((nbpts, nbpts, nbpts),  xuh,   V.knots, V.degree)
 
-	#===============
-	# Second subplot
-	ax = fig.add_subplot(1, 2, 2, projection='3d')
-	surf = ax.plot_surface(Y[0,:,:], Z[0,:,:], solut(0.5,Y[0,:,:], Z[0,:,:]), cmap=cm.coolwarm,
-		               linewidth=0, antialiased=False)
-	ax.set_xlim(0.0, 1.0)
-	ax.set_ylim(0.0, 1.0)
-	ax.zaxis.set_major_locator(LinearLocator(10))
-	ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
-	#ax.set_title('Approximate Solution in adaptive meshes')
-	ax.set_xlabel('F1',  fontweight ='bold')
-	ax.set_ylabel('F2',  fontweight ='bold')
-	fig.colorbar(surf, shrink=0.5, aspect=25)
-	plt.savefig('figs/Poisson3D.png')
-	plt.show()
+solut = lambda t, x, y : sin(pi*t)*x**2*y*3*sin(4.*pi*(1.-x))*(1.-y) 
+#solut = lambda t, x, y :  sin( pi*t)* sin( pi*x)* sin( pi*y)
+
+# set up a figure twice as wide as it is tall
+fig = plt.figure(figsize=plt.figaspect(0.5))
+#===============
+# First subplot
+# set up the axes for the first plot
+ax = fig.add_subplot(1, 2, 1, projection='3d')
+# plot a 3D surface like in the example mplot3d/surface3d_demo
+surf0 = ax.plot_surface(Y[0,:,:], Z[0,:,:], u[50,:,:], rstride=1, cstride=1, cmap=cm.coolwarm,
+                            linewidth=0, antialiased=False)
+ax.set_xlim(0.0, 1.0)
+ax.set_ylim(0.0, 1.0)
+ax.zaxis.set_major_locator(LinearLocator(10))
+ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+#ax.set_title('Approximate solution in uniform mesh')
+ax.set_xlabel('X',  fontweight ='bold')
+ax.set_ylabel('Y',  fontweight ='bold')
+# Add a color bar which maps values to colors.
+fig.colorbar(surf0, shrink=0.5, aspect=25)
+
+#===============
+# Second subplot
+ax = fig.add_subplot(1, 2, 2, projection='3d')
+surf = ax.plot_surface(Y[0,:,:], Z[0,:,:], solut(0.5,Y[0,:,:], Z[0,:,:]), cmap=cm.coolwarm,
+                            linewidth=0, antialiased=False)
+ax.set_xlim(0.0, 1.0)
+ax.set_ylim(0.0, 1.0)
+ax.zaxis.set_major_locator(LinearLocator(10))
+ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+#ax.set_title('Approximate Solution in adaptive meshes')
+ax.set_xlabel('F1',  fontweight ='bold')
+ax.set_ylabel('F2',  fontweight ='bold')
+fig.colorbar(surf, shrink=0.5, aspect=25)
+plt.savefig('figs/Poisson3D.png')
+plt.show(block=False)
+plt.close()

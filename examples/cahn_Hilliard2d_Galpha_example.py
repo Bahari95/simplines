@@ -28,16 +28,16 @@ from   matplotlib.ticker            import LinearLocator, FormatStrFormatter
 import time
 
 # --- for initialisation
-from gallery_section_08 import assemble_massmatrix1D
-from gallery_section_08 import assemble_vector_ex02 
+from examples.gallery.gallery_section_08 import assemble_massmatrix1D
+from examples.gallery.gallery_section_08 import assemble_vector_ex02 
 # ---
 assemble_mass1D      = compile_kernel( assemble_massmatrix1D, arity=2)
 assemble_dtrhs       = compile_kernel(assemble_vector_ex02, arity=1)
 
 #... for G-alpha method
-from gallery_section_08 import assemble_matrix_ex03 
-from gallery_section_08 import assemble_vector_ex03
-from gallery_section_08 import assemble_norm_ex01 
+from examples.gallery.gallery_section_08 import assemble_matrix_ex03 
+from examples.gallery.gallery_section_08 import assemble_vector_ex03
+from examples.gallery.gallery_section_08 import assemble_norm_ex01 
 
 assemble2_stiffness = compile_kernel(assemble_matrix_ex03, arity=2)
 assemble2_rhs       = compile_kernel(assemble_vector_ex03, arity=1)
@@ -245,68 +245,68 @@ for ii in range(0, ii_max):
    print('computation in time ================================', t)
    #-------------------------------------------
    u_ch, xu_ch, dt_u_ch, dt_xu_ch , Res, norm = Cahn_Hliard_solve(VP1, VP2, VPh, u_ch, dt_u_ch, xu_ch, dt_xu_ch, dt, alpha)
-   
+
    #------------
    if  Res > 1e10 :
-        print("Sorry. Your settings or the regularity assumption are not working !!!")
-        break
+         print("Sorry. Your settings or the regularity assumption are not working !!!")
+         break
    #if ii == a :
    if True :
-	   a += 10        
-	   #+++++++++++++++++++++++++++++
-	   u_Pr = pyccel_sol_field_2d((nbpts,nbpts),  xu_ch, VPh.knots, VPh.degree)[0]
-	   #Sol_CH.append( u_Pr)
-	      
-	   #+++++++++++++++++++++++++++++
-	   u_Pr = pyccel_sol_field_2d((nbpts,nbpts),  xu_ch, VPh.knots, VPh.degree)[0]
-	   # ...
-	   du_ch     = (u_Pr0[:-degree,:-degree]-xu_ch[:-degree,:-degree]).reshape((VP1.nbasis-degree)*(VP2.nbasis-degree))
-	   stat_mement.append((M_ms.dot(du_ch)).dot(du_ch) )
-	   GL_free_energy.append(norm)
-	   n_iter.append(t)   
-	   #+++-----------------------------------------------------------------------------------
-	   # ... Statistical moment
-	   plt.figure() 
-	   plt.subplot(121)
-	   plt.title( '$\mathbf{||c-c_0||_{L^2}}$')
-	   plt.plot(n_iter, stat_mement, 'o-b', linewidth = 2.)
-	   plt.xscale('log')
-	   plt.xlabel('time',  fontweight ='bold')
-	   plt.grid(True)
-	   #plt.legend()
-	   
-	   axes = plt.subplot(122)
-	   axes.set_aspect(1)
-	   plt.title( '$GL-Free-Energy$')
-	   plt.plot(n_iter, GL_free_energy,  'o--r', linewidth = 2.)
-	   plt.xscale('log')
-	   plt.xlabel('time',  fontweight ='bold')
-	   plt.grid(True)
-	   #plt.legend()
-	   plt.subplots_adjust(wspace=0.3)
-	   plt.savefig('figs/Pu.png')
-	   plt.show(block=False)
-	   plt.close()
-	   # ...
-	   figtitle        = 'Cahn_haliard_equation'
-	   fig, axes       = plt.subplots( 1, 1, figsize=[12,12], num=figtitle )
-	   axes.set_aspect('equal')
-	   axes.set_title( 'Approximate solution at t= {}'.format(t) )
-	   im2 = axes.contourf( X, Y, u_Pr, levels, cmap= 'jet')
-	   divider = make_axes_locatable(axes) 
-	   cax   = divider.append_axes("right", size="5%", pad=0.05, aspect = 40) 
-	   plt.colorbar(im2, cax=cax)
-	   
-	   fig.tight_layout()
-	   plt.subplots_adjust(wspace=0.3)
-	   plt.savefig('figs/u_{}.png'.format(i_save))
-	   plt.show(block=False)
-	   plt.close()
-	   i_save += 1
+      a += 10        
+      #+++++++++++++++++++++++++++++
+      u_Pr = pyccel_sol_field_2d((nbpts,nbpts),  xu_ch, VPh.knots, VPh.degree)[0]
+      #Sol_CH.append( u_Pr)
+         
+      #+++++++++++++++++++++++++++++
+      u_Pr = pyccel_sol_field_2d((nbpts,nbpts),  xu_ch, VPh.knots, VPh.degree)[0]
+      # ...
+      du_ch     = (u_Pr0[:-degree,:-degree]-xu_ch[:-degree,:-degree]).reshape((VP1.nbasis-degree)*(VP2.nbasis-degree))
+      stat_mement.append((M_ms.dot(du_ch)).dot(du_ch) )
+      GL_free_energy.append(norm)
+      n_iter.append(t)   
+      #+++-----------------------------------------------------------------------------------
+      # ... Statistical moment
+      plt.figure() 
+      plt.subplot(121)
+      plt.title( '$\mathbf{||c-c_0||_{L^2}}$')
+      plt.plot(n_iter, stat_mement, 'o-b', linewidth = 2.)
+      plt.xscale('log')
+      plt.xlabel('time',  fontweight ='bold')
+      plt.grid(True)
+      #plt.legend()
+      
+      axes = plt.subplot(122)
+      axes.set_aspect(1)
+      plt.title( '$GL-Free-Energy$')
+      plt.plot(n_iter, GL_free_energy,  'o--r', linewidth = 2.)
+      plt.xscale('log')
+      plt.xlabel('time',  fontweight ='bold')
+      plt.grid(True)
+      #plt.legend()
+      plt.subplots_adjust(wspace=0.3)
+      plt.savefig('figs/Pu.png')
+      plt.show(block=False)
+      plt.close()
+      # ...
+      figtitle        = 'Cahn_haliard_equation'
+      fig, axes       = plt.subplots( 1, 1, figsize=[12,12], num=figtitle )
+      axes.set_aspect('equal')
+      axes.set_title( 'Approximate solution at t= {}'.format(t) )
+      im2 = axes.contourf( X, Y, u_Pr, levels, cmap= 'jet')
+      divider = make_axes_locatable(axes) 
+      cax   = divider.append_axes("right", size="5%", pad=0.05, aspect = 40) 
+      plt.colorbar(im2, cax=cax)
+      
+      fig.tight_layout()
+      plt.subplots_adjust(wspace=0.3)
+      plt.savefig('figs/u_{}.png'.format(i_save))
+      plt.show(block=False)
+      plt.close()
+      i_save += 1
 
 if True :    
-  import imageio  
-  with imageio.get_writer('cahn_haliard.gif', mode='I') as writer:  
+   import imageio  
+   with imageio.get_writer('cahn_haliard.gif', mode='I') as writer:  
       for filename in ['figs/u_{}.png'.format(i) for i in range(1,i_save,35)]:  
-          image = imageio.imread(filename)  
-          writer.append_data(image) 
+            image = imageio.imread(filename)  
+            writer.append_data(image) 

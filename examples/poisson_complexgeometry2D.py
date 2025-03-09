@@ -19,9 +19,9 @@ from   simplines                    import least_square_Bspline
 from   simplines                    import getGeometryMap
 
 # ... Poisson tools in uniform mesh
-from gallery_section_06             import assemble_matrix_un_ex01
-from gallery_section_06             import assemble_vector_un_ex01
-from gallery_section_06             import assemble_norm_un_ex01
+from examples.gallery.gallery_section_06             import assemble_matrix_un_ex01
+from examples.gallery.gallery_section_06             import assemble_vector_un_ex01
+from examples.gallery.gallery_section_06             import assemble_norm_un_ex01
 
 assemble_matrix_un   = compile_kernel(assemble_matrix_un_ex01, arity=2)
 assemble_rhs_un      = compile_kernel(assemble_vector_un_ex01, arity=1)

@@ -27,9 +27,9 @@ import time
 start = time.time()
 
 #---In Poisson equation
-from gallery_section_04 import assemble_vector_ex01 #---1 : In uniform mesh
-from gallery_section_04 import assemble_matrix_ex01 #---1 : In uniform mesh
-from gallery_section_04 import assemble_norm_ex01 #---1 : In uniform mesh
+from examples.gallery.gallery_section_04 import assemble_vector_ex01 #---1 : In uniform mesh
+from examples.gallery.gallery_section_04 import assemble_matrix_ex01 #---1 : In uniform mesh
+from examples.gallery.gallery_section_04 import assemble_norm_ex01 #---1 : In uniform mesh
 
 assemble_stiffness2D = compile_kernel(assemble_matrix_ex01, arity=2)
 assemble_rhs         = compile_kernel(assemble_vector_ex01, arity=1)

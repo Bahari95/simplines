@@ -26,19 +26,19 @@ import timeit
 import time
 
 start = time.time()
-from gallery_section_07 import assemble_stiffnessmatrix1D
-from gallery_section_07 import assemble_massmatrix1D
-from gallery_section_07 import assemble_matrix_ex01
-from gallery_section_07 import assemble_matrix_ex02
+from examples.gallery.gallery_section_07 import assemble_stiffnessmatrix1D
+from examples.gallery.gallery_section_07 import assemble_massmatrix1D
+from examples.gallery.gallery_section_07 import assemble_matrix_ex01
+from examples.gallery.gallery_section_07 import assemble_matrix_ex02
 assemble_stiffness1D = compile_kernel( assemble_stiffnessmatrix1D, arity=2)
 assemble_mass1D      = compile_kernel( assemble_massmatrix1D, arity=2)
 assemble_matrix_ex01 = compile_kernel(assemble_matrix_ex01, arity=1)
 assemble_matrix_ex02 = compile_kernel(assemble_matrix_ex02, arity=1)
 
 #---In Poisson equation
-from gallery_section_07 import assemble_vector_ex01 #---1 : In uniform mesh
+from examples.gallery.gallery_section_07 import assemble_vector_ex01 #---1 : In uniform mesh
 assemble_rhs     = compile_kernel(assemble_vector_ex01, arity=1)
-from gallery_section_07 import assemble_norm_ex01 #---1 : In uniform mesh
+from examples.gallery.gallery_section_07 import assemble_norm_ex01 #---1 : In uniform mesh
 assemble_norm_l2 = compile_kernel(assemble_norm_ex01, arity=1)
 #print('time to import utilities of Poisson equation =', time.time()-start)
 

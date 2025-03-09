@@ -23,15 +23,15 @@ from   matplotlib.ticker            import LinearLocator, FormatStrFormatter
 import time
 
 # .. for the initialisation
-from gallery_section_09 import assemble_massmatrix1D
-from gallery_section_09 import assemble_vector_ex01 #---1 : Projection L2
+from examples.gallery.gallery_section_09 import assemble_massmatrix1D
+from examples.gallery.gallery_section_09 import assemble_vector_ex01 #---1 : Projection L2
 assemble_rhs         = compile_kernel(assemble_vector_ex01, arity=1)
 assemble_mass1D      = compile_kernel( assemble_massmatrix1D, arity=2)
 
 # ---. for cahn-haliard
-from gallery_section_09 import assemble_matrix_ex03 
-from gallery_section_09 import assemble_vector_ex03
-from gallery_section_09 import assemble_norm_ex01 
+from examples.gallery.gallery_section_09 import assemble_matrix_ex03 
+from examples.gallery.gallery_section_09 import assemble_vector_ex03
+from examples.gallery.gallery_section_09 import assemble_norm_ex01 
 
 assemble2_stiffness = compile_kernel(assemble_matrix_ex03, arity=2)
 assemble2_rhs       = compile_kernel(assemble_vector_ex03, arity=1)

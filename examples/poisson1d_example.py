@@ -15,14 +15,14 @@ from simplines import StencilVector
 from simplines import pyccel_sol_field_3d
 
 # .. Matrices in 1D ..
-from gallery_section_01 import assemble_stiffnessmatrix1D
-from gallery_section_01 import assemble_massmatrix1D
+from examples.gallery.gallery_section_01 import assemble_stiffnessmatrix1D
+from examples.gallery.gallery_section_01 import assemble_massmatrix1D
 assemble_stiffness1D = compile_kernel( assemble_stiffnessmatrix1D, arity=2)
 assemble_mass1D      = compile_kernel( assemble_massmatrix1D, arity=2)
 
 #---In Poisson equation
-from gallery_section_01 import assemble_vector_ex01    #---1 : In uniform mesh
-from gallery_section_01 import assemble_norm_ex01      #---1 : In uniform mesh
+from examples.gallery.gallery_section_01 import assemble_vector_ex01    #---1 : In uniform mesh
+from examples.gallery.gallery_section_01 import assemble_norm_ex01      #---1 : In uniform mesh
 
 assemble_rhs         = compile_kernel(assemble_vector_ex01, arity=1)
 assemble_norm_l2     = compile_kernel(assemble_norm_ex01, arity=1)

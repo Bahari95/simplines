@@ -22,12 +22,12 @@ from simplines import getGeometryMap
 import time
 
 #--- In Elasticity equation
-from gallery_section_05 import assemble_matrix_ad_ex11  
-from gallery_section_05 import assemble_matrix_ad_ex12  
+from examples.gallery.gallery_section_05 import assemble_matrix_ad_ex11  
+from examples.gallery.gallery_section_05 import assemble_matrix_ad_ex12  
 
-from gallery_section_05 import assemble_vector_ex12
-from gallery_section_05 import assemble_vector_ex22
-from gallery_section_05 import assemble_norm_ex02  
+from examples.gallery.gallery_section_05 import assemble_vector_ex12
+from examples.gallery.gallery_section_05 import assemble_vector_ex22
+from examples.gallery.gallery_section_05 import assemble_norm_ex02  
 
 assemble11_stiffness  = compile_kernel( assemble_matrix_ad_ex11, arity=2)
 assemble12_stiffness  = compile_kernel( assemble_matrix_ad_ex12, arity=2)
