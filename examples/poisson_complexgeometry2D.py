@@ -17,6 +17,7 @@ from   simplines                    import pyccel_sol_field_2d
 from   simplines                    import prolongation_matrix
 from   simplines                    import least_square_Bspline
 from   simplines                    import getGeometryMap
+from   simplines                    import build_dirichlet
 
 # ... Poisson tools in uniform mesh
 from examples.gallery.gallery_section_06             import assemble_matrix_un_ex01
@@ -137,17 +138,8 @@ u12_mpH.from_array(VH00, ymp)
 # ...Assembling Dirichlet boundary condition
 #--------------------------------------------------------------
 print("(#=assembled Dirichlet, #=solve poisson)\n")
-n_dir   = VH1.nbasis + VH2.nbasis+100
-sX      = pyccel_sol_field_2d((n_dir,n_dir),  xmp , VH00.knots, VH00.degree)[0]
-sY      = pyccel_sol_field_2d((n_dir,n_dir),  ymp , VH00.knots, VH00.degree)[0]
-
-u_d                  = StencilVector(VH00.vector_space)
-x_d                  = np.zeros(VH00.nbasis)
-x_d[0, : ]           = least_square_Bspline(VH2.degree, VH2.knots, u_exact(sX[0, :], sY[ 0,:]), m= n_dir)
-x_d[VH1.nbasis-1, :] = least_square_Bspline(VH2.degree, VH2.knots, u_exact(sX[-1,:], sY[-1,:]), m= n_dir)
-x_d[:,0]             = least_square_Bspline(VH1.degree, VH1.knots, u_exact(sX[:, 0], sY[:, 0]), m= n_dir)
-x_d[:, VH2.nbasis-1] = least_square_Bspline(VH1.degree, VH1.knots, u_exact(sX[:,-1], sY[:,-1]), m= n_dir)
-u_d.from_array(VH00, x_d)
+g        = ['sin(2.*pi*x)*sin(2.*pi*y)']
+x_d, u_d = build_dirichlet(VH00, g, map = (xmp, ymp))
 print('#')
 
 #...solve poisson
@@ -183,17 +175,7 @@ for nbne in range(RefinNumber):
     #-----------------------------------------
     print('#---IN-UNIFORM--MESH', nelements)
     #-----------------------------------------
-    n_dir                = V1.nbasis + V2.nbasis+100
-    sX                   = pyccel_sol_field_2d((n_dir,n_dir),  xmp , Vh00.knots, Vh00.degree)[0]
-    sY                   = pyccel_sol_field_2d((n_dir,n_dir),  ymp , Vh00.knots, Vh00.degree)[0]
-    u_d                  = StencilVector(Vh00.vector_space)
-    x_d                  = np.zeros(Vh00.nbasis)
-    x_d[0, : ]           = least_square_Bspline(V2.degree, V2.knots, u_exact(sX[0, :], sY[ 0,:]), m= n_dir)
-    x_d[V1.nbasis-1, :]  = least_square_Bspline(V2.degree, V2.knots, u_exact(sX[-1,:], sY[-1,:]), m= n_dir)
-    x_d[:,0]             = least_square_Bspline(V1.degree, V1.knots, u_exact(sX[:, 0], sY[:, 0]), m= n_dir)
-    x_d[:, V2.nbasis-1]  = least_square_Bspline(V1.degree, V1.knots, u_exact(sX[:,-1], sY[:,-1]), m= n_dir)
-    u_d.from_array(Vh00, x_d)
-    del sX, sY, x_d
+    u_d   = build_dirichlet(Vh00, g, map = (xmp, ymp))[1]
     print('#')
     # ...
     start = time.time()

@@ -82,3 +82,86 @@ def prolongation_matrix(VH, Vh):
     M = reduce(kron, (m for m in mats))
 
     return M
+
+
+from simplines.linalg import StencilVector
+from simplines.results_f90 import least_square_Bspline, pyccel_sol_field_2d
+from numpy import exp
+from numpy import cos
+from numpy import sin
+from numpy import pi
+from numpy import arctan2
+from numpy import sqrt
+from numpy import cosh
+from numpy import zeros
+from numpy import empty
+def build_dirichlet(V, f, map = None, admap = None):
+    '''
+    V    : FE space
+    f[0] : on the left
+    f[1] : on the right
+    f[2] : on the bottom
+    f[3] : on the top
+    map = (x,y) : control points
+    admap = (x, V1, y, V2) control points and associated space
+    '''
+    if len(f) > 1 :
+        fx0      = lambda x,y :  eval(f[0])
+        fx1      = lambda x,y :  eval(f[1])
+        fy0      = lambda x,y :  eval(f[2])
+        fy1      = lambda x,y :  eval(f[3])
+    elif map is None:
+        xi       = V.grid[0]
+        yi       = V.grid[1]
+        sol      = lambda x,y :  eval(f[0]) 
+        fx0      = lambda   y :  sol(xi[0],y)
+        fx1      = lambda   y :  sol(xi[-1],y) 
+        fy0      = lambda x   :  sol(x,yi[0])
+        fy1      = lambda x   :  sol(x,yi[-1])
+    else :
+        fx0      = lambda x,y :  eval(f[0])
+        fx1      = lambda x,y :  eval(f[0])
+        fy0      = lambda x,y :  eval(f[0])
+        fy1      = lambda x,y :  eval(f[0]) 
+    u_d          = StencilVector(V.vector_space)
+    x_d          = np.zeros(V.nbasis)
+    if V.dim == 2:
+        if map is None:
+            #------------------------------
+            #.. In the parametric domain
+            x_d[ 0 , : ] = least_square_Bspline(V.degree[1], V.knots[1], fx0)
+            x_d[ -1, : ] = least_square_Bspline(V.degree[1], V.knots[1], fx1)
+            x_d[ : , 0 ] = least_square_Bspline(V.degree[0], V.knots[0], fy0)
+            x_d[ : ,-1 ] = least_square_Bspline(V.degree[0], V.knots[0], fy1)
+
+        elif admap is None :
+            #------------------------------
+            #.. In the phyisacl domain without adaptive mapping               
+            n_dir        = V.nbasis[0] + V.nbasis[1]+100
+            sX           = pyccel_sol_field_2d((n_dir,n_dir),  map[0] , V.knots, V.degree)[0]
+            sY           = pyccel_sol_field_2d((n_dir,n_dir),  map[1] , V.knots, V.degree)[0]
+
+            x_d[ 0 , : ] = least_square_Bspline(V.degree[1], V.knots[1], fx0(sX[0, :], sY[ 0,:]), m= n_dir)
+            x_d[ -1, : ] = least_square_Bspline(V.degree[1], V.knots[1], fx1(sX[-1,:], sY[-1,:]), m= n_dir)
+            x_d[ : , 0 ] = least_square_Bspline(V.degree[0], V.knots[0], fy0(sX[:, 0], sY[:, 0]), m= n_dir)
+            x_d[ : ,-1 ] = least_square_Bspline(V.degree[0], V.knots[0], fy1(sX[:,-1], sY[:,-1]), m= n_dir)
+
+        else :
+            #------------------------------
+            #.. In the phyisacl domain with adaptive mapping               
+            n_dir        = V.nbasis[0] + V.nbasis[1]+100
+
+            Xmae         = pyccel_sol_field_2d((n_dir,n_dir),  admap[0] , admap[2].knots, admap[2].degree)[0]
+            Ymae         = pyccel_sol_field_2d((n_dir,n_dir),  admap[1] , admap[3].knots, admap[3].degree)[0]
+            sX           = pyccel_sol_field_2d( None, map[0], V.knots, V.degree, meshes = (Xmae, Ymae))[0]
+            sY           = pyccel_sol_field_2d( None, map[1], V.knots, V.degree, meshes = (Xmae, Ymae))[0]
+
+            x_d[ 0 , : ] = least_square_Bspline(V.degree[1], V.knots[1], fx0(sX[0, :], sY[ 0,:]), m= n_dir)
+            x_d[ -1, : ] = least_square_Bspline(V.degree[1], V.knots[1], fx1(sX[-1,:], sY[-1,:]), m= n_dir)
+            x_d[ : , 0 ] = least_square_Bspline(V.degree[0], V.knots[0], fy0(sX[:, 0], sY[:, 0]), m= n_dir)
+            x_d[ : ,-1 ] = least_square_Bspline(V.degree[0], V.knots[0], fy1(sX[:,-1], sY[:,-1]), m= n_dir)
+    if V.dim == 3 :
+        print("not yet implemented")
+        #.. TODO : USE l2 PROJECTION USING FAST DIAG
+    u_d.from_array(V, x_d)
+    return x_d, u_d

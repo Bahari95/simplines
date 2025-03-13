@@ -13,6 +13,7 @@ from simplines          import StencilVector
 from simplines          import pyccel_sol_field_2d
 from simplines          import least_square_Bspline
 from simplines          import save_geometry_to_xml
+from simplines          import build_dirichlet
 
 from gallery_section_04 import assemble_stiffnessmatrix1D
 from gallery_section_04 import assemble_massmatrix1D
@@ -256,29 +257,15 @@ nelements   = args.nelements
 if args.Xx0 is None:
     # Create the two functions dynamically
     print("Random analytic mapping")
-    sol_dx = lambda x,y : eval(args.expr1)
-    sol_dy = lambda x,y : eval(args.expr2)
     #__
-    fx0 = lambda y : sol_dx(0.,y) 
-    fy0 = lambda x : sol_dx(x,0.)
-    fy1 = lambda x : sol_dx(x,1.)
-    fx1 = lambda y : sol_dx(1.,y) 
+    gx  = [args.expr1]
     #__
-    gx0 = lambda y : sol_dy(0.,y) 
-    gy0 = lambda x : sol_dy(x,0.)
-    gy1 = lambda x : sol_dy(x,1.)
-    gx1 = lambda y : sol_dy(1.,y)
+    gy  = [args.expr2]
 else :
     #__
-    fx0 = lambda y : eval(args.Xx0)
-    fy0 = lambda x : eval(args.Xy0)
-    fy1 = lambda x : eval(args.Xy1)
-    fx1 = lambda y : eval(args.Xx1)
+    gx  = [args.Xx0, args.Xy0, args.Xy1, args.Xx1]
     #___
-    gx0 = lambda y : eval(args.Yx0)
-    gy0 = lambda x : eval(args.Yy0)
-    gy1 = lambda x : eval(args.Yy1)
-    gx1 = lambda y : eval(args.Yx1)  
+    gy = [args.Yx0, args.Yy0, args.Yy1, args.Yx1]  
 
 #..... Initialisation and computing optimal mapping for 16*16
 #----------------------
@@ -289,25 +276,8 @@ V2 = SplineSpace(degree=degree, nelements= nelements, nderiv = 2)
 # create the tensor space
 Vh = TensorSpace(V1, V2)
 
-u01   = StencilVector(Vh.vector_space)
-u10   = StencilVector(Vh.vector_space)
-
-xD = zeros(Vh.nbasis)
-yD = zeros(Vh.nbasis)
-
-xD[0, : ]                   = least_square_Bspline(V1.degree, V1.knots, fx0)
-xD[nelements+degree-1, : ]  = least_square_Bspline(V1.degree, V1.knots, fx1)
-xD[:,0]                     = least_square_Bspline(V1.degree, V1.knots, fy0)
-xD[:, nelements+degree - 1] = least_square_Bspline(V1.degree, V1.knots, fy1)
-
-yD[0, : ]                   = least_square_Bspline(V2.degree, V2.knots, gx0)
-yD[nelements+degree-1, : ]  = least_square_Bspline(V2.degree, V2.knots, gx1)
-yD[:,0]                     = least_square_Bspline(V2.degree, V2.knots, gy0)
-yD[:, nelements+degree - 1] = least_square_Bspline(V2.degree, V2.knots, gy1)
-
-#yD *=10.
-u01.from_array(Vh, xD)
-u10.from_array(Vh, yD)
+xD, u01 = build_dirichlet(Vh, gx)
+yD, u10 = build_dirichlet(Vh, gy)
 #+++++++++++++++++++++++++++++++++++
 print('++ NEW-FORMULATION--FOR---VOLUMETRIC-PARAMETERIZATION')
 start = time.time()

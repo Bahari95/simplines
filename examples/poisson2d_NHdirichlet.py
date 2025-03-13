@@ -10,7 +10,7 @@ from simplines import TensorSpace
 from simplines import StencilMatrix
 from simplines import StencilVector
 from simplines import pyccel_sol_field_2d
-
+from simplines import build_dirichlet
 #.. Prologation by knots insertion matrix
 from simplines import least_square_Bspline
 
@@ -108,21 +108,8 @@ V2 = SplineSpace(degree=degree, nelements=nelements, nderiv = 2)
 Vh = TensorSpace(V1, V2)
 
 #..
-fx0 = lambda x :  0.
-fx1 = lambda x :  2.* cos(pi*x)
-fy0 = lambda x :  2.* x 
-fy1 = lambda x : -2.* x 
-
-#------------------------------
-u_d                  = StencilVector(Vh.vector_space)
-x_d                  = np.zeros(Vh.nbasis)
-x_d[0, : ]           = least_square_Bspline(degree, V2.knots, fx0)
-x_d[V1.nbasis-1, : ] = least_square_Bspline(degree, V2.knots, fx1)
-x_d[:,0]             = least_square_Bspline(degree, V1.knots, fy0)
-x_d[:, V2.nbasis-1]  = least_square_Bspline(degree, V1.knots, fy1)
-
-u_d.from_array(Vh, x_d)
-
+g        = ['0.','2.* cos(pi*x)','2.* x ','-2.* x']
+x_d, u_d = build_dirichlet(Vh, g)
 print('#---IN-UNIFORM--MESH')
 u_pH, xuh, l2_norm, H1_norm = poisson_solve(V1, V2, Vh, x_d = x_d, u_d = u_d)
 xuh_uni = xuh
