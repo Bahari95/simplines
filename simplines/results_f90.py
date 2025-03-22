@@ -187,3 +187,55 @@ def least_square_Bspline(degree, knots, f, V_mae = None, x_mae = None, vec_in = 
     lu       = sla.splu(csc_matrix(M))
     Pc[1:-1] = lu.solve(R)    
     return Pc
+
+import matplotlib.pyplot            as     plt
+from   mpl_toolkits.axes_grid1      import make_axes_locatable
+import numpy                        as     np
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+def plot_SolutionMultipatch(nbpts, xuh, V, xmp, ymp, savefig = None, plot = True): 
+   ''''
+   Plot the solution of the problem in the whole domain
+   '''
+   #---Compute a solution
+   numPaches = len(V)
+   u = []
+   F1 = []
+   F2 = []
+   for i in range(numPaches):
+      u.append(pyccel_sol_field_2d((nbpts, nbpts), xuh[i], V[i].knots, V[i].degree)[0])
+      #---Compute a solution
+      F1.append(pyccel_sol_field_2d((nbpts, nbpts), xmp[i], V[i].knots, V[i].degree)[0])
+      F2.append(pyccel_sol_field_2d((nbpts, nbpts), ymp[i], V[i].knots, V[i].degree)[0])
+
+   # --- Compute Global Color Levels ---
+   u_min  = min(np.min(u[0]), np.min(u[1]))
+   u_max  = max(np.max(u[0]), np.max(u[1]))
+   for i in range(2, numPaches):
+      u_min  = min(u_min, np.min(u[i]))
+      u_max  = max(u_max, np.max(u[i]))
+   levels = np.linspace(u_min, u_max, 100)  # Uniform levels for both plots
+
+   # --- Create Figure ---
+   fig, axes = plt.subplots(figsize=(8, 6))
+
+   # --- Contour Plot for First Subdomain ---
+   im = []
+   for i in range(numPaches):
+      im.append(axes.contourf(F1[i], F2[i], u[i], levels, cmap='jet'))
+      # --- Colorbar ---
+      divider = make_axes_locatable(axes)
+      cax = divider.append_axes("right", size="5%", pad=0.05, aspect=40)
+      cbar = plt.colorbar(im[i], cax=cax)
+      cbar.ax.tick_params(labelsize=15)
+      cbar.ax.yaxis.label.set_fontweight('bold')
+   # --- Formatting ---
+   axes.set_title("Solution the in whole domain ", fontweight='bold')
+   for label in axes.get_xticklabels() + axes.get_yticklabels():
+      label.set_fontweight('bold')
+
+   fig.tight_layout()
+   if savefig is not None:
+      plt.savefig(savefig)
+   plt.show(block=plot)
+   print('Plotting done :  Solution in the whole domain (type savefig = \'location/somthing.png\' to save the figure)')
+   return 0

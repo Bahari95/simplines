@@ -57,9 +57,7 @@ from simplines.cad import ( point_on_bspline_curve,
                             rotate_bspline_surface,
                             rotate_nurbs_surface,
                             homothetic_bspline_surface,
-                            homothetic_nurbs_surface,
-                            getGeometryMap,
-                            save_geometry_to_xml )
+                            homothetic_nurbs_surface)
 
 from simplines.spaces import ( SplineSpace,
                                TensorSpace )
@@ -73,7 +71,9 @@ from simplines.quadratures import gauss_legendre
 from simplines.utilities import ( plot_field_1d,
                                   plot_field_2d,
                                   prolongation_matrix,
-                                  build_dirichlet )
+                                  build_dirichlet,
+                                  getGeometryMap,
+                                  save_geometry_to_xml)
 
 from simplines.results import ( sol_field_2d)
 
@@ -83,6 +83,7 @@ from simplines.fast_diag import ( Poisson)
 
 from simplines.results_f90 import ( pyccel_sol_field_2d,
                                     pyccel_sol_field_3d, 
-                                    least_square_Bspline)
+                                    least_square_Bspline,
+                                    plot_SolutionMultipatch)
 
 from simplines.api import (assemble_matrix, assemble_vector, assemble_scalar, compile_kernel, apply_dirichlet, apply_periodic, apply_zeros)

@@ -84,8 +84,11 @@ def prolongation_matrix(VH, Vh):
     return M
 
 
-from simplines.linalg import StencilVector
-from simplines.results_f90 import least_square_Bspline, pyccel_sol_field_2d
+from .linalg      import StencilVector
+from .spaces      import SplineSpace
+from .spaces      import TensorSpace
+from .results_f90 import least_square_Bspline
+from .results_f90 import pyccel_sol_field_2d
 from numpy import exp
 from numpy import cos
 from numpy import sin
@@ -165,3 +168,152 @@ def build_dirichlet(V, f, map = None, admap = None):
         #.. TODO : USE l2 PROJECTION USING FAST DIAG
     u_d.from_array(V, x_d)
     return x_d, u_d
+
+import xml.etree.ElementTree as ET
+import numpy as np
+
+def save_geometry_to_xml(V, Gmap, name = 'Geometry', locname = None):
+    """
+    save_geometry_to_xml : save the coefficients table, knots table, and degree in an XML file.
+    """
+    if locname is None :
+        filename = f'./figs/'+name+'.xml'
+    else :
+        filename = locname+'.xml'
+    # Root element
+    root = ET.Element('xml')
+    root.text  = '\n'
+    
+    # Geometry element
+    geometry    = ET.SubElement(root, 'Geometry', type='TensorNurbs2', id='0')
+    geometry.text = '\n'
+    basis_outer = ET.SubElement(geometry, 'Basis', type='TensorNurbsBasis2')
+    basis_outer.text = '\n'
+    basis_inner = ET.SubElement(basis_outer, 'Basis', type='TensorBSplineBasis2')
+    basis_inner.text = '\n'
+
+    # Add basis elements
+    for i in range(2):
+        basis            = ET.SubElement(basis_inner, 'Basis', type='BSplineBasis', index=str(i))
+        basis.text       = '\n'
+        knot_vector      = ET.SubElement(basis, 'KnotVector', degree=str(V.degree[0]))
+        knot_vector.text = '\n' + ' '.join(map(str, V.knots[i])) + '\n'
+    
+    # Add coefficients (control points)
+    coefs      = ET.SubElement(basis_inner, 'coefs', geoDim='2')
+    coefs.text = '\n' + '\n'.join(' '.join(f'{v:.20e}' for v in row) for row in Gmap) + '\n'
+
+    # Close inner Basis element properly
+    basis_inner.tail = '\n'
+    basis_outer.tail = '\n'
+
+    # MultiPatch element
+    multipatch   = ET.SubElement(root, 'MultiPatch', parDim='2', id='1')
+    multipatch.text = '\n'
+    patches      = ET.SubElement(multipatch, 'patches', type='id_range')
+    patches.text = '\n0 0\n'
+    
+    # Boundary conditions
+    boundary      = ET.SubElement(multipatch, 'boundary')
+    boundary.text = '\n  0 1\n  0 2\n  0 3\n  0 4\n '
+    boundary.tail = '\n'
+    
+    # Convert to XML string with declaration
+    xml_string = ET.tostring(root, encoding='utf-8').decode('utf-8')
+    xml_string = '<?xml version="1.0" encoding="UTF-8"?>\n' \
+                 '<!--This file was created by bahari95/simplines -->\n' \
+                 '<!--Geometry in two dimensions -->\n' + xml_string
+    
+    # Save to file
+    with open(filename, 'w', encoding='utf-8') as f:
+        f.write(xml_string)
+    
+    print(f"File saved as {filename}")
+
+class getGeometryMap:
+    """
+    getGeometryMap : extracts the coefficients table, knots table, and degree from an XML file based on a given id.
+    """
+    def __init__(self, filename, element_id):
+      #print("""Initialize with the XML filename.""", filename)
+      root            = ET.parse(filename).getroot()
+      """Retrieve coefs table, knots table, and degree for a given id."""
+      # Find the Geometry element by id
+      GeometryMap = root.find(f".//*[@id='{element_id}']")        
+      if GeometryMap is None:
+         raise RuntimeError(f"No element found with id {element_id}")
+
+      # Extract knots data and degree
+      knots_data  = []
+      degree_data = []
+      for basis in GeometryMap.findall(".//Basis[@type='BSplineBasis']"):
+         knot_vector = basis.find("KnotVector")
+         if knot_vector is not None:
+               degree_data.append(int(knot_vector.get("degree", -1)))  # Default to -1 if not found
+               knots = list(map(float, knot_vector.text.strip().split()))
+               knots_data.append(knots)
+      #....dimension
+      dim              = np.asarray(knots_data).shape[0]
+      #....number of basis functions
+      nbasis           = [len(np.asarray(knots_data)[n,:]) - degree_data[n]-1 for n in range(dim)]
+      # Extract coefs data
+      coefs_element = GeometryMap.find(".//coefs")
+      coefs_data    = None
+      if coefs_element is not None:
+         coefs_text = coefs_element.text.strip()
+         coefs_data = np.array([
+               list(map(float, line.split())) for line in coefs_text.split("\n")
+         ])
+
+      self.root        = root
+      self.GeometryMap = GeometryMap
+      self.knots_data  = knots_data
+      self._degree     = degree_data
+      self._coefs      = [coefs_data[:,n].reshape(nbasis) for n in range(dim)]
+      self._dim        = dim
+      self._nbasis     = nbasis
+      self._nelements  = [nbasis[n]-degree_data[n] for n in range(dim)]
+
+    @property
+    def nbasis(self):
+        return self._nbasis
+    @property
+    def dim(self):
+        return self._dim
+    @property
+    def knots(self):
+        return self.knots_data
+    @property
+    def degree(self):
+        return self._degree
+    @property
+    def nelements(self):
+        return self._nelements
+    def coefs(self):
+        return self._coefs   
+    
+    def RefineGeometryMap(self, numElevate=0, Nelements=None):
+        """
+        getGeometryMap :  Refine the geometry by elevating the DoFs numElevate times.
+        """
+        assert(numElevate >= 0)
+        #... refine the grid numElevate times
+        if Nelements is None:
+            Nelements = [self.nelements[n]**numElevate for n in range(self.dim)]
+        else :
+            assert(len(Nelements) == self.dim and Nelements[0]%self.nelements[0]==0 and Nelements[1]%self.nelements[1]==0)
+        #... refine the space
+        Vh1       = SplineSpace(degree=self.degree[0], nelements=Nelements[0])
+        Vh2       = SplineSpace(degree=self.degree[1], nelements=Nelements[1])
+        Vh        = TensorSpace(Vh1, Vh2)# after refinement
+        # Extract knots data and degree
+        VH1       = SplineSpace(degree=self.degree[0], nelements=self.nelements[0])
+        VH2       = SplineSpace(degree=self.degree[1], nelements=self.nelements[1])
+        VH        = TensorSpace(VH1, VH2)# after refinement
+        # Extract coefs data
+        coefs_data = self.coefs()
+        # Refine the coefs
+        M_mp      = prolongation_matrix(VH, Vh)
+        coefs_data[0]      = (M_mp.dot(coefs_data[0].reshape(self.nbasis[0]*self.nbasis[1]))).reshape(Vh.nbasis)
+        coefs_data[1]      = (M_mp.dot(coefs_data[1].reshape(self.nbasis[0]*self.nbasis[1]))).reshape(Vh.nbasis)        
+        return coefs_data

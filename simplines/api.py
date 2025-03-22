@@ -7,7 +7,7 @@ from .linalg import StencilMatrix
 from .linalg import StencilVector
 from .spaces import TensorSpace
 
-__all__ = ['assemble_matrix', 'assemble_vector', 'assemble_scalar', 'compile_kernel', 'apply_dirichlet']
+__all__ = ['assemble_matrix', 'assemble_vector', 'assemble_scalar', 'compile_kernel', 'apply_dirichlet', 'apply_periodic']
 
 #==============================================================================
 def assemble_matrix(core, V, fields=None, knots = None, value = None, out=None):
