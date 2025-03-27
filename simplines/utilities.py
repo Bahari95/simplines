@@ -109,10 +109,10 @@ def build_dirichlet(V, f, map = None, admap = None):
     admap = (x, V1, y, V2) control points and associated space
     '''
     if len(f) > 1 :
-        fx0      = lambda x,y :  eval(f[0])
-        fx1      = lambda x,y :  eval(f[1])
-        fy0      = lambda x,y :  eval(f[2])
-        fy1      = lambda x,y :  eval(f[3])
+        fx0      = lambda   y :  eval(f[0])
+        fx1      = lambda   y :  eval(f[1])
+        fy0      = lambda x   :  eval(f[2])
+        fy1      = lambda x   :  eval(f[3])
     elif map is None:
         xi       = V.grid[0]
         yi       = V.grid[1]

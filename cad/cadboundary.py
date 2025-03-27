@@ -231,6 +231,9 @@ print("Usage: python3 cadboundary.py --expr1 'x' --expr2 'y'")
 '(0.2+0.8*x)*sin(.5*pi*y)' '(0.2+0.8*x)*cos(.5*pi*y)' 
 # Example 9 circle
 '(2.*x-1.)*sqrt(1.-(2.*y-1.)**2/2.0)' '(2.*y-1.)*sqrt(1.-(2.*x-1.)**2/2.0)'
+
+--Xx0 'y' --Xx1 '1.+0.*y' --Xy0 '0.+0.*x' --Xy1 '1.+0.*x' --Yx0 'y' --Yx1 'y' --Yy0 'x' --Yy1 'x'
+
 """
 parser = argparse.ArgumentParser(description="Control plot behavior and save control points.")
 parser.add_argument("--plot", action="store_true", help="Enable plotting and saving control points")
@@ -263,9 +266,9 @@ if args.Xx0 is None:
     gy  = [args.expr2]
 else :
     #__
-    gx  = [args.Xx0, args.Xy0, args.Xy1, args.Xx1]
+    gx  = [args.Xx0, args.Xx1, args.Xy0, args.Xy1]
     #___
-    gy = [args.Yx0, args.Yy0, args.Yy1, args.Yx1]  
+    gy = [args.Yx0, args.Yx1, args.Yy0, args.Yy1]  
 
 #..... Initialisation and computing optimal mapping for 16*16
 #----------------------
@@ -361,6 +364,19 @@ print( ' max of Jacobian in the intire unit square =', np.max(Z) )
 # ... save data
 #np.savetxt('figs/filex_'+str(degree)+'_'+str(nelements)+'.txt', x11uh, fmt='%.20e')
 #np.savetxt('figs/filey_'+str(degree)+'_'+str(nelements)+'.txt', x12uh, fmt='%.20e')
+# from simplines import getGeometryMap
+# mp             = getGeometryMap('../fields/mhd.xml',0)
+# x12uh[:,:], x11uh[:,:]   = mp.coefs()
+# x11uh[:,:] = -.7*x11uh[:,:]+0.6
+# x12uh[:,:] = 2.*x12uh[:,:]
+# u11_pH.from_array(Vh, x11uh)
+# u12_pH.from_array(Vh, x12uh)
+# nbpts = 280
+# #---Solution in uniform mesh
+# #u  = pyccel_sol_field_2d((nbpts,nbpts),  x2uh , V11.knots, V11.degree)[1]
+# ux, a, b  = pyccel_sol_field_2d((nbpts,nbpts),  x11uh , Vh.knots, Vh.degree)[:-2]
+# uy, c, d  = pyccel_sol_field_2d((nbpts,nbpts),  x12uh , Vh.knots, Vh.degree)[:-2]
+
 Gmap  = np.zeros((V1.nbasis*V2.nbasis,2))
 x11uh = x11uh.reshape(V1.nbasis*V2.nbasis)
 x12uh = x12uh.reshape(V1.nbasis*V2.nbasis)
@@ -368,6 +384,7 @@ Gmap[:,0] = x11uh[:]
 Gmap[:,1] = x12uh[:]
 save_geometry_to_xml(Vh, Gmap, name = args.name)
 #np.savetxt('figs/Geom_'+str(degree)+'_'+str(nelements)+'.txt', Gmap, fmt='%.20e')
+
 if args.plot :
     #---------------------------------------------------------
     fig =plt.figure() 

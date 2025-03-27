@@ -448,7 +448,7 @@ def  Monge_ampere_equation(nb_ne, geometry = '../fields/circle.xml', degree = No
 # #.........................................................
 if True :
 	# ... unite-squar 0.6
-	geometry = '../fields/mhd.xml'
+	geometry = '../cad/figs/Geometry.xml'
 	
 	# ... Circular domain
 	#geometry = '../fields/circle.xml'
@@ -577,8 +577,8 @@ from numpy import pi, cos, sin, sqrt, arctan2, exp, cosh
 
 #rho = lambda x,y : (1. + 7./cosh( 20.*((x-sqrt(4)/2)**2+(1.2*y-0.4)**2 - 2.)**2 ) + 7./cosh( 20.*((x+sqrt(3)/2)**2+(1.2*y-0.4)**2 - 2.)**2 ) )
 #rho = lambda x,y : 1.+ 5.*exp( -200.*((x-0.1)**2+(y*sin(pi*x)**2-0.5)**2 - 0.3)**2)
-rho = lambda x,y : 1.+ 10.*exp( -10.*(4.*(x-0.1)**2+2.*(y-0.35)**2 - 1.4)**2)
-
+#rho = lambda x,y : 1.+ 10.*exp( -10.*(4.*(x-0.1)**2+2.*(y-0.35)**2 - 1.4)**2)
+rho = lambda x,y : 1.+ 10./cosh(2.*(1./(y**2-4.*x*(x-1)**2+1.)-1.))**2 
 fig =plt.figure() 
 for i in range(nbpts):
    phidx = X[:,i]
