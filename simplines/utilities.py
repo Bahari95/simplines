@@ -311,9 +311,9 @@ class getGeometryMap:
         VH2       = SplineSpace(degree=self.degree[1], nelements=self.nelements[1])
         VH        = TensorSpace(VH1, VH2)# after refinement
         # Extract coefs data
-        coefs_data = self.coefs()
+        coefs_data = zeros((2, Vh.nbasis[0], Vh.nbasis[1]))
         # Refine the coefs
         M_mp      = prolongation_matrix(VH, Vh)
-        coefs_data[0]      = (M_mp.dot(coefs_data[0].reshape(self.nbasis[0]*self.nbasis[1]))).reshape(Vh.nbasis)
-        coefs_data[1]      = (M_mp.dot(coefs_data[1].reshape(self.nbasis[0]*self.nbasis[1]))).reshape(Vh.nbasis)        
+        coefs_data[0]      = (M_mp.dot(self.coefs()[0].reshape(self.nbasis[0]*self.nbasis[1]))).reshape(Vh.nbasis)
+        coefs_data[1]      = (M_mp.dot(self.coefs()[1].reshape(self.nbasis[0]*self.nbasis[1]))).reshape(Vh.nbasis)        
         return coefs_data

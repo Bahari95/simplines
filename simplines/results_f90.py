@@ -191,6 +191,8 @@ def least_square_Bspline(degree, knots, f, V_mae = None, x_mae = None, vec_in = 
 import matplotlib.pyplot            as     plt
 from   mpl_toolkits.axes_grid1      import make_axes_locatable
 import numpy                        as     np
+colors = ['b', 'k', 'r', 'g', 'm', 'c', 'y', 'orange']
+markers = ['v', 'o', 's', 'D', '^', '<', '>', '*']  # Different markers
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def plot_SolutionMultipatch(nbpts, xuh, V, xmp, ymp, savefig = None, plot = True): 
    ''''
@@ -232,6 +234,65 @@ def plot_SolutionMultipatch(nbpts, xuh, V, xmp, ymp, savefig = None, plot = True
    axes.set_title("Solution the in whole domain ", fontweight='bold')
    for label in axes.get_xticklabels() + axes.get_yticklabels():
       label.set_fontweight('bold')
+
+   fig.tight_layout()
+   if savefig is not None:
+      plt.savefig(savefig)
+   plt.show(block=plot)
+   print('Plotting done :  Solution in the whole domain (type savefig = \'location/somthing.png\' to save the figure)')
+   return 0
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+def plot_MeshMultipatch(nbpts, V, xmp, ymp, savefig = None, plot = True): 
+   ''''
+   Plot the solution of the problem in the whole domain
+   '''
+   #---Compute a solution
+   numPaches = len(V)
+   F1 = []
+   F2 = []
+   for i in range(numPaches):
+      #---Compute a mesh
+      F1.append(pyccel_sol_field_2d((nbpts, nbpts), xmp[i], V[i].knots, V[i].degree)[0])
+      F2.append(pyccel_sol_field_2d((nbpts, nbpts), ymp[i], V[i].knots, V[i].degree)[0])
+
+   # --- Create Figure ---
+   fig =plt.figure() 
+
+   # ---
+   for ii in range(numPaches):
+      #---------------------------------------------------------
+      for i in range(nbpts):
+         phidx = F1[ii][:,i]
+         phidy = F2[ii][:,i]
+
+      plt.plot(phidx, phidy, color = colors[ii], linewidth = 0.25)
+      for i in range(nbpts):
+         phidx = F1[ii][i,:]
+         phidy = F2[ii][i,:]
+
+      plt.plot(phidx, phidy, color = colors[ii], linewidth = 0.25)
+      plt.plot(xmp[ii].reshape(V[ii].nbasis[0]*V[ii].nbasis[1]), ymp[ii].reshape(V[ii].nbasis[0]*V[ii].nbasis[1]), 'ro', markersize=3.5)
+      #~~~~~~~~~~~~~~~~~~~~
+      #.. Plot the surface
+      phidx = F1[ii][:,0]
+      phidy = F2[ii][:,0]
+      plt.plot(phidx, phidy, 'm', linewidth=2., label = '$Im([0,1]^2_{y=0})$')
+      # ...
+      phidx = F1[ii][:,nbpts-1]
+      phidy = F2[ii][:,nbpts-1]
+      plt.plot(phidx, phidy, 'b', linewidth=2. ,label = '$Im([0,1]^2_{y=1})$')
+      #''
+      phidx = F1[ii][0,:]
+      phidy = F2[ii][0,:]
+      plt.plot(phidx, phidy, 'r',  linewidth=2., label = '$Im([0,1]^2_{x=0})$')
+      # ...
+      phidx = F1[ii][nbpts-1,:]
+      phidy = F2[ii][nbpts-1,:]
+      plt.plot(phidx, phidy, 'g', linewidth= 2., label = '$Im([0,1]^2_{x=1}$)')
+
+   #axes[0].axis('off')
+   plt.margins(0,0)
 
    fig.tight_layout()
    if savefig is not None:

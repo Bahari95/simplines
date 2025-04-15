@@ -234,6 +234,7 @@ print("Usage: python3 cadboundary.py --expr1 'x' --expr2 'y'")
 
 --Xx0 'y' --Xx1 '1.+0.*y' --Xy0 '0.+0.*x' --Xy1 '1.+0.*x' --Yx0 'y' --Yx1 'y' --Yy0 'x' --Yy1 'x'
 
+--Xx0 '(2.*0-1.)*sqrt(1.-(2.*y-1.)**2/2.0)' --Xx1 'sqrt(1.-(2.*y-1.)**2/2.0)' --Xy0 '(2.*x-1.)*sqrt(1.-1./2.0)' --Xy1 '(2.*x-1.)*sqrt(1.-1./2.0)' --Yx0 '(2.*y-1.)*sqrt(1.-1./2.0)' --Yx1 '(2.*y-1.)*sqrt(1.-1./2.0)' --Yy0 '(2.*0.-1.)*sqrt(1.-(2.*x-1.)**2/2.0)' --Yy1 'sqrt(1.-(2.*x-1.)**2/2.0)'
 """
 parser = argparse.ArgumentParser(description="Control plot behavior and save control points.")
 parser.add_argument("--plot", action="store_true", help="Enable plotting and saving control points")

@@ -448,10 +448,10 @@ def  Monge_ampere_equation(nb_ne, geometry = '../fields/circle.xml', degree = No
 # #.........................................................
 if True :
 	# ... unite-squar 0.6
-	geometry = '../cad/figs/Geometry.xml'
+	#geometry = '../fields/mhd.xml'
 	
 	# ... Circular domain
-	#geometry = '../fields/circle.xml'
+	geometry = '../fields/circle.xml'
 	
 	# ... Puzzle piece
 	#geometry = '../fields/Piece.xml'

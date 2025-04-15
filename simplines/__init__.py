@@ -84,6 +84,7 @@ from simplines.fast_diag import ( Poisson)
 from simplines.results_f90 import ( pyccel_sol_field_2d,
                                     pyccel_sol_field_3d, 
                                     least_square_Bspline,
-                                    plot_SolutionMultipatch)
+                                    plot_SolutionMultipatch,
+                                    plot_MeshMultipatch)
 
 from simplines.api import (assemble_matrix, assemble_vector, assemble_scalar, compile_kernel, apply_dirichlet, apply_periodic, apply_zeros)

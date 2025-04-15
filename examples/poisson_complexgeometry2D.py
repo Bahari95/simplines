@@ -119,7 +119,7 @@ VH00       = TensorSpace(VH1, VH2)
 #..... Parameterization from 16*16 elements
 #----------------------------------------
 # ... Circle
-geometry = '../fields/DDM.xml'
+geometry = '../fields/quart_annulus.xml'
 print('#---IN-UNIFORM--MESH-Poisson equation', geometry)
 
 # ... Assembling mapping
@@ -127,7 +127,7 @@ mp             = getGeometryMap(geometry,0)
 xmp = zeros(VH00.nbasis)
 ymp = zeros(VH00.nbasis)
 
-xmp[:,:], ymp[:,:]       = mp.coefs()
+xmp[:,:], ymp[:,:]       = mp.RefineGeometryMap(Nelements=(nelements,nelements))
 
 # ...
 u11_mpH        = StencilVector(VH00.vector_space)
@@ -164,9 +164,7 @@ for nbne in range(RefinNumber):
     #---------------------------------------------------------------
     #.. Prologation by knots insertion matrix of the initial mapping
     #---------------------------------------------------------------
-    M_mp            = prolongation_matrix(VH00, Vh00)
-    xmp             = (M_mp.dot(u11_mpH.toarray())).reshape(Vh00.nbasis)
-    ymp             = (M_mp.dot(u12_mpH.toarray())).reshape(Vh00.nbasis)
+    xmp, ymp        = mp.RefineGeometryMap(Nelements=(nelements,nelements))
     # ...
     u11_mph         = StencilVector(Vh00.vector_space)
     u12_mph         = StencilVector(Vh00.vector_space)
