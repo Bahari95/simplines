@@ -186,14 +186,15 @@ def poisson_solve(V1, V2, V3, V4, V,  V00, V11, V01, V10, u_01 = None, u_10 = No
      
        return u11, u12, x2, x11, x12, H1_norm
 
-degree    = 3
-nelements = 64
+degree      = 3
+nelements   = 64
+quad_degree = degree
 #----------------------
 # create the spline space for each direction
 V1 = SplineSpace(degree=degree, nelements= nelements, nderiv = 1)
 V2 = SplineSpace(degree=degree, nelements= nelements, nderiv = 1)
-V3 = SplineSpace(degree=degree-1, nelements= nelements, nderiv = 1, mixed = True)
-V4 = SplineSpace(degree=degree-1, nelements= nelements, nderiv = 1, mixed = True)
+V3 = SplineSpace(degree=degree-1, nelements= nelements, nderiv = 1, quad_degree = quad_degree)
+V4 = SplineSpace(degree=degree-1, nelements= nelements, nderiv = 1, quad_degree = quad_degree)
 
 # create the tensor space
 Vh00 = TensorSpace(V1, V2)
@@ -265,6 +266,6 @@ divider = make_axes_locatable(axes[1])
 cax     = divider.append_axes("right", size="5%", pad=0.05, aspect = 40) 
 plt.colorbar(ima, cax=cax) 
 fig.tight_layout()
-plt.savefig('figs/density_function.png')
+plt.savefig('figs/solution.png')
 plt.show(block=False)
 plt.close()

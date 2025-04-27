@@ -291,15 +291,15 @@ def  Monge_ampere_equation(nb_ne, geometry = '../fields/circle.xml', degree = No
       degree          = 3
    if times is None :
       times           = 0.
-
+   quad_degree    = degree
    #..... Initialisation and computing optimal mapping for 16*16
    #----------------------
    # create the spline space for each direction
    Hnelements       = 2**4
    V1H             = SplineSpace(degree=degree,   nelements= Hnelements, nderiv = 2)
    V2H             = SplineSpace(degree=degree,   nelements= Hnelements, nderiv = 2)
-   V3H             = SplineSpace(degree=degree-1, nelements= Hnelements, grid = V1H.grid, nderiv = 2, mixed = True)
-   V4H             = SplineSpace(degree=degree-1, nelements= Hnelements, grid = V2H.grid, nderiv = 2, mixed = True)
+   V3H             = SplineSpace(degree=degree-1, nelements= Hnelements, grid = V1H.grid, nderiv = 2, quad_degree = quad_degree)
+   V4H             = SplineSpace(degree=degree-1, nelements= Hnelements, grid = V2H.grid, nderiv = 2, quad_degree = quad_degree)
 
    # create the tensor space
    VH00           = TensorSpace(V1H, V2H)
@@ -315,8 +315,10 @@ def  Monge_ampere_equation(nb_ne, geometry = '../fields/circle.xml', degree = No
    mp             = getGeometryMap(geometry,0)
    xmp, ymp       = mp.coefs()
 
-   xmp = xmp.reshape(VHmp.nbasis)
-   ymp = ymp.reshape(VHmp.nbasis)
+   a, b = -0.2, 1.2
+   xmp = xmp.reshape(VHmp.nbasis)*(b-a) +a
+   a, b = -1.2, 1.2
+   ymp = ymp.reshape(VHmp.nbasis)*(b-a) +a
 
    u11_mpH        = StencilVector(VHmp.vector_space)
    u12_mpH        = StencilVector(VHmp.vector_space)
@@ -337,8 +339,8 @@ def  Monge_ampere_equation(nb_ne, geometry = '../fields/circle.xml', degree = No
       nelements   = 2**n
       V1mg        = SplineSpace(degree=degree,   nelements= nelements, nderiv = 2)
       V2mg        = SplineSpace(degree=degree,   nelements= nelements, nderiv = 2)
-      V3mg        = SplineSpace(degree=degree-1, nelements= nelements, grid = V1mg.grid, nderiv = 2, mixed = True)
-      V4mg        = SplineSpace(degree=degree-1, nelements= nelements, grid = V2mg.grid, nderiv = 2, mixed = True)
+      V3mg        = SplineSpace(degree=degree-1, nelements= nelements, grid = V1mg.grid, nderiv = 2, quad_degree = quad_degree)
+      V4mg        = SplineSpace(degree=degree-1, nelements= nelements, grid = V2mg.grid, nderiv = 2, quad_degree = quad_degree)
 
       # create the tensor space
       Vh00mg      = TensorSpace(V1mg, V2mg)
@@ -376,8 +378,8 @@ def  Monge_ampere_equation(nb_ne, geometry = '../fields/circle.xml', degree = No
       # .. update grids
       V1H         = SplineSpace(degree=degree,   nelements= nelements, nderiv = 2)
       V2H         = SplineSpace(degree=degree,   nelements= nelements, nderiv = 2)
-      V3H         = SplineSpace(degree=degree-1, nelements= nelements, grid = V1H.grid, nderiv = 2, mixed = True)
-      V4H         = SplineSpace(degree=degree-1, nelements= nelements, grid = V2H.grid, nderiv = 2, mixed = True)
+      V3H         = SplineSpace(degree=degree-1, nelements= nelements, grid = V1H.grid, nderiv = 2, quad_degree = quad_degree)
+      V4H         = SplineSpace(degree=degree-1, nelements= nelements, grid = V2H.grid, nderiv = 2, quad_degree = quad_degree)
 
       # create the tensor space
       VH00        = TensorSpace(V1H, V2H)
@@ -398,8 +400,8 @@ def  Monge_ampere_equation(nb_ne, geometry = '../fields/circle.xml', degree = No
    nelements       = 2**nb_ne
    V1              = SplineSpace(degree=degree,   nelements= nelements, nderiv = 2)
    V2              = SplineSpace(degree=degree,   nelements= nelements, nderiv = 2)
-   V3              = SplineSpace(degree=degree-1, nelements= nelements, grid = V1.grid, nderiv = 2, mixed = True)
-   V4              = SplineSpace(degree=degree-1, nelements= nelements, grid = V2.grid, nderiv = 2, mixed = True)
+   V3              = SplineSpace(degree=degree-1, nelements= nelements, grid = V1.grid, nderiv = 2, quad_degree = quad_degree)
+   V4              = SplineSpace(degree=degree-1, nelements= nelements, grid = V2.grid, nderiv = 2, quad_degree = quad_degree)
 
    # create the tensor space
    Vh00            = TensorSpace(V1, V2)
@@ -448,10 +450,10 @@ def  Monge_ampere_equation(nb_ne, geometry = '../fields/circle.xml', degree = No
 # #.........................................................
 if True :
 	# ... unite-squar 0.6
-	#geometry = '../fields/mhd.xml'
-	
+	geometry = '../fields/squar.xml'
+	#geometry = '../fields/mhd.xml'	
 	# ... Circular domain
-	geometry = '../fields/circle.xml'
+	#geometry = '../fields/circle.xml'
 	
 	# ... Puzzle piece
 	#geometry = '../fields/Piece.xml'
@@ -466,7 +468,7 @@ if True :
 	#geometry = '../fields/butterfly.xml'
 
 	# ... nelement = 2**nb_ne
-	nb_ne           = 6
+	nb_ne           = 7
 	
 	nelements, l2_Quality, MG_time, l2_displacement, x11uh , Vh01, x12uh , Vh10, xmp, ymp, Vhmp = Monge_ampere_equation(nb_ne, geometry= geometry, check = True)
 
@@ -578,7 +580,9 @@ from numpy import pi, cos, sin, sqrt, arctan2, exp, cosh
 #rho = lambda x,y : (1. + 7./cosh( 20.*((x-sqrt(4)/2)**2+(1.2*y-0.4)**2 - 2.)**2 ) + 7./cosh( 20.*((x+sqrt(3)/2)**2+(1.2*y-0.4)**2 - 2.)**2 ) )
 #rho = lambda x,y : 1.+ 5.*exp( -200.*((x-0.1)**2+(y*sin(pi*x)**2-0.5)**2 - 0.3)**2)
 #rho = lambda x,y : 1.+ 10.*exp( -10.*(4.*(x-0.1)**2+2.*(y-0.35)**2 - 1.4)**2)
-rho = lambda x,y : 1.+ 10./cosh(2.*(1./(y**2-4.*x*(x-1)**2+1.)-1.))**2 
+rho = lambda x,y : (1.+5./cosh(40.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2+5./cosh(10.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2 +(30./cosh(100.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2+30./cosh(100.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2)*(x>0.9)*(x<1.1))
+
+
 fig =plt.figure() 
 for i in range(nbpts):
    phidx = X[:,i]

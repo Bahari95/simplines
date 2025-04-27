@@ -253,11 +253,12 @@ class getGeometryMap:
                knots = list(map(float, knot_vector.text.strip().split()))
                knots_data.append(knots)
       #....dimension
-      dim              = np.asarray(knots_data).shape[0]
+      dim              = len(knots_data)
       #....number of basis functions
-      nbasis           = [len(np.asarray(knots_data)[n,:]) - degree_data[n]-1 for n in range(dim)]
+      nbasis           = [len(knots_data[n]) - degree_data[n]-1 for n in range(dim)]
       # Extract coefs data
       coefs_element = GeometryMap.find(".//coefs")
+      geo_dim       = int(coefs_element.attrib.get("geoDim")) if coefs_element is not None else None
       coefs_data    = None
       if coefs_element is not None:
          coefs_text = coefs_element.text.strip()
@@ -269,8 +270,9 @@ class getGeometryMap:
       self.GeometryMap = GeometryMap
       self.knots_data  = knots_data
       self._degree     = degree_data
-      self._coefs      = [coefs_data[:,n].reshape(nbasis) for n in range(dim)]
+      self._coefs      = [coefs_data[:,n].reshape(nbasis) for n in range(geo_dim)]
       self._dim        = dim
+      self._geo_dim    = geo_dim
       self._nbasis     = nbasis
       self._nelements  = [nbasis[n]-degree_data[n] for n in range(dim)]
 
@@ -280,6 +282,9 @@ class getGeometryMap:
     @property
     def dim(self):
         return self._dim
+    @property
+    def geo_dim(self):
+        return self._geo_dim
     @property
     def knots(self):
         return self.knots_data
