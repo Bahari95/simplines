@@ -14,14 +14,14 @@ from simplines          import pyccel_sol_field_2d
 from simplines          import least_square_Bspline
 from simplines          import save_geometry_to_xml
 from simplines          import build_dirichlet
+# ... Using Matrices accelerated with Pyccel
+from   simplines                    import assemble_stiffness1D
+from   simplines                    import assemble_mass1D     
 
-from gallery_section_04 import assemble_stiffnessmatrix1D
-from gallery_section_04 import assemble_massmatrix1D
 from gallery_section_04 import assemble_vector_ex01
 from gallery_section_04 import assemble_vector_ex02
 
-assemble_stiffness  = compile_kernel( assemble_stiffnessmatrix1D, arity=2)
-assemble_mass       = compile_kernel( assemble_massmatrix1D, arity=2)
+
 assemble_rhs01      = compile_kernel(assemble_vector_ex01, arity=1)
 assemble_rhs10      = compile_kernel(assemble_vector_ex02, arity=1)
 
@@ -60,22 +60,22 @@ def picard(V1, V2, V, u01, u10, u_01= None, u_10= None, x0 = None, y0 = None, ni
     #. as a technic for applying Dirichlet boundary condition
 
     #..Stiffness and Mass matrix in 1D in the first deriction
-    K1 = assemble_stiffness(V1)
+    K1 = assemble_stiffness1D(V1)
     K1 = K1.tosparse()
     K1 = K1.toarray()[1:-1,1:-1]
     K1 = csr_matrix(K1)
 
-    M1 = assemble_mass(V1)
+    M1 = assemble_mass1D(V1)
     M1 = M1.tosparse()
     M1 = M1.toarray()
 
     # Stiffness and Mass matrix in 1D in the second deriction
-    K2 = assemble_stiffness(V2)
+    K2 = assemble_stiffness1D(V2)
     K2 = K2.tosparse()
     K2 = K2.toarray()[1:-1,1:-1]
     K2 = csr_matrix(K2)
 
-    M2 = assemble_mass(V2)
+    M2 = assemble_mass1D(V2)
     M2 = M2.tosparse()
     M2 = M2.toarray()
     # ...
@@ -235,6 +235,7 @@ print("Usage: python3 cadboundary.py --expr1 'x' --expr2 'y'")
 --Xx0 'y' --Xx1 '1.+0.*y' --Xy0 '0.+0.*x' --Xy1 '1.+0.*x' --Yx0 'y' --Yx1 'y' --Yy0 'x' --Yy1 'x'
 
 --Xx0 '(2.*0-1.)*sqrt(1.-(2.*y-1.)**2/2.0)' --Xx1 'sqrt(1.-(2.*y-1.)**2/2.0)' --Xy0 '(2.*x-1.)*sqrt(1.-1./2.0)' --Xy1 '(2.*x-1.)*sqrt(1.-1./2.0)' --Yx0 '(2.*y-1.)*sqrt(1.-1./2.0)' --Yx1 '(2.*y-1.)*sqrt(1.-1./2.0)' --Yy0 '(2.*0.-1.)*sqrt(1.-(2.*x-1.)**2/2.0)' --Yy1 'sqrt(1.-(2.*x-1.)**2/2.0)'
+
 """
 parser = argparse.ArgumentParser(description="Control plot behavior and save control points.")
 parser.add_argument("--plot", action="store_true", help="Enable plotting and saving control points")
@@ -358,7 +359,7 @@ if np.min(Z) < 0. :
         uy, c, d  = pyccel_sol_field_2d((nbpts,nbpts),  x12uh , Vh.knots, Vh.degree)[:-2]
 
         Z = a*d-b*c   
-
+        
 print( ' min of Jacobian in the intire unit square =', np.min(Z) )
 print( ' max of Jacobian in the intire unit square =', np.max(Z) )
 

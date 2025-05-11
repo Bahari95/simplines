@@ -255,7 +255,7 @@ class getGeometryMap:
       #....dimension
       dim              = len(knots_data)
       #....number of basis functions
-      nbasis           = [len(knots_data[n]) - degree_data[n]-1 for n in range(dim)]
+      _nbasis           = [len(knots_data[n]) - degree_data[n]-1 for n in range(dim)]
       # Extract coefs data
       coefs_element = GeometryMap.find(".//coefs")
       geo_dim       = int(coefs_element.attrib.get("geoDim")) if coefs_element is not None else None
@@ -270,13 +270,13 @@ class getGeometryMap:
       self.GeometryMap = GeometryMap
       self.knots_data  = knots_data
       self._degree     = degree_data
-      self._coefs      = [coefs_data[:,n].reshape(nbasis) for n in range(geo_dim)]
+      self._coefs      = [coefs_data[:,n].reshape(_nbasis) for n in range(geo_dim)]
       self._dim        = dim
       self._geo_dim    = geo_dim
-      self._nbasis     = nbasis
-      self._nelements  = [nbasis[n]-degree_data[n] for n in range(dim)]
+      self._nbasis     = _nbasis
+      self._nelements  = [_nbasis[n]-degree_data[n] for n in range(dim)]
 
-    @property
+    #@property
     def nbasis(self):
         return self._nbasis
     @property
@@ -319,6 +319,6 @@ class getGeometryMap:
         coefs_data = zeros((2, Vh.nbasis[0], Vh.nbasis[1]))
         # Refine the coefs
         M_mp      = prolongation_matrix(VH, Vh)
-        coefs_data[0]      = (M_mp.dot(self.coefs()[0].reshape(self.nbasis[0]*self.nbasis[1]))).reshape(Vh.nbasis)
-        coefs_data[1]      = (M_mp.dot(self.coefs()[1].reshape(self.nbasis[0]*self.nbasis[1]))).reshape(Vh.nbasis)        
+        coefs_data[0]      = (M_mp.dot(self.coefs()[0].reshape(self._nbasis[0]*self._nbasis[1]))).reshape(Vh.nbasis)
+        coefs_data[1]      = (M_mp.dot(self.coefs()[1].reshape(self._nbasis[0]*self._nbasis[1]))).reshape(Vh.nbasis)        
         return coefs_data

@@ -14,6 +14,11 @@ from simplines import Poisson
 from simplines import least_square_Bspline
 #.. Prologation by knots insertion matrix
 from simplines import prolongation_matrix
+# ... Using Matrices accelerated with Pyccel
+from   simplines                    import assemble_stiffness1D
+from   simplines                    import assemble_mass1D      
+from   simplines                    import assemble_matrix_ex01
+from   simplines                    import assemble_matrix_ex02
 
 #from matplotlib.pyplot import plot, show
 import matplotlib.pyplot as plt
@@ -26,14 +31,6 @@ import timeit
 import time
 
 start = time.time()
-from examples.gallery.gallery_section_07 import assemble_stiffnessmatrix1D
-from examples.gallery.gallery_section_07 import assemble_massmatrix1D
-from examples.gallery.gallery_section_07 import assemble_matrix_ex01
-from examples.gallery.gallery_section_07 import assemble_matrix_ex02
-assemble_stiffness1D = compile_kernel( assemble_stiffnessmatrix1D, arity=2)
-assemble_mass1D      = compile_kernel( assemble_massmatrix1D, arity=2)
-assemble_matrix_ex01 = compile_kernel(assemble_matrix_ex01, arity=1)
-assemble_matrix_ex02 = compile_kernel(assemble_matrix_ex02, arity=1)
 
 #---In Poisson equation
 from examples.gallery.gallery_section_07 import assemble_vector_ex01 #---1 : In uniform mesh

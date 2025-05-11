@@ -16,22 +16,22 @@ from   simplines                    import quadratures_in_admesh
 from   simplines                    import prolongation_matrix
 # ... Using Kronecker algebra accelerated with Pyccel
 from   simplines                    import Poisson
-#from   kronecker.fast_diag          import Poisson
+# ... Using Matrices accelerated with Pyccel
+from   simplines                    import assemble_stiffness1D
+from   simplines                    import assemble_mass1D      
+from   simplines                    import assemble_matrix_ex01
+from   simplines                    import assemble_matrix_ex02
 # ...   load a geometry from xml file 
 from   simplines                    import getGeometryMap
 
-from gallery_section_06             import assemble_stiffnessmatrix1D
-from gallery_section_06             import assemble_massmatrix1D
-from gallery_section_06             import assemble_matrix_ex01
-from gallery_section_06             import assemble_matrix_ex02
+#from gallery_section_06             import assemble_stiffnessmatrix1D
+#from gallery_section_06             import assemble_massmatrix1D
+#from gallery_section_06             import assemble_matrix_ex01
+#from gallery_section_06             import assemble_matrix_ex02
 #..
 from gallery_section_06             import assemble_vector_ex01
 from gallery_section_06             import assemble_Quality_ex01
 
-assemble_stiffness1D = compile_kernel( assemble_stiffnessmatrix1D, arity=2)
-assemble_mass1D      = compile_kernel( assemble_massmatrix1D, arity=2)
-assemble_matrix_ex01 = compile_kernel(assemble_matrix_ex01, arity=1)
-assemble_matrix_ex02 = compile_kernel(assemble_matrix_ex02, arity=1)
 #..
 assemble_rhs         = compile_kernel(assemble_vector_ex01, arity=1)
 assemble_Quality     = compile_kernel(assemble_Quality_ex01, arity=1)
@@ -580,7 +580,9 @@ from numpy import pi, cos, sin, sqrt, arctan2, exp, cosh
 #rho = lambda x,y : (1. + 7./cosh( 20.*((x-sqrt(4)/2)**2+(1.2*y-0.4)**2 - 2.)**2 ) + 7./cosh( 20.*((x+sqrt(3)/2)**2+(1.2*y-0.4)**2 - 2.)**2 ) )
 #rho = lambda x,y : 1.+ 5.*exp( -200.*((x-0.1)**2+(y*sin(pi*x)**2-0.5)**2 - 0.3)**2)
 #rho = lambda x,y : 1.+ 10.*exp( -10.*(4.*(x-0.1)**2+2.*(y-0.35)**2 - 1.4)**2)
-rho = lambda x,y : (1.+5./cosh(40.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2+5./cosh(10.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2 +(30./cosh(100.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2+30./cosh(100.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2)*(x>0.9)*(x<1.1))
+#rho = lambda x,y : (1.+5./cosh(40.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2+5./cosh(10.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2 +(30./cosh(100.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2+30./cosh(100.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2)*(x>0.9)*(x<1.1))
+
+rho = lambda x,y : exp( -1000.*abs(1./(abs(y**2-4.*x*(x-1)**2)+1.)-1.))
 
 
 fig =plt.figure() 
@@ -739,7 +741,7 @@ plt.axis('off')
 plt.margins(0,0)
 fig.tight_layout()
 plt.savefig('figs/adaptive_meshes.png')
-plt.show(block=False)
+plt.show(block=True)
 plt.close()
 
 Z = rho(F1, F2)
@@ -784,8 +786,42 @@ i     = nbpts-1
 phidx = F1[i,:]
 phidy = F2[i,:]
 plt.plot(phidx, phidy, '-r', linewidth = 2.)
-plt.xlim(0., 0.5)
-plt.ylim(0.5, 1.)
+plt.xlim(0.8, 1.)
+plt.ylim(0.35, 0.65)
 plt.savefig('figs/close_up_adaptive_meshes.png')
-plt.show(block=False)
+plt.show(block=True)
 plt.close()
+
+
+# Create a grid
+x = np.linspace(-0.5, 2.5, 400)
+y = np.linspace(-1, 1, 400)
+X, Y = np.meshgrid(x, y)
+
+# Define the functions
+F0 = Y**2 - X*(X-1)**2
+# F2 = Y**2 - X*(X-1)**2 - 2
+# C0 = (X-0.5)**2 + Y**2 - (np.sqrt(2)/10)**2
+# C1 = (X-2)**2 + Y**2 - 0.25
+
+# Plot
+plt.figure(figsize=(8,8))
+
+# Contour for F0 = 0
+plt.contour(X, Y, F0, levels=[0], colors='blue', linewidths=2, linestyles='solid', label='F0')
+# Contour for F2 = 0
+# plt.contour(X, Y, F2, levels=[0], colors='cyan', linewidths=2, linestyles='dashed', label='F2')
+# # Contour for C0 = 0
+# plt.contour(X, Y, C0, levels=[0], colors='red', linewidths=2, linestyles='solid', label='C0')
+# # Contour for C1 = 0
+# plt.contour(X, Y, C1, levels=[0], colors='green', linewidths=2, linestyles='dashed', label='C1')
+
+# Line for x = 2
+#plt.axvline(x=2, color='magenta', linestyle='dotted', linewidth=2, label='X2')
+
+plt.xlim(-0.5, 2.5)
+plt.ylim(-1, 1)
+plt.gca().set_aspect('equal')
+plt.title('Iso-curves and Boundaries')
+plt.grid(True)
+plt.show()

@@ -3,124 +3,6 @@ __all__ = ['assemble_vector_ex01',
 ]
 from pyccel.decorators import types
 
-
-
-# assembles stiffness matrix 1D
-#==============================================================================
-@types('int', 'int', 'int[:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]')
-def assemble_stiffnessmatrix1D(ne, degree, spans, basis, weights, points,  matrix):
-
-    # ... sizes
-    k1 = weights.shape[1]
-    # ... build matrices
-    for ie1 in range(0, ne):
-            i_span_1 = spans[ie1]        
-            # evaluation dependant uniquement de l'element
-
-            for il_1 in range(0, degree+1):
-                i1 = i_span_1 - degree + il_1
-                for il_2 in range(0, degree+1):
-                            i2 = i_span_1 - degree + il_2
-                            v  = 0.0
-                            for g1 in range(0, k1):
-                                
-                                    bi_x = basis[ie1, il_1, 1, g1]
-                                    bj_x = basis[ie1, il_2, 1, g1]
-                                    
-                                    wvol = weights[ie1, g1]
-                                    
-                                    v   += bi_x * bj_x * wvol
-
-                            matrix[ degree+ i1, degree+ i2-i1]  += v
-
-# assembles mass matrix 1D
-#==============================================================================
-@types('int', 'int', 'int[:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]')
-def assemble_massmatrix1D(ne, degree, spans, basis, weights, points, matrix):
-
-    # ... sizes
-    k1 = weights.shape[1]
-    # ... build matrices
-    for ie1 in range(0, ne):
-            i_span_1 = spans[ie1]        
-            # evaluation dependant uniquement de l'element
-
-            for il_1 in range(0, degree+1):
-                i1 = i_span_1 - degree + il_1
-                for il_2 in range(0, degree+1):
-                            i2 = i_span_1 - degree + il_2
-                            v  = 0.0
-                            for g1 in range(0, k1):
-                                
-                                    bi_0 = basis[ie1, il_1, 0, g1]
-                                    bj_0 = basis[ie1, il_2, 0, g1]
-                                    
-                                    wvol = weights[ie1, g1]
-                                    
-                                    v   += bi_0 * bj_0 * wvol
-
-                            matrix[degree+i1, degree+ i2-i1]  += v
-    # ...
-
-@types('int', 'int', 'int', 'int', 'int[:]', 'int[:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]')
-def assemble_matrix_ex01(ne1, ne2, p1, p2, spans_1, spans_2, basis_1, basis_2, weights_1, weights_2, points_1, points_2, matrix):
-
-    # ... sizes
-    k1 = weights_1.shape[1]
-
-    # ... build matrices
-    for ie1 in range(0, ne1):
-            i_span_1 = spans_1[ie1]  
-            i_span_2 = spans_2[ie1]      
-            # evaluation dependant uniquement de l'element
-
-            for il_1 in range(0, p1+1):
-                i1 = i_span_1 - p1 + il_1
-                for il_2 in range(0, p2+1):
-                            i2 = i_span_2 - p2 + il_2
-                            v  = 0.0
-                            for g1 in range(0, k1):
-                                
-                                    bi_x = basis_1[ie1, il_1, 1, g1]
-                                    bj_0 = basis_2[ie1, il_2, 0, g1]
-                                    
-                                    wvol = weights_1[ie1, g1]
-                                    
-                                    v   += bi_x * bj_0 * wvol
-
-                            matrix[i1+p1,i2+p2]  += v
-    # ...
-
-
-@types('int', 'int', 'int', 'int', 'int[:]', 'int[:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]')
-def assemble_matrix_ex02(ne1, ne2, p1, p2, spans_1, spans_2, basis_1, basis_2, weights_1, weights_2, points_1, points_2, matrix):
-
-    # ... sizes
-    k1 = weights_1.shape[1]
-
-    # ... build matrices
-    for ie1 in range(0, ne1):
-            i_span_1 = spans_1[ie1]
-            i_span_2 = spans_2[ie1]        
-            # evaluation dependant uniquement de l'element
-
-            for il_1 in range(0, p1+1):
-                i1 = i_span_1 - p1 + il_1
-                for il_2 in range(0, p2+1):
-                            i2 = i_span_2 - p2 + il_2
-                            v  = 0.0
-                            for g1 in range(0, k1):
-                                
-                                    bi_0 = basis_1[ie1, il_1, 0, g1]
-                                    bj_x = basis_2[ie1, il_2, 1, g1]
-                                    
-                                    wvol = weights_1[ie1, g1]
-                                    
-                                    v   += bi_0 * bj_x * wvol
-
-                            matrix[i1+p1,i2+p2]  += v
-    # ...
-
 #==============================================================================Assemble rhs Poisson
 #---1 : In uniform mesh
 @types('int', 'int', 'int', 'int', 'int', 'int', 'int', 'int','int', 'int', 'int', 'int', 'int[:]', 'int[:]','int[:]', 'int[:]','int[:]', 'int[:]', 'double[:,:,:,:]', 'double[:,:,:,:]',  'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]',  'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'int[:,:,:,:]', 'int[:,:,:,:]', 'double[:,:,:,:,:,:]', 'double[:,:,:,:,:,:]', 'double[:,:]')
@@ -185,7 +67,7 @@ def assemble_vector_ex01(ne1, ne2, ne3, ne4, ne5, ne6, p1, p2, p3, p4, p5, p6, s
                    # rho  = (1.+ 9./(1.+(10.*sqrt((x-0.5-0.25*0.)**2+(y-0.5)**2)*cos(arctan2(y-0.5,x-0.5-0.25*0.) -20.*((x-0.5-0.25*0.)**2+(y-0.5)**2)))**2) )
                     #rho   = (1. + 7./cosh( 5.*((x-sqrt(4)/2)**2+(y-0.5)**2 - (pi/2)**2) )**2 + 7./cosh( 5.*((x+sqrt(3)/2)**2+(y-0.5)**2 - (pi/2)**2) )**2)
                     #rho   = (1.+ 10./cosh(2.*(1./(y**2-4.*x*(x-1)**2+1.)-1.))**2 )
-                    rho   = (1.+5./cosh(40.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2+5./cosh(10.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2 +(30./cosh(100.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2+30./cosh(100.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2)*(x>0.95)*(x<1.05))
+                    rho   = (1.+5./cosh(40.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2+5./cosh(10.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2 +100*exp( -1000.*abs(1./(abs(y**2-4.*x*(x-1)**2)+1.)-1.))*(x>0.95)*(x<1.05))#(30./cosh(100.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2+30./cosh(100.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2)*(x>0.95)*(x<1.05))
                     #rho   = 1.+ 10.*exp( -10.*(4.*(x-0.1)**2+2.*(y-0.35)**2 - 1.4)**2)
                     Crho += rho * wvol 
     #..                
@@ -265,7 +147,7 @@ def assemble_vector_ex01(ne1, ne2, ne3, ne4, ne5, ne6, p1, p2, p3, p4, p5, p6, s
                     #rho  = Crho/(1.+5.*exp(-100.*abs((x-0.45)**2+(y-0.4)**2-0.1))+5.*exp(-100.*abs(x**2+y**2-0.2))+5.*exp(-100*abs((x+0.45)**2 +(y-0.4)**2-0.1)) +7.*exp(-100.*abs(x**2+(y+1.25)**2-0.4)) )
                     #rho  = Crho/(2.+sin(10.*pi*sqrt((x-0.6)**2+(y-0.6)**2)) )#0.8
                     #rho = Crho/(1.+ 9./(1.+(10.*sqrt((x-0.5-0.25*0.)**2+(y-0.5)**2)*cos(arctan2(y-0.5,x-0.5-0.25*0.) -20.*((x-0.5-0.25*0.)**2+(y-0.5)**2)))**2) )
-                    rho  = Crho/(1.+5./cosh(40.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2+5./cosh(10.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2 +(30./cosh(100.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2+30./cosh(100.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2)*(x>0.95)*(x<1.05))
+                    rho  = Crho/(1.+5./cosh(40.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2+5./cosh(10.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2 +100*exp( -1000.*abs(1./(abs(y**2-4.*x*(x-1)**2)+1.)-1.))*(x>0.95)*(x<1.05))#(30./cosh(100.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2+30./cosh(100.*(2./(y**2-4.*x*(x-1)**2+1.)-2.))**2)*(x>0.95)*(x<1.05))
                     #rho  = Crho/(1.+ 10.*exp( -10.*(4.*(x-0.1)**2+2.*(y-0.35)**2 - 1.4)**2))
 
                     #...

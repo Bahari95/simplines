@@ -12,16 +12,9 @@ from simplines import StencilMatrix
 from simplines import StencilVector
 from simplines import pyccel_sol_field_3d
 from simplines import Poisson
-
-# .. Matrices in 1D ..
-from examples.gallery.gallery_section_03 import assemble_stiffnessmatrix1D
-from examples.gallery.gallery_section_03 import assemble_massmatrix1D
-from examples.gallery.gallery_section_03 import assemble_matrix_ex11
-from examples.gallery.gallery_section_03 import assemble_matrix_ex12
-assemble_stiffness1D = compile_kernel( assemble_stiffnessmatrix1D, arity=2)
-assemble_mass1D      = compile_kernel( assemble_massmatrix1D, arity=2)
-assemble_matrix_ex01 = compile_kernel(assemble_matrix_ex11, arity=2)
-assemble_matrix_ex10 = compile_kernel(assemble_matrix_ex12, arity=2)
+# ... Using Matrices accelerated with Pyccel
+from   simplines                    import assemble_stiffness1D
+from   simplines                    import assemble_mass1D     
 
 #---In Poisson equation
 from examples.gallery.gallery_section_03 import assemble_vector_ex01    #---1 : In uniform mesh

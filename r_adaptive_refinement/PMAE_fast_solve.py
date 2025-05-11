@@ -13,31 +13,25 @@ from   simplines                    import StencilMatrix
 from   simplines                    import StencilVector
 from   simplines                    import pyccel_sol_field_2d
 from   simplines                    import quadratures_in_admesh
-#.. Prologation by knots insertion matrix
+# ... Prologation by knots insertion matrix
 from   simplines                    import prolongation_matrix
 # ... Using Kronecker algebra accelerated with Pyccel
 from   simplines                    import Poisson
 # ...   load a geometry from xml file 
 from   simplines                    import getGeometryMap
-
-from gallery_section_07             import assemble_stiffnessmatrix1D
-from gallery_section_07             import assemble_massmatrix1D
-from gallery_section_07             import assemble_matrix_ex01
-from gallery_section_07             import assemble_matrix_ex02
-#..
+# ... Using Matrices accelerated with Pyccel
+from   simplines                    import assemble_stiffness1D
+from   simplines                    import assemble_mass1D      
+from   simplines                    import assemble_matrix_ex01
+from   simplines                    import assemble_matrix_ex02
+# ...
 from gallery_section_07             import assemble_vector_ex01
 from gallery_section_07             import assemble_Quality_ex01
 from gallery_section_07             import assemble_vector_ex00
-#...
-assemble_stiffness1D = compile_kernel( assemble_stiffnessmatrix1D, arity=2)
-assemble_mass1D      = compile_kernel( assemble_massmatrix1D, arity=2)
-assemble_matrix_ex01 = compile_kernel(assemble_matrix_ex01, arity=1)
-assemble_matrix_ex02 = compile_kernel(assemble_matrix_ex02, arity=1)
-#..
+# ...
 assemble_rhs_in      = compile_kernel(assemble_vector_ex00, arity=1)
 assemble_rhs         = compile_kernel(assemble_vector_ex01, arity=1)
 assemble_Quality     = compile_kernel(assemble_Quality_ex01, arity=1)
-
 
 #from matplotlib.pyplot import plot, show
 import matplotlib.pyplot            as     plt

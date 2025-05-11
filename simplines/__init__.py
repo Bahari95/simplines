@@ -77,7 +77,11 @@ from simplines.utilities import ( plot_field_1d,
 
 from simplines.results import ( sol_field_2d)
 
-from simplines.ad_mesh_tools import ( quadratures_in_admesh)
+from simplines.ad_mesh_tools import ( quadratures_in_admesh,
+                                     assemble_stiffness1D,
+                                     assemble_mass1D,
+                                     assemble_matrix_ex01,
+                                     assemble_matrix_ex02)
 
 from simplines.fast_diag import ( Poisson)
 
@@ -85,6 +89,7 @@ from simplines.results_f90 import ( pyccel_sol_field_2d,
                                     pyccel_sol_field_3d, 
                                     least_square_Bspline,
                                     plot_SolutionMultipatch,
-                                    plot_MeshMultipatch)
+                                    plot_MeshMultipatch,
+                                    plot_JacobianMultipatch)
 
 from simplines.api import (assemble_matrix, assemble_vector, assemble_scalar, compile_kernel, apply_dirichlet, apply_periodic, apply_zeros)

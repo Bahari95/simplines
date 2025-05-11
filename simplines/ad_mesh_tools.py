@@ -26,7 +26,10 @@ class quadratures_in_admesh(object):
 		args  = []
 		args += list(V.nelements)
 		args += list(V.degree)
-		args += list(V.spans)
+		if V.dim ==6 :
+			args += list(V.spans[:-2])
+		else :
+			args += list(V.spans)			
 		args += list(V.basis)
 		args += list(V.weights)
 		args += list(V.points)
@@ -78,3 +81,11 @@ class quadratures_in_admesh(object):
 			return spans_ad1, spans_ad2, basis_ad1, basis_ad2
 		else :
 			print("Error please Try with StencilVector")
+
+#... Some kernels for assembling matrices
+from   functools import partial
+from   .api      import assemble_matrix, assemble_vector
+assemble_stiffness1D = partial(assemble_matrix, core.assemble_stiffnessmatrix1D)
+assemble_mass1D      = partial(assemble_matrix, core.assemble_massmatrix1D)
+assemble_matrix_ex01 = partial(assemble_vector, core.assemble_matrix_ex01)
+assemble_matrix_ex02 = partial(assemble_vector, core.assemble_matrix_ex02)
