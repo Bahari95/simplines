@@ -290,7 +290,7 @@ def plot_JacobianMultipatch(nbpts, V, xmp, ymp, savefig = None, plot = True):
       cbar.ax.tick_params(labelsize=15)
       cbar.ax.yaxis.label.set_fontweight('bold')
    # --- Formatting ---
-   axes.set_title("Solution the in whole domain ", fontweight='bold')
+   axes.set_title("Jacobian the in whole domain ", fontweight='bold')
    for label in axes.get_xticklabels() + axes.get_yticklabels():
       label.set_fontweight('bold')
 
@@ -325,12 +325,12 @@ def plot_MeshMultipatch(nbpts, V, xmp, ymp, savefig = None, plot = True):
          phidx = F1[ii][:,i]
          phidy = F2[ii][:,i]
 
-      plt.plot(phidx, phidy, color = colors[ii], linewidth = 0.25)
+      plt.plot(phidx, phidy, linewidth = 0.25)
       for i in range(nbpts):
          phidx = F1[ii][i,:]
          phidy = F2[ii][i,:]
 
-      plt.plot(phidx, phidy, color = colors[ii], linewidth = 0.25)
+      plt.plot(phidx, phidy, linewidth = 0.25)
       plt.plot(xmp[ii].reshape(V[ii].nbasis[0]*V[ii].nbasis[1]), ymp[ii].reshape(V[ii].nbasis[0]*V[ii].nbasis[1]), 'ro', markersize=3.5)
       #~~~~~~~~~~~~~~~~~~~~
       #.. Plot the surface
