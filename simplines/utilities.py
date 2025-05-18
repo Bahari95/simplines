@@ -183,40 +183,71 @@ def save_geometry_to_xml(V, Gmap, name = 'Geometry', locname = None):
     # Root element
     root = ET.Element('xml')
     root.text  = '\n'
-    
-    # Geometry element
-    geometry    = ET.SubElement(root, 'Geometry', type='TensorNurbs2', id='0')
-    geometry.text = '\n'
-    basis_outer = ET.SubElement(geometry, 'Basis', type='TensorNurbsBasis2')
-    basis_outer.text = '\n'
-    basis_inner = ET.SubElement(basis_outer, 'Basis', type='TensorBSplineBasis2')
-    basis_inner.text = '\n'
+    if isinstance(Gmap, (list, tuple)):
+        for pid, gmap in enumerate(Gmap):
+            geom = ET.SubElement(root, 'Geometry', type='TensorNurbs2', id=str(pid))
+            geom.text = '\n'
 
-    # Add basis elements
-    for i in range(2):
-        basis            = ET.SubElement(basis_inner, 'Basis', type='BSplineBasis', index=str(i))
-        basis.text       = '\n'
-        knot_vector      = ET.SubElement(basis, 'KnotVector', degree=str(V.degree[0]))
-        knot_vector.text = '\n' + ' '.join(map(str, V.knots[i])) + '\n'
-    
-    # Add coefficients (control points)
-    coefs      = ET.SubElement(basis_inner, 'coefs', geoDim='2')
-    coefs.text = '\n' + '\n'.join(' '.join(f'{v:.20e}' for v in row) for row in Gmap) + '\n'
+            outer = ET.SubElement(geom, 'Basis', type='TensorNurbsBasis2'); outer.text = '\n'
+            inner = ET.SubElement(outer, 'Basis', type='TensorBSplineBasis2'); inner.text = '\n'
 
-    # Close inner Basis element properly
-    basis_inner.tail = '\n'
-    basis_outer.tail = '\n'
+            # mêmes nœuds / degrés pour chaque patch
+            for d in range(2):
+                b = ET.SubElement(inner, 'Basis', type='BSplineBasis', index=str(d)); b.text = '\n'
+                kv = ET.SubElement(b, 'KnotVector', degree=str(V.degree[d]))
+                kv.text = '\n' + ' '.join(map(str, V.knots[d])) + '\n'
+                b.tail = '\n'
 
-    # MultiPatch element
-    multipatch   = ET.SubElement(root, 'MultiPatch', parDim='2', id='1')
-    multipatch.text = '\n'
-    patches      = ET.SubElement(multipatch, 'patches', type='id_range')
-    patches.text = '\n0 0\n'
-    
-    # Boundary conditions
-    boundary      = ET.SubElement(multipatch, 'boundary')
-    boundary.text = '\n  0 1\n  0 2\n  0 3\n  0 4\n '
-    boundary.tail = '\n'
+            co = ET.SubElement(inner, 'coefs', geoDim='2')
+            co.text = '\n' + '\n'.join(
+                ' '.join(f'{v:.20e}' for v in row) for row in gmap
+            ) + '\n'
+            co.tail = '\n'            
+
+            inner.tail = '\n'; outer.tail = '\n'; geom.tail = '\n'
+
+        # ---------- MultiPatch ----------
+        mp = ET.SubElement(root, 'MultiPatch', parDim='2', id=str(len(Gmap))); mp.text = '\n'
+        pr = ET.SubElement(mp, 'patches', type='id_range')
+        pr.text = f'\n0 {len(Gmap)-1}\n'
+        bd = ET.SubElement(mp, 'boundary')
+        bd.text = '\n' + ''.join(f'  {i} 1\n  {i} 2\n  {i} 3\n  {i} 4\n' for i in range(len(Gmap)))
+        bd.tail = '\n'
+
+    else :
+        # Geometry element
+        geometry    = ET.SubElement(root, 'Geometry', type='TensorNurbs2', id='0')
+        geometry.text = '\n'
+        basis_outer = ET.SubElement(geometry, 'Basis', type='TensorNurbsBasis2')
+        basis_outer.text = '\n'
+        basis_inner = ET.SubElement(basis_outer, 'Basis', type='TensorBSplineBasis2')
+        basis_inner.text = '\n'
+
+        # Add basis elements
+        for i in range(2):
+            basis            = ET.SubElement(basis_inner, 'Basis', type='BSplineBasis', index=str(i))
+            basis.text       = '\n'
+            knot_vector      = ET.SubElement(basis, 'KnotVector', degree=str(V.degree[0]))
+            knot_vector.text = '\n' + ' '.join(map(str, V.knots[i])) + '\n'
+        
+        # Add coefficients (control points)
+        coefs      = ET.SubElement(basis_inner, 'coefs', geoDim='2')
+        coefs.text = '\n' + '\n'.join(' '.join(f'{v:.20e}' for v in row) for row in Gmap) + '\n'
+
+        # Close inner Basis element properly
+        basis_inner.tail = '\n'
+        basis_outer.tail = '\n'
+
+        # MultiPatch element
+        multipatch   = ET.SubElement(root, 'MultiPatch', parDim='2', id='1')
+        multipatch.text = '\n'
+        patches      = ET.SubElement(multipatch, 'patches', type='id_range')
+        patches.text = '\n0 0\n'
+        
+        # Boundary conditions
+        boundary      = ET.SubElement(multipatch, 'boundary')
+        boundary.text = '\n  0 1\n  0 2\n  0 3\n  0 4\n '
+        boundary.tail = '\n'
     
     # Convert to XML string with declaration
     xml_string = ET.tostring(root, encoding='utf-8').decode('utf-8')

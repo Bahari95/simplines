@@ -290,7 +290,7 @@ def plot_JacobianMultipatch(nbpts, V, xmp, ymp, savefig = None, plot = True):
       cbar.ax.tick_params(labelsize=15)
       cbar.ax.yaxis.label.set_fontweight('bold')
    # --- Formatting ---
-   axes.set_title("Jacobian the in whole domain ", fontweight='bold')
+   #axes.set_title("Jacobian the in whole domain ", fontweight='bold')
    for label in axes.get_xticklabels() + axes.get_yticklabels():
       label.set_fontweight('bold')
 
@@ -302,7 +302,7 @@ def plot_JacobianMultipatch(nbpts, V, xmp, ymp, savefig = None, plot = True):
    return 0
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def plot_MeshMultipatch(nbpts, V, xmp, ymp, savefig = None, plot = True): 
+def plot_MeshMultipatch(nbpts, V, xmp, ymp, cp = True, savefig = None, plot = True): 
    ''''
    Plot the solution of the problem in the whole domain
    '''
@@ -325,30 +325,40 @@ def plot_MeshMultipatch(nbpts, V, xmp, ymp, savefig = None, plot = True):
          phidx = F1[ii][:,i]
          phidy = F2[ii][:,i]
 
-      plt.plot(phidx, phidy, linewidth = 0.25)
+         plt.plot(phidx, phidy, linewidth = 0.5, color = 'b')
       for i in range(nbpts):
          phidx = F1[ii][i,:]
          phidy = F2[ii][i,:]
 
-      plt.plot(phidx, phidy, linewidth = 0.25)
-      plt.plot(xmp[ii].reshape(V[ii].nbasis[0]*V[ii].nbasis[1]), ymp[ii].reshape(V[ii].nbasis[0]*V[ii].nbasis[1]), 'ro', markersize=3.5)
+         plt.plot(phidx, phidy, linewidth = 0.5, color = 'b')
+      if cp:
+         plt.plot(xmp[ii].reshape(V[ii].nbasis[0]*V[ii].nbasis[1]), ymp[ii].reshape(V[ii].nbasis[0]*V[ii].nbasis[1]), 'ro', markersize=3.5)
       #~~~~~~~~~~~~~~~~~~~~
       #.. Plot the surface
-      phidx = F1[ii][:,0]
-      phidy = F2[ii][:,0]
-      plt.plot(phidx, phidy, 'm', linewidth=2., label = '$Im([0,1]^2_{y=0})$')
-      # ...
-      phidx = F1[ii][:,nbpts-1]
-      phidy = F2[ii][:,nbpts-1]
-      plt.plot(phidx, phidy, 'b', linewidth=2. ,label = '$Im([0,1]^2_{y=1})$')
+      if ii == 1:
+         phidx = F1[ii][:,0]
+         phidy = F2[ii][:,0]
+         plt.plot(phidx, phidy, '--k', linewidth=2., label = '$Im([0,1]^2_{y=0})$')
+         # ...
+         phidx = F1[ii][:,nbpts-1]
+         phidy = F2[ii][:,nbpts-1]
+         plt.plot(phidx, phidy, '-g', linewidth=2. ,label = '$Im([0,1]^2_{y=1})$')
+      else :
+         phidx = F1[ii][:,0]
+         phidy = F2[ii][:,0]
+         plt.plot(phidx, phidy, '-g', linewidth=2., label = '$Im([0,1]^2_{y=0})$')
+         # ...
+         phidx = F1[ii][:,nbpts-1]
+         phidy = F2[ii][:,nbpts-1]
+         plt.plot(phidx, phidy, '--k', linewidth=2. ,label = '$Im([0,1]^2_{y=1})$')
       #''
       phidx = F1[ii][0,:]
       phidy = F2[ii][0,:]
-      plt.plot(phidx, phidy, 'r',  linewidth=2., label = '$Im([0,1]^2_{x=0})$')
+      plt.plot(phidx, phidy, '-r',  linewidth=2., label = '$Im([0,1]^2_{x=0})$')
       # ...
       phidx = F1[ii][nbpts-1,:]
       phidy = F2[ii][nbpts-1,:]
-      plt.plot(phidx, phidy, 'g', linewidth= 2., label = '$Im([0,1]^2_{x=1}$)')
+      plt.plot(phidx, phidy, '-r', linewidth= 2., label = '$Im([0,1]^2_{x=1}$)')
 
    #axes[0].axis('off')
    plt.margins(0,0)
