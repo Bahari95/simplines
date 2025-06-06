@@ -87,14 +87,14 @@ def poisson_solve(V1, V2, V, u11_mpH, u12_mpH, u_d):
     Norm    = assemble_norm_un(V, fields=[u11_mpH, u12_mpH, u])
     norm    = Norm.toarray()
     l2_norm = norm[0]
-    H1_norm =  norm[1]
+    H1_norm = norm[1]
     return u, x, l2_norm, H1_norm, cond_M
 
 
 degree      = 2
 quad_degree = degree+3
 nbpts       = 100 # FOR PLOT
-RefinNumber = 1 # for refinement
+RefinNumber = 0 # for refinement
 table       = zeros((RefinNumber+1,6))
 i           = 1
 times       = []
@@ -113,38 +113,40 @@ nelements  = 16
 # create the spline space for each direction
 VH1        = SplineSpace(degree=degree, nelements= nelements, nderiv = 2, quad_degree = quad_degree)
 VH2        = SplineSpace(degree=degree, nelements= nelements, nderiv = 2, quad_degree = quad_degree)
-VH00       = TensorSpace(VH1, VH2)
+Vh00       = TensorSpace(VH1, VH2)
 
 #----------------------------------------
 #..... Parameterization from 16*16 elements
 #----------------------------------------
-# ... Circle
-geometry = '../fields/quart_annulus.xml'
+#geometry = '../fields/quart_annulus.xml'
+geometry = '../fields/unitSquare.xml'
 print('#---IN-UNIFORM--MESH-Poisson equation', geometry)
 
 # ... Assembling mapping
 mp             = getGeometryMap(geometry,0)
-xmp = zeros(VH00.nbasis)
-ymp = zeros(VH00.nbasis)
+
+# ... Prolongation by knots insertion matrix of the initial mapping
+xmp = zeros(Vh00.nbasis)
+ymp = zeros(Vh00.nbasis)
 
 xmp[:,:], ymp[:,:]       = mp.RefineGeometryMap(Nelements=(nelements,nelements))
 
 # ...
-u11_mpH        = StencilVector(VH00.vector_space)
-u12_mpH        = StencilVector(VH00.vector_space)
-u11_mpH.from_array(VH00, xmp)
-u12_mpH.from_array(VH00, ymp)
+u11_mpH        = StencilVector(Vh00.vector_space)
+u12_mpH        = StencilVector(Vh00.vector_space)
+u11_mpH.from_array(Vh00, xmp)
+u12_mpH.from_array(Vh00, ymp)
 #--------------------------------------------------------------
 # ...Assembling Dirichlet boundary condition
 #--------------------------------------------------------------
 print("(#=assembled Dirichlet, #=solve poisson)\n")
 g        = ['sin(2.*pi*x)*sin(2.*pi*y)']
-x_d, u_d = build_dirichlet(VH00, g, map = (xmp, ymp))
+x_d, u_d = build_dirichlet(Vh00, g, map = (xmp, ymp))
 print('#')
 
 #...solve poisson
 start = time.time()
-u_pH, xuh, l2_error, H1_error, cond = poisson_solve(VH1, VH2, VH00, u11_mpH, u12_mpH, u_d)
+u_pH, xuh, l2_error, H1_error, cond = poisson_solve(VH1, VH2, Vh00, u11_mpH, u12_mpH, u_d)
 times.append(time.time()- start)
 xuh_uni = xuh
 print('#')
@@ -198,6 +200,15 @@ if True :
     print("	\end{tabular}")
 print('\n')
 
+# -----------------------------END OF THE SHARED PART FOR ALL GEOMETRY
+from simplines    import plot_SolutionMultipatch, plot_JacobianMultipatch, plot_MeshMultipatch
+
+plot_SolutionMultipatch(nbpts, (xuh, xuh), (Vh00, Vh00), (xmp, xmp), (ymp, ymp), savefig = './figs/solution.png')
+plot_JacobianMultipatch(nbpts, (Vh00,Vh00), (xmp, xmp), (ymp, ymp), savefig = './figs/Jacobain.png')
+plot_MeshMultipatch(nbpts, (Vh00,Vh00), (xmp, xmp), (ymp, ymp), savefig = './figs/mesh.png')
+
+
+"""
 #---Solution in uniform mesh
 u, ux, uy, X, Y = pyccel_sol_field_2d((nbpts,nbpts),  xuh , Vh00.knots, Vh00.degree)
 #.. circle 
@@ -207,8 +218,6 @@ F2 = pyccel_sol_field_2d((nbpts,nbpts),  ymp, Vh00.knots, Vh00.degree)[0]
 #===============
 # ... test 2
 Sol_un = u_exact( F1 , F2)
-# -----------------------------END OF THE SHARED PART FOR ALL GEOMETRY
-
 fig, axes =plt.subplots() 
 levelsc_un= np.linspace(np.min(u), np.max(u), 100)
 im2 = plt.contourf( F1, F2, u, levelsc_un, cmap= 'jet')
@@ -225,3 +234,4 @@ plt.savefig('figs/solution.png')
 plt.show(block=False)
 plt.close()
 print("Plotting is disabled. No files were saved, run in your terminal open ./figs/solution.png")
+"""

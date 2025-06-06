@@ -138,7 +138,7 @@ def assemble_vector_un_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_
     arr_J_mat1  = zeros((k1,k2))
     arr_J_mat2  = zeros((k1,k2))
     arr_J_mat3  = zeros((k1,k2))
-    lvalues_Jac = zeros((k1, k2))
+    #lvalues_Jac = zeros((k1, k2))
     lvalues_udx = zeros((k1, k2))
     lvalues_udy = zeros((k1, k2))
     # ... build rhs
@@ -195,8 +195,8 @@ def assemble_vector_un_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_
                     #.. Test 1
                     f = 2.*(2.*pi)**2*sin(2.*pi*x)*sin(2.*pi*y)
 
-                    lvalues_u[g1,g2]   = f 
-                    lvalues_Jac[g1,g2] = J_mat
+                    lvalues_u[g1,g2]   = f * J_mat 
+                    #lvalues_Jac[g1,g2] = J_mat
             for il_1 in range(0, p1+1):
                 for il_2 in range(0, p2+1):
                     i1 = i_span_1 - p1 + il_1
@@ -217,7 +217,7 @@ def assemble_vector_un_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_
                             u     = lvalues_u[g1,g2]
                             udx   = lvalues_udx[g1, g2]
                             udy   = lvalues_udy[g1, g2]
-                            v    += bi_0 * u * wvol * lvalues_Jac[g1,g2] -  (udx * bi_x+ udy * bi_y) * wvol
+                            v    += bi_0 * u * wvol -  (udx * bi_x+ udy * bi_y) * wvol
 
                     rhs[i1+p1,i2+p2] += v
 
@@ -238,8 +238,6 @@ def assemble_norm_un_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_2,
     k1 = weights_1.shape[1]
     k2 = weights_2.shape[1]
 
-    #.. circle
-
     # ...
     lcoeffs_m1 = zeros((p1+1,p2+1))
     lcoeffs_m2 = zeros((p1+1,p2+1))
@@ -257,10 +255,10 @@ def assemble_norm_un_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_2,
         for ie2 in range(0, ne2):
             i_span_2 = spans_2[ie2]
 
-            lvalues_u[ : , : ]  = 0.0
+            lvalues_u[ : , : ]   = 0.0
             lvalues_ux[ : , : ]  = 0.0
             lvalues_uy[ : , : ]  = 0.0
-            lcoeffs_u[ : , : ] = vector_u[i_span_1 : i_span_1+p1+1, i_span_2 : i_span_2+p2+1]
+            lcoeffs_u[ : , : ]   = vector_u[i_span_1 : i_span_1+p1+1, i_span_2 : i_span_2+p2+1]
             for il_1 in range(0, p1+1):
                 for il_2 in range(0, p2+1):
                     coeff_u = lcoeffs_u[il_1,il_2]
@@ -269,7 +267,7 @@ def assemble_norm_un_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_2,
                         b1 = basis_1[ie1,il_1,0,g1]
                         db1 = basis_1[ie1,il_1,1,g1]
                         for g2 in range(0, k2):
-                            b2 = basis_2[ie2,il_2,0,g2]
+                            b2  = basis_2[ie2,il_2,0,g2]
                             db2 = basis_2[ie2,il_2,1,g2]
 
                             lvalues_u[g1,g2]   += coeff_u*b1*b2
@@ -309,9 +307,7 @@ def assemble_norm_un_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_2,
                     det_J = abs(F1x*F2y-F1y*F2x)
                     
                     # ...                              
-                    wvol  = weights_1[ie1, g1] * weights_2[ie2, g2]
-                    x1    =  points_1[ie1, g1]
-                    x2    =  points_2[ie2, g2]
+                    wvol  = weights_1[ie1, g1] * weights_2[ie2, g2] * det_J
 
                     uh    = lvalues_u[g1,g2]
                     sx    = lvalues_ux[g1,g2]
@@ -325,8 +321,8 @@ def assemble_norm_un_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_2,
                     uhx   = (F2y*sx-F2x*sy)/det_J
                     uhy   = (F1x*sy-F1y*sx)/det_J
 
-                    w    += ((uhx-fx)**2 +(uhy-fy)**2)* wvol * det_J
-                    v    += (uh-f)**2 * wvol * det_J
+                    w    += ((uhx-fx)**2 +(uhy-fy)**2)* wvol
+                    v    += (uh-f)**2 * wvol
 
             error_H1      += w
             error_l2      += v

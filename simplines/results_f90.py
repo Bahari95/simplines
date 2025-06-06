@@ -222,7 +222,7 @@ def plot_SolutionMultipatch(nbpts, xuh, V, xmp, ymp, savefig = None, plot = True
    for i in range(2, numPaches):
       u_min  = min(u_min, np.min(u[i]))
       u_max  = max(u_max, np.max(u[i]))
-   levels = np.linspace(u_min, u_max, 100)  # Uniform levels for both plots
+   levels = np.linspace(u_min, u_max+1e-10, 100)  # Uniform levels for both plots
 
    # --- Create Figure ---
    fig, axes = plt.subplots(figsize=(8, 6))
@@ -274,7 +274,7 @@ def plot_JacobianMultipatch(nbpts, V, xmp, ymp, savefig = None, plot = True):
    for i in range(2, numPaches):
       u_min  = min(u_min, np.min(u[i]))
       u_max  = max(u_max, np.max(u[i]))
-   levels = np.linspace(u_min, u_max, 100)  # Uniform levels for both plots
+   levels = np.linspace(u_min, u_max+1e-10, 100)  # Uniform levels for both plots
 
    # --- Create Figure ---
    fig, axes = plt.subplots(figsize=(8, 6))

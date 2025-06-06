@@ -807,6 +807,8 @@ F0 = Y**2 - X*(X-1)**2
 # Plot
 plt.figure(figsize=(8,8))
 
+plt.plot(x, np.sqrt(x*(1-x)**2), color = 'r', marker = '+')
+plt.plot(x,-np.sqrt(x*(1-x)**2), color = 'r', marker = '+')
 # Contour for F0 = 0
 plt.contour(X, Y, F0, levels=[0], colors='blue', linewidths=2, linestyles='solid', label='F0')
 # Contour for F2 = 0
