@@ -90,6 +90,10 @@ from simplines.results_f90 import ( pyccel_sol_field_2d,
                                     least_square_Bspline,
                                     plot_SolutionMultipatch,
                                     plot_MeshMultipatch,
-                                    plot_JacobianMultipatch)
+                                    plot_AdMeshMultipatch,
+                                    plot_FunctMultipatch,
+                                    plot_JacobianMultipatch,
+                                    paraview_AdMeshMultipatch,
+                                    paraview_SolutionMultipatch)
 
 from simplines.api import (assemble_matrix, assemble_vector, assemble_scalar, compile_kernel, apply_dirichlet, apply_periodic, apply_zeros)

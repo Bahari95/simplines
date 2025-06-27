@@ -19,43 +19,43 @@ def pyccel_sol_field_2d( Npoints, uh, knots, degree, meshes = None, bound_val = 
     
     if meshes is None:
 
-	    if Npoints is None:
+      if Npoints is None:
 
-	       nx = nu-pu+1
-	       ny = nv-pv+1
-	    
-	       xs = Tu[pu:-pu] 
-	       ys = Tv[pv:-pv] 
-	      
-	    else :
-	       '''
-	       x0_v  : min val in x direction
-	       x1_v  : max val in x direction
-	       y0_v  : min val in y direction
-	       y1_v  : max val in y direction
-	       '''
-	       nx, ny  = Npoints
-	       if bound_val is not None:
+         nx = nu-pu+1
+         ny = nv-pv+1
+      
+         xs = Tu[pu:-pu] 
+         ys = Tv[pv:-pv] 
+      
+      else :
+         '''
+         x0_v  : min val in x direction
+         x1_v  : max val in x direction
+         y0_v  : min val in y direction
+         y1_v  : max val in y direction
+         '''
+         nx, ny  = Npoints
+         if bound_val is not None:
 
-		       x0_v = bound_val[0]
-		       x1_v = bound_val[1] 
-		       y0_v = bound_val[2] 
-		       y1_v = bound_val[3]
+            x0_v = bound_val[0]
+            x1_v = bound_val[1] 
+            y0_v = bound_val[2] 
+            y1_v = bound_val[3]
 
-	       else :
-		       x0_v = Tu[pu]
-		       x1_v = Tu[-pu-1]
-		       y0_v = Tv[pv]
-		       y1_v = Tv[-pv-1]
-	       # ...
-	       xs                     = linspace(x0_v, x1_v, nx)
-	       ys                     = linspace(y0_v, y1_v, ny)
-	    # ...
-	    Q    = zeros((nx, ny, 3)) 
-	    core.sol_field_2D(nx, ny, xs, ys, uh, Tu, Tv, pu, pv, Q)
-	    # ...
-	    X, Y = meshgrid(xs, ys)
-	    return Q[:,:,0], Q[:,:,1], Q[:,:,2], X.T, Y.T
+         else :
+            x0_v = Tu[pu]
+            x1_v = Tu[-pu-1]
+            y0_v = Tv[pv]
+            y1_v = Tv[-pv-1]
+         # ...
+         xs                     = linspace(x0_v, x1_v, nx)
+         ys                     = linspace(y0_v, y1_v, ny)
+      # ...
+      Q    = zeros((nx, ny, 3)) 
+      core.sol_field_2D(nx, ny, xs, ys, uh, Tu, Tv, pu, pv, Q)
+      # ...
+      X, Y = meshgrid(xs, ys)
+      return Q[:,:,0], Q[:,:,1], Q[:,:,2], X.T, Y.T
     else :
        # ...
        nx, ny   = meshes[0].shape
@@ -191,6 +191,8 @@ def least_square_Bspline(degree, knots, f, V_mae = None, x_mae = None, vec_in = 
 import matplotlib.pyplot            as     plt
 from   mpl_toolkits.axes_grid1      import make_axes_locatable
 import numpy                        as     np
+import pyvista                      as     pv
+import os
 colors = ['b', 'k', 'r', 'g', 'm', 'c', 'y', 'orange']
 markers = ['v', 'o', 's', 'D', '^', '<', '>', '*']  # Different markers
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -317,7 +319,6 @@ def plot_MeshMultipatch(nbpts, V, xmp, ymp, cp = True, savefig = None, plot = Tr
 
    # --- Create Figure ---
    fig =plt.figure() 
-
    # ---
    for ii in range(numPaches):
       #---------------------------------------------------------
@@ -325,12 +326,12 @@ def plot_MeshMultipatch(nbpts, V, xmp, ymp, cp = True, savefig = None, plot = Tr
          phidx = F1[ii][:,i]
          phidy = F2[ii][:,i]
 
-         plt.plot(phidx, phidy, linewidth = 0.5, color = 'b')
+         plt.plot(phidx, phidy, linewidth = 0.5, color = 'k')
       for i in range(nbpts):
          phidx = F1[ii][i,:]
          phidy = F2[ii][i,:]
 
-         plt.plot(phidx, phidy, linewidth = 0.5, color = 'b')
+         plt.plot(phidx, phidy, linewidth = 0.5, color = 'k')
       if cp:
          plt.plot(xmp[ii].reshape(V[ii].nbasis[0]*V[ii].nbasis[1]), ymp[ii].reshape(V[ii].nbasis[0]*V[ii].nbasis[1]), 'ro', markersize=3.5)
       #~~~~~~~~~~~~~~~~~~~~
@@ -369,3 +370,474 @@ def plot_MeshMultipatch(nbpts, V, xmp, ymp, cp = True, savefig = None, plot = Tr
    plt.show(block=plot)
    print('Plotting done :  Solution in the whole domain (type savefig = \'location/somthing.png\' to save the figure)')
    return 0
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+def plot_FunctMultipatch(nbpts, V, xmp, ymp, Func, cp = True, savefig = None, plot = True): 
+   ''''
+   Plot the function in the whole domain
+   '''
+   #---Compute a solution
+   numPaches = len(V)
+   F1     = []
+   F2     = []
+   values = []
+   for i in range(numPaches):
+      #---Compute a mesh
+      F1.append(pyccel_sol_field_2d((nbpts, nbpts), xmp[i], V[i].knots, V[i].degree)[0])
+      F2.append(pyccel_sol_field_2d((nbpts, nbpts), ymp[i], V[i].knots, V[i].degree)[0])
+      values.append(Func(F1[i], F2[i]))
+
+   # --- Compute Global Color Levels ---
+   u_min  = min(np.min(values[0]), np.min(values[1]))
+   u_max  = max(np.max(values[0]), np.max(values[1]))
+   for i in range(2, numPaches):
+      u_min  = min(u_min, np.min(values[i]))
+      u_max  = max(u_max, np.max(values[i]))
+   levels = np.linspace(u_min, u_max+1e-10, 100)  # Uniform levels for both plots
+   # --- Create Figure ---
+   # ... Analytic Density function
+   fig, axes =plt.subplots() 
+   for i in range(numPaches):
+      im2 = plt.contourf( F1[i], F2[i], values[i], levels, cmap= 'plasma')
+   #divider = make_axes_locatable(axes) 
+   #cax   = divider.append_axes("right", size="5%", pad=0.05, aspect = 40) 
+   #plt.colorbar(im2, cax=cax) 
+   fig.tight_layout()
+
+   if savefig is not None:
+      plt.savefig(savefig)
+   plt.show(block=plot)
+   print('Plotting done :  Solution in the whole domain (type savefig = \'location/somthing.png\' to save the figure)')
+   return 0
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+def plot_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, cp = True, savefig = None, plot = True, patchesInterface = False): 
+   ''''
+   Plot the solution of the problem in the whole domain
+   '''
+   #---Compute a solution
+   numPaches = len(V)
+   F1 = []
+   F2 = []
+   for i in range(numPaches):
+      sx = pyccel_sol_field_2d((nbpts, nbpts), xad[i], V[i].knots, V[i].degree)[0]
+      sy = pyccel_sol_field_2d((nbpts, nbpts), yad[i], V[i].knots, V[i].degree)[0]
+      #---Compute a mesh
+      F1.append(pyccel_sol_field_2d((None, None), xmp[i], V[i].knots, V[i].degree, meshes=(sx, sy))[0])
+      F2.append(pyccel_sol_field_2d((None, None), ymp[i], V[i].knots, V[i].degree, meshes=(sx, sy))[0])
+
+   # --- Create Figure ---
+   fig =plt.figure() 
+
+   # ---
+   for ii in range(numPaches):
+      #---------------------------------------------------------
+      for i in range(nbpts):
+         phidx = F1[ii][:,i]
+         phidy = F2[ii][:,i]
+
+         plt.plot(phidx, phidy, linewidth = 0.3, color = 'k')
+      for i in range(nbpts):
+         phidx = F1[ii][i,:]
+         phidy = F2[ii][i,:]
+
+         plt.plot(phidx, phidy, linewidth = 0.3, color = 'k')
+      if cp:
+         plt.plot(xmp[ii].reshape(V[ii].nbasis[0]*V[ii].nbasis[1]), ymp[ii].reshape(V[ii].nbasis[0]*V[ii].nbasis[1]), 'ro', markersize=3.5)
+      #~~~~~~~~~~~~~~~~~~~~
+      #.. Plot the surface
+      if patchesInterface:
+         phidx = F1[ii][:,0]
+         phidy = F2[ii][:,0]
+         plt.plot(phidx, phidy, '--k', linewidth=0.25, label = '$Im([0,1]^2_{y=0})$')
+         # ...
+         phidx = F1[ii][:,nbpts-1]
+         phidy = F2[ii][:,nbpts-1]
+         plt.plot(phidx, phidy, '--k', linewidth=0.25 ,label = '$Im([0,1]^2_{y=1})$')
+
+         phidx = F1[ii][:,0]
+         phidy = F2[ii][:,0]
+         plt.plot(phidx, phidy, '--k', linewidth=0.25, label = '$Im([0,1]^2_{y=0})$')
+         # ...
+         phidx = F1[ii][:,nbpts-1]
+         phidy = F2[ii][:,nbpts-1]
+         plt.plot(phidx, phidy, '--k', linewidth=0.25,label = '$Im([0,1]^2_{y=1})$')
+         #''
+         phidx = F1[ii][0,:]
+         phidy = F2[ii][0,:]
+         plt.plot(phidx, phidy, '--k',  linewidth=0.25, label = '$Im([0,1]^2_{x=0})$')
+         # ...
+         phidx = F1[ii][nbpts-1,:]
+         phidy = F2[ii][nbpts-1,:]
+         plt.plot(phidx, phidy, '--k', linewidth= 0.25, label = '$Im([0,1]^2_{x=1}$)')
+
+   #axes[0].axis('off')
+   plt.margins(0,0)
+
+   fig.tight_layout()
+   if savefig is not None:
+      plt.savefig(savefig)
+   plt.show(block=plot)
+   print('Plotting done :  Solution in the whole domain (type savefig = \'location/somthing.png\' to save the figure)')
+   return 0
+
+#----------------------------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------------------------------
+# ... Post processing using Paraview
+#----------------------------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------------------------------
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+def paraview_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zd = None, xuh = None, Func = None, output_path = "figs/admultipatch_multiblock.vtm", plot = True): 
+   ''''
+   Plot the solution of the problem in the whole domain
+   '''
+   #---Compute a solution
+   #---Compute a solution
+   numPaches = len(V)
+   os.makedirs("figs", exist_ok=True)
+   multiblock = pv.MultiBlock()
+
+   #... TODO
+   #F3 = [] 
+   if xuh is None:
+      if Func is None:
+         for i in range(numPaches):
+            #... computes adaptive mesh
+            sx, sxx, sxy = pyccel_sol_field_2d((nbpts, nbpts), xad[i], V[i].knots, V[i].degree)[0:3]
+            sy, syx, syy = pyccel_sol_field_2d((nbpts, nbpts), yad[i], V[i].knots, V[i].degree)[0:3]
+            #---Compute a image by initial mapping
+            x, F1x, F1y = pyccel_sol_field_2d((None, None), xmp[i], V[i].knots, V[i].degree, meshes=(sx, sy))[0:3]
+            y, F2x, F2y = pyccel_sol_field_2d((None, None), ymp[i], V[i].knots, V[i].degree, meshes=(sx, sy))[0:3]
+            #...Compute a Jacobian
+            #Jf = (F1x*F2y - F1y*F2x)
+            Jf = (sxx*syy-sxy*syx)*(F1x*F2y - F1y*F2x)
+            #...
+            z = np.zeros_like(x)
+            points = np.stack((x, y, z), axis=-1)
+
+            nx, ny = x.shape
+            grid = pv.StructuredGrid()
+            grid.points = points.reshape(-1, 3)
+            grid.dimensions = [nx, ny, 1]
+
+            # Flatten the solution and attach as a scalar field
+            grid["Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
+
+            multiblock[f"patch_{i}"] = grid
+      else:
+         for i in range(numPaches):
+            #... computes adaptive mesh
+            sx, sxx, sxy = pyccel_sol_field_2d((nbpts, nbpts), xad[i], V[i].knots, V[i].degree)[0:3]
+            sy, syx, syy = pyccel_sol_field_2d((nbpts, nbpts), yad[i], V[i].knots, V[i].degree)[0:3]
+            #---Compute a image by initial mapping
+            x, F1x, F1y = pyccel_sol_field_2d((None, None), xmp[i], V[i].knots, V[i].degree, meshes=(sx, sy))[0:3]
+            y, F2x, F2y = pyccel_sol_field_2d((None, None), ymp[i], V[i].knots, V[i].degree, meshes=(sx, sy))[0:3]
+            #...Compute a Jacobian
+            #Jf = (F1x*F2y - F1y*F2x)
+            Jf = (sxx*syy-sxy*syx)*(F1x*F2y - F1y*F2x)
+            # ... image bu analytic function
+            fnc  = Func(x, y)
+            #...
+            z = np.zeros_like(x)
+            points = np.stack((x, y, z), axis=-1)
+
+            nx, ny = x.shape
+            grid = pv.StructuredGrid()
+            grid.points = points.reshape(-1, 3)
+            grid.dimensions = [nx, ny, 1]
+
+            # Flatten the solution and attach as a scalar field
+            grid["Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
+            grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
+
+            multiblock[f"patch_{i}"] = grid
+
+   else:
+      if Func is None:
+         for i in range(numPaches):
+            #... computes adaptive mesh
+            sx, sxx, sxy = pyccel_sol_field_2d((nbpts, nbpts), xad[i], V[i].knots, V[i].degree)[0:3]
+            sy, syx, syy = pyccel_sol_field_2d((nbpts, nbpts), yad[i], V[i].knots, V[i].degree)[0:3]
+            #---Compute a image by initial mapping
+            x, F1x, F1y = pyccel_sol_field_2d((None, None), xmp[i], V[i].knots, V[i].degree, meshes=(sx, sy))[0:3]
+            y, F2x, F2y = pyccel_sol_field_2d((None, None), ymp[i], V[i].knots, V[i].degree, meshes=(sx, sy))[0:3]
+            #...Compute a Jacobian
+            #Jf = (F1x*F2y - F1y*F2x)
+            Jf = (sxx*syy-sxy*syx)*(F1x*F2y - F1y*F2x)
+            # .... 
+            U          = pyccel_sol_field_2d((nbpts, nbpts), xuh[i], V[i].knots, V[i].degree)[0]
+            #...
+            z = np.zeros_like(x)
+            points = np.stack((x, y, z), axis=-1)
+
+            nx, ny = x.shape
+            grid = pv.StructuredGrid()
+            grid.points = points.reshape(-1, 3)
+            grid.dimensions = [nx, ny, 1]
+
+            # Flatten the solution and attach as a scalar field
+            grid["Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
+            grid["solution"] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
+
+            multiblock[f"patch_{i}"] = grid
+      else:
+         for i in range(numPaches):
+            #... computes adaptive mesh
+            sx, sxx, sxy = pyccel_sol_field_2d((nbpts, nbpts), xad[i], V[i].knots, V[i].degree)[0:3]
+            sy, syx, syy = pyccel_sol_field_2d((nbpts, nbpts), yad[i], V[i].knots, V[i].degree)[0:3]
+            #---Compute a image by initial mapping
+            x, F1x, F1y = pyccel_sol_field_2d((None, None), xmp[i], V[i].knots, V[i].degree, meshes=(sx, sy))[0:3]
+            y, F2x, F2y = pyccel_sol_field_2d((None, None), ymp[i], V[i].knots, V[i].degree, meshes=(sx, sy))[0:3]
+            #...Compute a Jacobian
+            #Jf = (F1x*F2y - F1y*F2x)
+            Jf = (sxx*syy-sxy*syx)*(F1x*F2y - F1y*F2x)
+            # ... image bu analytic function
+            fnc  = Func(x, y)
+            #...
+            z = np.zeros_like(x)
+            points = np.stack((x, y, z), axis=-1)
+
+            nx, ny = x.shape
+            grid = pv.StructuredGrid()
+            grid.points = points.reshape(-1, 3)
+            grid.dimensions = [nx, ny, 1]
+
+            # Flatten the solution and attach as a scalar field
+            grid["Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
+            grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
+            grid["solution"] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
+
+            multiblock[f"patch_{i}"] = grid
+
+   # Save multiblock dataset
+   multiblock.save(output_path)
+   print(f"Saved all patches with solution to {output_path}")
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+def paraview_SolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, xuh = None, Func = None, output_path = "figs/multipatch_solution.vtm", plot = True): 
+   ''''
+   Plot the solution of the problem in the whole domain
+   '''
+   #---Compute a solution
+   numPaches = len(V)
+   os.makedirs("figs", exist_ok=True)
+   multiblock = pv.MultiBlock()
+   if zmp is None:
+      if xuh is None:
+         if Func is None:
+            for i in range(numPaches):
+               #---Compute a physical domain
+               x, F1x, F1y = pyccel_sol_field_2d((nbpts, nbpts), xmp[i], V[i].knots, V[i].degree)[0:3]
+               y, F2x, F2y = pyccel_sol_field_2d((nbpts, nbpts), ymp[i], V[i].knots, V[i].degree)[0:3]
+               #...Compute a Jacobian
+               Jf = F1x*F2y - F1y*F2x
+               #...
+               z = np.zeros_like(x)
+               points = np.stack((x, y, z), axis=-1)
+
+               nx, ny = x.shape
+               grid = pv.StructuredGrid()
+               grid.points = points.reshape(-1, 3)
+               grid.dimensions = [nx, ny, 1]
+
+               # Flatten the solution and attach as a scalar field
+               grid["Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
+
+               multiblock[f"patch_{i}"] = grid
+         else:
+            for i in range(numPaches):
+               #---Compute a physical domain
+               x, F1x, F1y = pyccel_sol_field_2d((nbpts, nbpts), xmp[i], V[i].knots, V[i].degree)[0:3]
+               y, F2x, F2y = pyccel_sol_field_2d((nbpts, nbpts), ymp[i], V[i].knots, V[i].degree)[0:3]
+               #...Compute a Jacobian
+               Jf = F1x*F2y - F1y*F2x
+               # ... image bu analytic function
+               fnc  = Func(x, y)
+               #...
+               z = np.zeros_like(x)
+               points = np.stack((x, y, z), axis=-1)
+
+               nx, ny = x.shape
+               grid = pv.StructuredGrid()
+               grid.points = points.reshape(-1, 3)
+               grid.dimensions = [nx, ny, 1]
+
+               # Flatten the solution and attach as a scalar field
+               grid["Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
+               grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
+
+               multiblock[f"patch_{i}"] = grid
+
+      else:
+         if Func is None:
+            for i in range(numPaches):
+               #---Compute a physical domain
+               x, F1x, F1y = pyccel_sol_field_2d((nbpts, nbpts), xmp[i], V[i].knots, V[i].degree)[0:3]
+               y, F2x, F2y = pyccel_sol_field_2d((nbpts, nbpts), ymp[i], V[i].knots, V[i].degree)[0:3]
+               #...Compute a Jacobian
+               Jf = F1x*F2y - F1y*F2x
+               # .... 
+               U          = pyccel_sol_field_2d((nbpts, nbpts), xuh[i], V[i].knots, V[i].degree)[0]
+               #...
+               z = np.zeros_like(x)
+               points = np.stack((x, y, z), axis=-1)
+
+               nx, ny = x.shape
+               grid = pv.StructuredGrid()
+               grid.points = points.reshape(-1, 3)
+               grid.dimensions = [nx, ny, 1]
+
+               # Flatten the solution and attach as a scalar field
+               grid["Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
+               grid["solution"] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
+
+               multiblock[f"patch_{i}"] = grid
+         else:
+            for i in range(numPaches):
+               #---Compute a physical domain
+               x, F1x, F1y = pyccel_sol_field_2d((nbpts, nbpts), xmp[i], V[i].knots, V[i].degree)[0:3]
+               y, F2x, F2y = pyccel_sol_field_2d((nbpts, nbpts), ymp[i], V[i].knots, V[i].degree)[0:3]
+               #...Compute a Jacobian
+               Jf = F1x*F2y - F1y*F2x
+               # ... image bu analytic function
+               fnc  = Func(x, y)
+               #...
+               z = np.zeros_like(x)
+               points = np.stack((x, y, z), axis=-1)
+
+               nx, ny = x.shape
+               grid = pv.StructuredGrid()
+               grid.points = points.reshape(-1, 3)
+               grid.dimensions = [nx, ny, 1]
+
+               # Flatten the solution and attach as a scalar field
+               grid["Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
+               grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
+               grid["solution"] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
+
+               multiblock[f"patch_{i}"] = grid
+   else:
+      if xuh is None:
+         if Func is None:
+            for i in range(numPaches):
+               #---Compute a physical domain
+               x, F1x, F1y = pyccel_sol_field_2d((nbpts, nbpts), xmp[i], V[i].knots, V[i].degree)[0:3]
+               y, F2x, F2y = pyccel_sol_field_2d((nbpts, nbpts), ymp[i], V[i].knots, V[i].degree)[0:3]
+               z, F3x, F3y = pyccel_sol_field_2d((nbpts, nbpts), zmp[i], V[i].knots, V[i].degree)[0:3]
+               #...Compute a Jacobian
+               Jf = F1x*F2y - F1y*F2x
+               #...
+               points = np.stack((x, y, z), axis=-1)
+
+               nx, ny = x.shape
+               grid = pv.StructuredGrid()
+               grid.points = points.reshape(-1, 3)
+               grid.dimensions = [nx, ny, 1]
+
+               # Flatten the solution and attach as a scalar field
+               grid["i-Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
+
+               multiblock[f"patch_{i}"] = grid
+         else:
+            for i in range(numPaches):
+               #---Compute a physical domain
+               x = pyccel_sol_field_2d((nbpts, nbpts), xmp[i], V[i].knots, V[i].degree)[0]
+               y = pyccel_sol_field_2d((nbpts, nbpts), ymp[i], V[i].knots, V[i].degree)[0]
+               z = pyccel_sol_field_2d((nbpts, nbpts), zmp[i], V[i].knots, V[i].degree)[0]
+               # ... image bu analytic function
+               fnc  = Func(x, y, z)
+               #...
+               points = np.stack((x, y, z), axis=-1)
+
+               nx, ny = x.shape
+               grid = pv.StructuredGrid()
+               grid.points = points.reshape(-1, 3)
+               grid.dimensions = [nx, ny, 1]
+
+               # Flatten the solution and attach as a scalar field
+               # grid["i-Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
+               grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
+
+               multiblock[f"patch_{i}"] = grid
+
+      else:
+         if Func is None:
+            for i in range(numPaches):
+               #---Compute a physical domain
+               x = pyccel_sol_field_2d((nbpts, nbpts), xmp[i], V[i].knots, V[i].degree)[0]
+               y = pyccel_sol_field_2d((nbpts, nbpts), ymp[i], V[i].knots, V[i].degree)[0]
+               z = pyccel_sol_field_2d((nbpts, nbpts), zmp[i], V[i].knots, V[i].degree)[0]
+               # .... 
+               U          = pyccel_sol_field_2d((nbpts, nbpts), xuh[i], V[i].knots, V[i].degree)[0]
+               #...
+               points = np.stack((x, y, z), axis=-1)
+
+               nx, ny = x.shape
+               grid = pv.StructuredGrid()
+               grid.points = points.reshape(-1, 3)
+               grid.dimensions = [nx, ny, 1]
+
+               # Flatten the solution and attach as a scalar field
+               # grid["i-Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
+               grid["solution"] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
+
+               multiblock[f"patch_{i}"] = grid
+         else:
+            for i in range(numPaches):
+               #---Compute a physical domain
+               x = pyccel_sol_field_2d((nbpts, nbpts), xmp[i], V[i].knots, V[i].degree)[0]
+               y = pyccel_sol_field_2d((nbpts, nbpts), ymp[i], V[i].knots, V[i].degree)[0]
+               z = pyccel_sol_field_2d((nbpts, nbpts), zmp[i], V[i].knots, V[i].degree)[0]
+               # ... image bu analytic function
+               fnc  = Func(x, y, z)
+               #...
+               points = np.stack((x, y, z), axis=-1)
+
+               nx, ny = x.shape
+               grid = pv.StructuredGrid()
+               grid.points = points.reshape(-1, 3)
+               grid.dimensions = [nx, ny, 1]
+
+               # Flatten the solution and attach as a scalar field
+               # grid["i-Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
+               grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
+               grid["solution"] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
+
+               multiblock[f"patch_{i}"] = grid
+   # Save multiblock dataset
+   multiblock.save(output_path)
+   print(f"Saved all patches with solution to {output_path}")
+
+
+
+# output_pvd_path = "figs/all_patches.pvd"
+# filename_base = "figs/Pmultipatch"
+# with open(output_pvd_path, 'w') as f:
+#    f.write('<?xml version="1.0"?>\n')
+#    f.write('<VTKFile type="Collection" version="0.1" byte_order="LittleEndian">\n')
+#    f.write('  <Collection>\n')
+
+#    for idx, (elF1, elF2) in enumerate(zip(F1, F2)):
+#       # Create 3D points (z = 0 for 2D)
+#       x, y = elF1, elF2
+#       z = np.zeros_like(x)
+#       points = np.stack((x, y, z), axis=-1)
+
+#       # Convert to PyVista structured grid
+#       nx, ny = x.shape
+#       grid = pv.StructuredGrid()
+#       grid.points = points.reshape(-1, 3)
+#       grid.dimensions = [nx, ny, 1]
+
+#       # Save to .vts file
+#       vts_filename = f"{filename_base}_{idx}.vts"
+#       grid.save(vts_filename)
+#       print(f"Saved patch {idx} to {vts_filename}")
+
+#       rel_path = os.path.basename(vts_filename)
+#       f.write(f'    <DataSet timestep="{idx}" group="" part="0" file="{rel_path}"/>\n')
+
+#    f.write('  </Collection>\n')
+#    f.write('</VTKFile>\n')

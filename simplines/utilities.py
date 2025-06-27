@@ -339,17 +339,21 @@ class getGeometryMap:
         else :
             assert(len(Nelements) == self.dim and Nelements[0]%self.nelements[0]==0 and Nelements[1]%self.nelements[1]==0)
         #... refine the space
+        #print(f"Refining the geometry map {self.dim}D with {numElevate} times and Nelements = {Nelements}")
         Vh1       = SplineSpace(degree=self.degree[0], nelements=Nelements[0])
         Vh2       = SplineSpace(degree=self.degree[1], nelements=Nelements[1])
         Vh        = TensorSpace(Vh1, Vh2)# after refinement
         # Extract knots data and degree
+        #print(f"Refined space : {self.nelements[0]} x {self.nelements[1]} Nelements")
         VH1       = SplineSpace(degree=self.degree[0], nelements=self.nelements[0])
         VH2       = SplineSpace(degree=self.degree[1], nelements=self.nelements[1])
         VH        = TensorSpace(VH1, VH2)# after refinement
         # Extract coefs data
-        coefs_data = zeros((2, Vh.nbasis[0], Vh.nbasis[1]))
+        coefs_data = zeros((self.geo_dim, Vh.nbasis[0], Vh.nbasis[1]))
+        #print("\n coef: ", self.coefs())
+        #print("VH1.nbasis: ", self._nbasis[0], "VH2.nbasis: ", self._nbasis[1])
         # Refine the coefs
         M_mp      = prolongation_matrix(VH, Vh)
-        coefs_data[0]      = (M_mp.dot(self.coefs()[0].reshape(self._nbasis[0]*self._nbasis[1]))).reshape(Vh.nbasis)
-        coefs_data[1]      = (M_mp.dot(self.coefs()[1].reshape(self._nbasis[0]*self._nbasis[1]))).reshape(Vh.nbasis)        
+        for i in range(self.geo_dim):
+            coefs_data[i]      = (M_mp.dot(self.coefs()[i].reshape(self._nbasis[0]*self._nbasis[1]))).reshape(Vh.nbasis)        
         return coefs_data

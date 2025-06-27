@@ -313,7 +313,7 @@ def  Monge_ampere_equation(nb_ne, geometry = '../fields/circle.xml', degree = No
    VHmp           = TensorSpace(V1mpH, V2mpH)
    # ... Assembling mapping
    mp             = getGeometryMap(geometry,0)
-   xmp, ymp       = mp.coefs()
+   xmp, ymp       = mp.RefineGeometryMap(Nelements=(Hnelements, Hnelements))
 
    a, b = -0.2, 1.2
    xmp = xmp.reshape(VHmp.nbasis)*(b-a) +a
@@ -450,7 +450,7 @@ def  Monge_ampere_equation(nb_ne, geometry = '../fields/circle.xml', degree = No
 # #.........................................................
 if True :
 	# ... unite-squar 0.6
-	geometry = '../fields/squar.xml'
+	geometry = '../fields/unitSquare.xml'
 	#geometry = '../fields/mhd.xml'	
 	# ... Circular domain
 	#geometry = '../fields/circle.xml'
