@@ -104,7 +104,6 @@ class Poisson(object):
 
     def _solve_2d(self, b):
 
-        # # ... Avoidding kron product
         n1, n2  = self.nDoFs
         s_tilde = b.reshape((n1,n2))
         s_tilde = self.Us[0].T @ s_tilde @ self.Us[1]
@@ -113,6 +112,17 @@ class Poisson(object):
         s_tilde = s_tilde.reshape(n1*n2)
         return s_tilde
 
+    def solve_23d(self, b, i_dir, j_dir):
+
+        # # ... Avoidding kron product : i_dir j_dir, if in 3D one wants to solve the Poisson equation in a fixed direction
+        n1, n2  = self.nDoFs[i_dir], self.nDoFs[j_dir]
+        s_tilde = b.reshape((n1,n2))
+        s_tilde = self.Us[i_dir].T @ s_tilde @ self.Us[j_dir]
+        core.solve_unit_sylvester_system_2d(self.ds[i_dir], self.ds[j_dir], s_tilde, float(self.tau), s_tilde)
+        s_tilde = self.Us[i_dir] @ s_tilde @ self.Us[j_dir].T
+        s_tilde = s_tilde.reshape(n1*n2)
+        return s_tilde
+    
     def _solve_3d(self, b):
         # ... Avoidding kron product TODO optimize and parallelize
         n1, n2, n3 = self.nDoFs
@@ -177,7 +187,7 @@ class Poisson(object):
         return s_tilde
 
     
-    def solve(self, b):
+    def solve(self, b, ij_dir = None):
         if self.rdim == 2:
             return self._solve_2d(b)
         else:

@@ -342,18 +342,30 @@ class getGeometryMap:
         #print(f"Refining the geometry map {self.dim}D with {numElevate} times and Nelements = {Nelements}")
         Vh1       = SplineSpace(degree=self.degree[0], nelements=Nelements[0])
         Vh2       = SplineSpace(degree=self.degree[1], nelements=Nelements[1])
-        Vh        = TensorSpace(Vh1, Vh2)# after refinement
+        if self.dim == 2:
+            Vh        = TensorSpace(Vh1, Vh2)# after refinement
+        else:
+            Vh3       = SplineSpace(degree=self.degree[2], nelements=Nelements[2])            
+            Vh        = TensorSpace(Vh1, Vh2, Vh3)# after refinement
         # Extract knots data and degree
         #print(f"Refined space : {self.nelements[0]} x {self.nelements[1]} Nelements")
         VH1       = SplineSpace(degree=self.degree[0], nelements=self.nelements[0])
         VH2       = SplineSpace(degree=self.degree[1], nelements=self.nelements[1])
-        VH        = TensorSpace(VH1, VH2)# after refinement
-        # Extract coefs data
-        coefs_data = zeros((self.geo_dim, Vh.nbasis[0], Vh.nbasis[1]))
+        if self.dim == 2:
+            nbasis_tot = self._nbasis[0]*self._nbasis[1]
+            VH         = TensorSpace(VH1, VH2)# after refinement
+            # Extract coefs data
+            coefs_data = zeros((self.geo_dim, Vh.nbasis[0], Vh.nbasis[1]))
+        else:
+            VH3        = SplineSpace(degree=self.degree[2], nelements=self.nelements[2])
+            VH         = TensorSpace(VH1, VH2, VH3)# after refinement
+            nbasis_tot = self._nbasis[0]*self._nbasis[1]*self._nbasis[2]
+            # Extract coefs data
+            coefs_data = zeros((self.geo_dim, Vh.nbasis[0], Vh.nbasis[1], Vh.nbasis[2]))
         #print("\n coef: ", self.coefs())
         #print("VH1.nbasis: ", self._nbasis[0], "VH2.nbasis: ", self._nbasis[1])
         # Refine the coefs
         M_mp      = prolongation_matrix(VH, Vh)
         for i in range(self.geo_dim):
-            coefs_data[i]      = (M_mp.dot(self.coefs()[i].reshape(self._nbasis[0]*self._nbasis[1]))).reshape(Vh.nbasis)        
+            coefs_data[i]      = (M_mp.dot(self.coefs()[i].reshape(nbasis_tot))).reshape(Vh.nbasis)        
         return coefs_data
