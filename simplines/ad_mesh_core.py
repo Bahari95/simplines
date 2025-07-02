@@ -1010,15 +1010,14 @@ def assemble_basis_spans_in_adquadrature_3L2map(ne1, ne2, ne3, p1, p2, p3, spans
                                     j  = s1
                                     s1 = s2
                                     s2 = j
-                            # Multiply derivatives by correct factors
-                            r = degree
-                            ders[1,:] = ders[1,:] * r
-                            r = r * (degree-1)
-                            ders[2,:] = ders[2,:] * r
                             # ...
-                            for i_ders in range(nders):
+                            basis_ad1[ie1, ie2, ie3, :, 0, g1, g2, g3] = ders[0,:]
+                            r = degree
+                            for i_ders in range(1,nders+1):
+                                # Multiply derivatives by correct factors
+                                ders[i_ders+1,:] = ders[i_ders+1,:] * r
                                 basis_ad1[ie1, ie2, ie3, :, i_ders, g1, g2, g3] = ders[i_ders,:]
-
+                                r = r * (degree-i_ders)
     degree         = p2
     #...
     for ie1 in range(0, ne1):
@@ -1091,14 +1090,14 @@ def assemble_basis_spans_in_adquadrature_3L2map(ne1, ne2, ne3, p1, p2, p3, spans
                                     j  = s1
                                     s1 = s2
                                     s2 = j
-                            # Multiply derivatives by correct factors
-                            r = degree
-                            ders[1,:] = ders[1,:] * r
-                            r = r * (degree-1)
-                            ders[2,:] = ders[2,:] * r
                             # ...
-                            for i_ders in range(nders):
+                            basis_ad2[ie1, ie2, ie3, :, 0, g1, g2, g3] = ders[0,:]
+                            r = degree
+                            for i_ders in range(1,nders+1):
+                                # Multiply derivatives by correct factors
+                                ders[i_ders+1,:] = ders[i_ders+1,:] * r
                                 basis_ad2[ie1, ie2, ie3, :, i_ders, g1, g2, g3] = ders[i_ders,:]
+                                r = r * (degree-i_ders)
     degree         = p3
     #...
     for ie1 in range(0, ne1):
@@ -1171,15 +1170,14 @@ def assemble_basis_spans_in_adquadrature_3L2map(ne1, ne2, ne3, p1, p2, p3, spans
                                     j  = s1
                                     s1 = s2
                                     s2 = j
-                            # Multiply derivatives by correct factors
-                            r = degree
-                            ders[1,:] = ders[1,:] * r
-                            r = r * (degree-1)
-                            ders[2,:] = ders[2,:] * r
                             # ...
-                            for i_ders in range(nders):
+                            basis_ad3[ie1, ie2, ie3, :, 0, g1, g2, g3] = ders[0,:]
+                            r = degree
+                            for i_ders in range(1,nders+1):
+                                # Multiply derivatives by correct factors
+                                ders[i_ders+1,:] = ders[i_ders+1,:] * r
                                 basis_ad3[ie1, ie2, ie3, :, i_ders, g1, g2, g3] = ders[i_ders,:]
-
+                                r = r * (degree-i_ders)
 # assembles stiffness matrix 1D
 #==============================================================================
 @types('int', 'int', 'int[:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]')
