@@ -1015,7 +1015,7 @@ def assemble_basis_spans_in_adquadrature_3L2map(ne1, ne2, ne3, p1, p2, p3, spans
                             r = degree
                             for i_ders in range(1,nders+1):
                                 # Multiply derivatives by correct factors
-                                ders[i_ders+1,:] = ders[i_ders+1,:] * r
+                                ders[i_ders,:] = ders[i_ders,:] * r
                                 basis_ad1[ie1, ie2, ie3, :, i_ders, g1, g2, g3] = ders[i_ders,:]
                                 r = r * (degree-i_ders)
     degree         = p2
@@ -1095,7 +1095,7 @@ def assemble_basis_spans_in_adquadrature_3L2map(ne1, ne2, ne3, p1, p2, p3, spans
                             r = degree
                             for i_ders in range(1,nders+1):
                                 # Multiply derivatives by correct factors
-                                ders[i_ders+1,:] = ders[i_ders+1,:] * r
+                                ders[i_ders,:] = ders[i_ders,:] * r
                                 basis_ad2[ie1, ie2, ie3, :, i_ders, g1, g2, g3] = ders[i_ders,:]
                                 r = r * (degree-i_ders)
     degree         = p3
@@ -1175,7 +1175,7 @@ def assemble_basis_spans_in_adquadrature_3L2map(ne1, ne2, ne3, p1, p2, p3, spans
                             r = degree
                             for i_ders in range(1,nders+1):
                                 # Multiply derivatives by correct factors
-                                ders[i_ders+1,:] = ders[i_ders+1,:] * r
+                                ders[i_ders,:] = ders[i_ders,:] * r
                                 basis_ad3[ie1, ie2, ie3, :, i_ders, g1, g2, g3] = ders[i_ders,:]
                                 r = r * (degree-i_ders)
 # assembles stiffness matrix 1D
