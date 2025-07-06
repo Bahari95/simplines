@@ -178,6 +178,20 @@ class Poisson(object):
         s_tilde    = b.reshape(n1,n2*n3)
         s_tilde    = s_tilde.T @ self.Us[0]
         # matrix becomes (n2*n3, n1)
+        r_tilde = np.zeros((n1,n2,n3))
+        r_tilde[:,:,:] = s_tilde.T.reshape(n1, n2, n3)[:,:,:]
+        r_tilde[:,:,:] = np.einsum('ij,njk->nik', self.Us[1].T, r_tilde)[:,:,:]      # transform along axis=1
+        r_tilde[:,:,:] = np.einsum('nij,jk->nik', r_tilde, self.Us[2])[:,:,:]        # transform along axis=2
+        # ...
+        r_tilde[:,:,:] = np.einsum('ij,njk->nik', self.Us[1], r_tilde)[:,:,:]        # transform along axis=1
+        r_tilde[:,:,:] = np.einsum('nij,jk->nik', r_tilde, self.Us[2].T)[:,:,:]      # transform along axis=2
+        # reshape and transpose back to (n2*n3, n1)
+        s_tilde        = r_tilde.reshape(n1, n2*n3)
+        # ...
+        s_tilde = self.Us[0] @ s_tilde
+        s_tilde = s_tilde.reshape(n1*n2*n3)
+        '''
+        # matrix becomes (n2*n3, n1)
         for i1 in range(n1):
             r_tilde         = s_tilde[:,i1]
             r_tilde         = r_tilde.reshape((n2, n3))
@@ -186,6 +200,7 @@ class Poisson(object):
             s_tilde[:,i1]   = r_tilde.reshape(n2*n3)
         s_tilde = self.Us[0] @ s_tilde.T
         s_tilde = s_tilde.reshape(n1*n2*n3)
+        '''
         # ...
         return s_tilde
 
