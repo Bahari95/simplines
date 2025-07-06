@@ -8,7 +8,11 @@ from .cad import point_on_bspline_surface
 from .bsplines import hrefinement_matrix
 
 
-__all__ = ['plot_field_1d', 'plot_field_2d', 'prolongation_matrix']
+__all__ = ['plot_field_1d', 
+           'plot_field_2d', 
+           'prolongation_matrix',
+           'save_geometry_to_xml',
+           'getGeometryMap']
 
 # ==========================================================
 def plot_field_1d(knots, degree, u, nx=101, color='b', xmin = None, xmax = None, label = None):

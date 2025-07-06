@@ -752,7 +752,7 @@ def paraview_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp = No
                   y           = pyccel_sol_field_3d((nbpts, nbpts, nbpts), ymp[i], V[i].knots, V[i].degree, meshes=(sx, sy, sz))[0]
                   z           = pyccel_sol_field_3d((nbpts, nbpts, nbpts), zmp[i], V[i].knots, V[i].degree, meshes=(sx, sy, sz))[0]
                   # .... 
-                  # ... image bu analytic function
+                  # ... image by analytic function
                   fnc  = Func(x, y, z)
                   # .... 
                   points = np.stack((x, y, z), axis=-1)
@@ -913,6 +913,8 @@ def paraview_SolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, xuh = None, Func
                Jf = F1x*F2y - F1y*F2x
                # ... image bu analytic function
                fnc  = Func(x, y)
+               # .... 
+               U          = pyccel_sol_field_2d((nbpts, nbpts), xuh[i], V[i].knots, V[i].degree)[0]
                #...
                z = np.zeros_like(x)
                points = np.stack((x, y, z), axis=-1)
@@ -1003,6 +1005,8 @@ def paraview_SolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, xuh = None, Func
                # ... image bu analytic function
                fnc  = Func(x, y, z)
                # .... 
+               U = pyccel_sol_field_3d((nbpts, nbpts, nbpts), xuh[i], V[i].knots, V[i].degree)[0]
+               # .... 
                points = np.stack((x, y, z), axis=-1)
 
                nx, ny, nz = x.shape
@@ -1090,6 +1094,8 @@ def paraview_SolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, xuh = None, Func
                z = pyccel_sol_field_2d((nbpts, nbpts), zmp[i], V[i].knots, V[i].degree)[0]
                # ... image bu analytic function
                fnc  = Func(x, y, z)
+               # .... 
+               U          = pyccel_sol_field_2d((nbpts, nbpts), xuh[i], V[i].knots, V[i].degree)[0]
                #...
                points = np.stack((x, y, z), axis=-1)
 

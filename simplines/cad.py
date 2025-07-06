@@ -33,9 +33,7 @@ __all__ = ['point_on_bspline_curve',
            'rotate_bspline_surface',
            'rotate_nurbs_surface',
            'homothetic_bspline_surface',
-           'homothetic_nurbs_surface',
-           'save_geometry_to_xml',
-           'getGeometryMap']
+           'homothetic_nurbs_surface']
 
 # ==========================================================
 def point_on_bspline_curve(knots, P, x):
@@ -571,7 +569,6 @@ def homothetic_bspline_surface(Tu, Tv, P, alpha, center=[0.,0.]):
     pu = len(Tu) - nu - 1
     pv = len(Tv) - nv - 1
 
-    Q = np.zeros((n,d))
     Q = np.zeros((nu, nv, d))
     for i in range(0, nu):
         for j in range(0, nv):
