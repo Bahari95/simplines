@@ -108,6 +108,7 @@ def poisson_solve(V1, V2, V3, V):
        b                   = b[1:-1, 1:-1, 1:-1]      
        b                   = b.reshape((V1.nbasis-2)*(V2.nbasis-2)*(V3.nbasis-2))
        # ...
+       print(type(b))
        #xkron               = lu.solve(b)       
        xkron               = poisson.solve(b)
        

@@ -1,3 +1,9 @@
+"""
+results_f90.py: A fast post-processing script for visualizing the solution and its derivatives.
+
+Author: M. Mustapha Bahari
+"""
+
 from   .               import results_f90_core as core
 
 #==============================================================
@@ -116,6 +122,9 @@ def pyccel_sol_field_3d(Npoints,  uh , knots, degree, meshes = None):
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Computes L2 projection of 1D function
 def least_square_Bspline(degree, knots, f, V_mae = None, x_mae = None, vec_in = None, y = None, m = None):
+    """
+    Computes the least squares projection of a 1D function onto a B-spline basis.
+    """
     from numpy     import zeros, linspace
     from .bsplines import find_span
     from .bsplines import basis_funs
@@ -197,9 +206,9 @@ colors = ['b', 'k', 'r', 'g', 'm', 'c', 'y', 'orange']
 markers = ['v', 'o', 's', 'D', '^', '<', '>', '*']  # Different markers
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def plot_SolutionMultipatch(nbpts, xuh, V, xmp, ymp, savefig = None, plot = True, Jacfield = None): 
-   ''''
-   Plot the solution of the problem in the whole domain
-   '''
+   """
+   Plot the solution of the problem in the whole multi-patch domain
+   """
    #---Compute a solution
    numPaches = len(V)
    u   = []
@@ -253,9 +262,9 @@ def plot_SolutionMultipatch(nbpts, xuh, V, xmp, ymp, savefig = None, plot = True
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def plot_JacobianMultipatch(nbpts, V, xmp, ymp, savefig = None, plot = True): 
-   ''''
+   """
    Plot the solution of the problem in the whole domain
-   '''
+   """
    #---Compute a solution
    numPaches = len(V)
    u   = []
@@ -305,9 +314,9 @@ def plot_JacobianMultipatch(nbpts, V, xmp, ymp, savefig = None, plot = True):
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def plot_MeshMultipatch(nbpts, V, xmp, ymp, cp = True, savefig = None, plot = True): 
-   ''''
+   """
    Plot the solution of the problem in the whole domain
-   '''
+   """
    #---Compute a solution
    numPaches = len(V)
    F1 = []
@@ -373,9 +382,9 @@ def plot_MeshMultipatch(nbpts, V, xmp, ymp, cp = True, savefig = None, plot = Tr
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def plot_FunctMultipatch(nbpts, V, xmp, ymp, Func, cp = True, savefig = None, plot = True): 
-   ''''
+   """
    Plot the function in the whole domain
-   '''
+   """
    #---Compute a solution
    numPaches = len(V)
    F1     = []
@@ -412,9 +421,9 @@ def plot_FunctMultipatch(nbpts, V, xmp, ymp, Func, cp = True, savefig = None, pl
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def plot_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, cp = True, savefig = None, plot = True, patchesInterface = False): 
-   ''''
+   """
    Plot the solution of the problem in the whole domain
-   '''
+   """
    #---Compute a solution
    numPaches = len(V)
    F1 = []
@@ -489,11 +498,37 @@ def plot_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, cp = True, savefig = Non
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def paraview_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp = None, xuh = None, Func = None, output_path = "figs/admultipatch_multiblock.vtm", plot = True): 
-   ''''
-   Plot the solution of the problem in the whole domain
-   '''
-   #---Compute a solution
-   #---Compute a solution
+   """
+   Post-processes and exports the solution in the multi-patch domain using Paraview.
+
+   Parameters
+   ----------
+   nbpts : int
+       Number of points per patch direction for evaluation.
+   V : list
+       List of patch objects containing spline spaces.
+   xmp, ymp : list
+       Lists of control points for the initial mapping in x and y directions.
+   xad, yad : list
+       Lists of control points for the adaptive mesh in x and y directions.
+   zad : list, optional
+       List of control points for the adaptive mesh in z direction (for 3D).
+   zmp : list, optional
+       List of control points for the initial mapping in z direction (for 3D).
+   xuh : list, optional
+       List of solution control points for each patch.
+   Func : callable, optional
+       Analytic function to evaluate on the mesh (signature depends on dimension).
+   output_path : str, optional
+       Path to save the output VTM file (default: "figs/admultipatch_multiblock.vtm").
+   plot : bool, optional
+       If True, enables plotting (not used in this function).
+
+   Returns
+   -------
+   None
+       The function saves the multi-block dataset to the specified output path.
+   """
    numPaches = len(V)
    os.makedirs("figs", exist_ok=True)
    multiblock = pv.MultiBlock()
@@ -827,9 +862,33 @@ def paraview_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp = No
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def paraview_SolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, xuh = None, Func = None, output_path = "figs/multipatch_solution.vtm", plot = True): 
-   ''''
-   Plot the solution of the problem in the whole domain
-   '''
+   """
+   Post-processes and exports the solution in the multi-patch domain using Paraview.
+
+   Parameters
+   ----------
+   nbpts : int
+       Number of points per patch direction for evaluation.
+   V : list
+       List of patch objects containing spline spaces.
+   xmp, ymp : list
+       Lists of control points for the initial mapping in x and y directions.
+   zmp : list, optional
+       List of control points for the initial mapping in z direction (for 3D).
+   xuh : list, optional
+       List of solution control points for each patch.
+   Func : callable, optional
+       Analytic function to evaluate on the mesh (signature depends on dimension).
+   output_path : str, optional
+       Path to save the output VTM file (default: "figs/multipatch_solution.vtm").
+   plot : bool, optional
+       If True, enables plotting (not used in this function).
+
+   Returns
+   -------
+   None
+       The function saves the multi-block dataset to the specified output path.
+   """
    #---Compute a solution
    numPaches = len(V)
    os.makedirs("figs", exist_ok=True)

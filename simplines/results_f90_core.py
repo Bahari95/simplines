@@ -1,8 +1,6 @@
-from pyccel.decorators import types
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Computes Solution and its gradien In two dimension
-@types('int', 'int', 'float[:,:]', 'float[:]', 'float[:]', 'int', 'int', 'float[:,:,:]')
-def sol_field_2D_meshes(nx, ny, uh, Tu, Tv, pu, pv, Q):
+def sol_field_2D_meshes(nx:'int', ny:'int', uh:'float[:,:]', Tu:'float[:]', Tv:'float[:]', pu:'int', pv:'int', Q:'float[:,:,:]'):
     # Using computed control points U we compute solution
     # in new discretisation by Npoints
     
@@ -202,8 +200,7 @@ def sol_field_2D_meshes(nx, ny, uh, Tu, Tv, pu, pv, Q):
               
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Computes Solution and its gradien In two dimension
-@types('int', 'int', 'real[:]', 'real[:]', 'real[:,:]', 'real[:]', 'real[:]', 'int', 'int', 'real[:,:,:]')
-def sol_field_2D(nx, ny, xs, ys, uh, Tu, Tv, pu, pv, Q):
+def sol_field_2D(nx:'int', ny:'int', xs:'float[:]', ys:'float[:]', uh:'float[:,:]', Tu:'float[:]', Tv:'float[:]', pu:'int', pv:'int', Q:'float[:,:,:]'):
     # Using computed control points U we compute solution
     # in new discretisation by Npoints
     
@@ -404,8 +401,7 @@ def sol_field_2D(nx, ny, xs, ys, uh, Tu, Tv, pu, pv, Q):
               
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Computes Solution and its gradien In two dimension
-@types('int', 'int', 'int', 'real[:]', 'real[:]', 'real[:]', 'real[:,:,:]', 'real[:]', 'real[:]', 'real[:]', 'int', 'int', 'int', 'real[:,:,:,:]')
-def sol_field_3D(nx, ny, nz, xs, ys, zs, uh, Tu, Tv, Tw, pu, pv, pw, Q):
+def sol_field_3D(nx:'int', ny:'int', nz:'int', xs:'float[:]', ys:'float[:]', zs:'float[:]', uh:'float[:,:,:]', Tu:'float[:]', Tv:'float[:]', Tw:'float[:]', pu:'int', pv:'int', pw:'int', Q:'float[:,:,:,:]'):
     # Using computed control points U we compute solution
     # in new discretisation by Npoints
     
@@ -693,8 +689,7 @@ def sol_field_3D(nx, ny, nz, xs, ys, zs, uh, Tu, Tv, Tw, pu, pv, pw, Q):
               
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Computes Solution and its gradien In three dimension
-@types('int', 'int', 'int', 'real[:,:,:]', 'real[:]', 'real[:]', 'real[:]', 'int', 'int', 'int', 'real[:,:,:,:]')
-def sol_field_3D_mesh(nx, ny, nz, uh, Tu, Tv, Tw, pu, pv, pw, Q):
+def sol_field_3D_mesh(nx:'int', ny:'int', nz:'int', uh:'float[:,:,:]', Tu:'float[:]', Tv:'float[:]', Tw:'float[:]', pu:'int', pv:'int', pw:'int', Q:'float[:,:,:,:]'):
     # Using computed control points U we compute solution
     # in new discretisation by Npoints
     

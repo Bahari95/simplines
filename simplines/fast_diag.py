@@ -124,7 +124,22 @@ class Poisson(object):
         return s_tilde
     
     def _solve_3d(self, b):
-        # ... Avoidding kron product TODO optimize and parallelize
+        # ... Avoidding kron product
+        n1, n2, n3     = self.nDoFs
+        s_tilde        = b.reshape(n1,n2*n3)
+        s_tilde        = s_tilde.T @ self.Us[0]
+        # matrix becomes (n2*n3, n1)
+        r_tilde = np.zeros((n1,n2,n3))
+        r_tilde[:,:,:] = s_tilde.T.reshape(n1, n2, n3)[:,:,:]
+        r_tilde[:,:,:] = np.einsum('ij,njk->nik', self.Us[1].T, r_tilde)[:,:,:]      # transform along axis=1
+        r_tilde[:,:,:] = np.einsum('nij,jk->nik', r_tilde, self.Us[2])[:,:,:]        # transform along axis=2
+        core.solve_unit_sylvester_system_3d(self.ds[0], self.ds[1],self.ds[2], r_tilde, float(self.tau), r_tilde)
+
+        r_tilde[:,:,:] = np.einsum('ij,njk->nik', self.Us[1], r_tilde)[:,:,:]        # transform along axis=1
+        r_tilde[:,:,:] = np.einsum('nij,jk->nik', r_tilde, self.Us[2].T)[:,:,:]      # transform along axis=2
+        # reshape and transpose back to (n2*n3, n1)
+        s_tilde        = r_tilde.reshape(n1, n2*n3)
+        '''
         n1, n2, n3 = self.nDoFs
         s_tilde    = b.reshape(n1,n2*n3)
         s_tilde    = s_tilde.T @ self.Us[0]
@@ -137,25 +152,13 @@ class Poisson(object):
             #... r_tilde(i2, i3) = r_tilde(i2, i3) / (ds[0](i1,0) + ds[1](i2,0) + ds[2](i3,0) + _tau);
             core.solve_unit_sylvester_system_2d(self.ds[1],self.ds[2], r_tilde, float(self.tau+self.ds[0][i1]), r_tilde)
             r_tilde         = self.Us[1] @ r_tilde @ self.Us[2].T
-            s_tilde[:,i1]   = r_tilde.reshape(n2*n3)
-        '''
-        from joblib import Parallel, delayed
-
-        def process_column(i1):
-            r_tilde = s_tilde[:, i1].copy().reshape((n2, n3))
-            r_tilde = self.Us[1].T @ r_tilde @ self.Us[2]
-            core.solve_unit_sylvester_system_2d(self.ds[1], self.ds[2], r_tilde, float(self.tau + self.ds[0][i1]), r_tilde)
-            r_tilde = self.Us[1] @ r_tilde @ self.Us[2].T
-            return i1, r_tilde.reshape(n2 * n3)
-
-        # Run in parallel
-        results = Parallel(n_jobs=-1)(delayed(process_column)(i1) for i1 in range(n1))
-        # Store results
-        for i1, r_tilde in results:
-            s_tilde[:, i1] = r_tilde'
-        '''
+            s_tilde[:,i1]   = r_tilde.reshape(n2*n3)'
         #...
         s_tilde = self.Us[0] @ s_tilde.T
+        s_tilde = s_tilde.reshape(n1*n2*n3)
+        '''
+        #...
+        s_tilde = self.Us[0] @ s_tilde
         s_tilde = s_tilde.reshape(n1*n2*n3)
         # ...
         return s_tilde
