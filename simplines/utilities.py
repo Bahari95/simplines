@@ -95,11 +95,11 @@ from .results_f90 import least_square_Bspline
 from .results_f90 import pyccel_sol_field_2d
 from numpy import exp
 from numpy import cos
-from numpy import sin
+from numpy import sin, sinh
 from numpy import pi
 from numpy import arctan2
 from numpy import sqrt
-from numpy import cosh
+from numpy import cosh, tanh
 from numpy import zeros
 from numpy import empty
 def build_dirichlet(V, f, map = None, admap = None):
@@ -142,7 +142,7 @@ def build_dirichlet(V, f, map = None, admap = None):
             x_d[ : ,-1 ] = least_square_Bspline(V.degree[0], V.knots[0], fy1)
 
         elif admap is None :
-            #------------------------------
+            #-------------------------------------------------
             #.. In the phyisacl domain without adaptive mapping               
             n_dir        = V.nbasis[0] + V.nbasis[1]+100
             sX           = pyccel_sol_field_2d((n_dir,n_dir),  map[0] , V.knots, V.degree)[0]
@@ -154,7 +154,7 @@ def build_dirichlet(V, f, map = None, admap = None):
             x_d[ : ,-1 ] = least_square_Bspline(V.degree[0], V.knots[0], fy1(sX[:,-1], sY[:,-1]), m= n_dir)
 
         else :
-            #------------------------------
+            #-----------------------------------------------
             #.. In the phyisacl domain with adaptive mapping               
             n_dir        = V.nbasis[0] + V.nbasis[1]+100
 
