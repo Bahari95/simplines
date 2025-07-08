@@ -616,8 +616,8 @@ def make_knots( breaks, degree, periodic ):
     assert isinstance( periodic, bool )
 
     # Consistency checks
-    assert len(breaks) > 1
-    assert all( np.diff(breaks) > 0 )
+    # assert len(breaks) > 1
+    # assert all( np.diff(breaks) > 0 )
     assert degree > 0
     if periodic:
         assert len(breaks) > degree

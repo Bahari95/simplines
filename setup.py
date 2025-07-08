@@ -58,6 +58,7 @@ class RunPyccelCommand(Command):
             'simplines/ad_mesh_core.py',
             'simplines/results_f90_core.py',
             'simplines/fast_diag_core.py',
+            'simplines/nurbs_utilities_core.py',
         ]
         for file in files_to_process:
             print(f"Running pyccel on {file}...")

@@ -300,18 +300,32 @@ class getGeometryMap:
          coefs_data = np.array([
                list(map(float, line.split())) for line in coefs_text.split("\n")
          ])
+      # Extract weights data or default to ones
+      weights_element = GeometryMap.find(".//weights")
+      nurbs_check     = False 
+      if weights_element is not None:
+          nurbs_check     = True
+          weights_text = weights_element.text.strip()
+          weights_data = np.array([
+              float(line.strip()) for line in weights_text.split("\n") if line.strip()
+          ])
+      else:
+          weights_data = np.ones(len(coefs_data[:,0]))
 
       self.root        = root
       self.GeometryMap = GeometryMap
       self.knots_data  = knots_data
       self._degree     = degree_data
-      self._coefs      = [coefs_data[:,n].reshape(_nbasis) for n in range(geo_dim)]
+      self._coefs      = np.asarray([coefs_data[:,n].reshape(_nbasis) for n in range(geo_dim)])
+      self._grids      = [knots_data[n][degree_data[n]:-degree_data[n]] for n in range(dim)]
+      self._weights    = weights_data
       self._dim        = dim
+      self.nurbs_check = nurbs_check
       self._geo_dim    = geo_dim
       self._nbasis     = _nbasis
       self._nelements  = [_nbasis[n]-degree_data[n] for n in range(dim)]
 
-    #@property
+    @property
     def nbasis(self):
         return self._nbasis
     @property
@@ -329,9 +343,16 @@ class getGeometryMap:
     @property
     def nelements(self):
         return self._nelements
-    def coefs(self):
-        return self._coefs   
+    @property
+    def grids(self):
+        return self._grids
+    @property
+    def weights(self):
+        return self._weights
     
+    def coefs(self):
+        return self._coefs      
+        
     def RefineGeometryMap(self, numElevate=0, Nelements=None):
         """
         getGeometryMap :  Refine the geometry by elevating the DoFs numElevate times.
@@ -343,33 +364,89 @@ class getGeometryMap:
         else :
             assert(len(Nelements) == self.dim and Nelements[0]%self.nelements[0]==0 and Nelements[1]%self.nelements[1]==0)
         #... refine the space
-        #print(f"Refining the geometry map {self.dim}D with {numElevate} times and Nelements = {Nelements}")
-        Vh1       = SplineSpace(degree=self.degree[0], nelements=Nelements[0])
-        Vh2       = SplineSpace(degree=self.degree[1], nelements=Nelements[1])
         if self.dim == 2:
+            #print(f"Refining the geometry map {self.dim}D with {numElevate} times and Nelements = {Nelements}")
+            grids      = []
+            numElevate = Nelements[0]//self.nelements[0]
+            for i in range(0, self.nelements[0]):
+                a = (self._grids[0][i+1] - self._grids[0][i])/numElevate
+                grids.append(self._grids[0][i])
+                if a != 0. :
+                    for j in range(1,numElevate):
+                        grids.append(grids[-1] + a)
+            grids.append(1.)
+            Vh1       = SplineSpace(degree=self.degree[0], grid= grids)
+
+            grids      = []
+            numElevate = Nelements[1]//self.nelements[1]
+            for i in range(0, self.nelements[1]):
+                a = (self._grids[1][i+1] - self._grids[1][i])/numElevate
+                grids.append(self._grids[1][i])
+                if a != 0. :
+                    for j in range(1,numElevate):
+                        grids.append(grids[-1] + a)
+            grids.append(1.)
+            Vh2       = SplineSpace(degree=self.degree[1], grid= grids)
             Vh        = TensorSpace(Vh1, Vh2)# after refinement
-        else:
-            Vh3       = SplineSpace(degree=self.degree[2], nelements=Nelements[2])            
-            Vh        = TensorSpace(Vh1, Vh2, Vh3)# after refinement
-        # Extract knots data and degree
-        #print(f"Refined space : {self.nelements[0]} x {self.nelements[1]} Nelements")
-        VH1       = SplineSpace(degree=self.degree[0], nelements=self.nelements[0])
-        VH2       = SplineSpace(degree=self.degree[1], nelements=self.nelements[1])
-        if self.dim == 2:
+            # Extract knots data and degree
+            #print(f"Refined space : {self.nelements[0]} x {self.nelements[1]} Nelements")
+            VH1       = SplineSpace(degree=self.degree[0], grid= self._grids[0])
+            VH2       = SplineSpace(degree=self.degree[1], grid= self._grids[1])
+
             nbasis_tot = self._nbasis[0]*self._nbasis[1]
             VH         = TensorSpace(VH1, VH2)# after refinement
             # Extract coefs data
-            coefs_data = zeros((self.geo_dim, Vh.nbasis[0], Vh.nbasis[1]))
+            coefs_data = []
         else:
-            VH3        = SplineSpace(degree=self.degree[2], nelements=self.nelements[2])
+            #print(f"Refining the geometry map {self.dim}D with {numElevate} times and Nelements = {Nelements}")
+            grids      = []
+            numElevate = Nelements[0]//self.nelements[0]
+            for i in range(0, self.nelements[0]):
+                a = (self._grids[0][i+1] - self._grids[0][i])/numElevate
+                grids.append(self._grids[0][i])
+                if a != 0. :
+                    for j in range(1,numElevate):
+                        grids.append(grids[-1] + a)
+            grids.append(1.)
+            Vh1        = SplineSpace(degree=self.degree[0], grid= grids)
+            grids      = []
+            numElevate = Nelements[1]//self.nelements[1]
+            for i in range(0, self.nelements[1]):
+                a = (self._grids[1][i+1] - self._grids[1][i])/numElevate
+                grids.append(self._grids[1][i])
+                if a != 0. :
+                    for j in range(1,numElevate):
+                        grids.append(grids[-1] + a)
+            grids.append(1.)
+            Vh2        = SplineSpace(degree=self.degree[1], grid= grids)
+            grids      = []
+            numElevate = Nelements[2]//self.nelements[2]
+            for i in range(0, self.nelements[2]):
+                a = (self._grids[2][i+1] - self._grids[2][i])/numElevate
+                grids.append(self._grids[2][i])
+                if a != 0. :
+                    for j in range(1,numElevate):
+                        grids.append(grids[-1] + a)
+            grids.append(1.)
+            Vh3        = SplineSpace(degree=self.degree[2], grid= grids)            
+            Vh         = TensorSpace(Vh1, Vh2, Vh3)# after refinement
+            # Extract knots data and degree
+            #print(f"Refined space : {self.nelements[0]} x {self.nelements[1]} Nelements")
+            VH1        = SplineSpace(degree=self.degree[0], grid= self._grids[0])
+            VH2        = SplineSpace(degree=self.degree[1], grid= self._grids[1])
+            VH3        = SplineSpace(degree=self.degree[2], grid= self._grids[2])
             VH         = TensorSpace(VH1, VH2, VH3)# after refinement
             nbasis_tot = self._nbasis[0]*self._nbasis[1]*self._nbasis[2]
             # Extract coefs data
-            coefs_data = zeros((self.geo_dim, Vh.nbasis[0], Vh.nbasis[1], Vh.nbasis[2]))
-        #print("\n coef: ", self.coefs())
-        #print("VH1.nbasis: ", self._nbasis[0], "VH2.nbasis: ", self._nbasis[1])
+            coefs_data = []
         # Refine the coefs
         M_mp      = prolongation_matrix(VH, Vh)
-        for i in range(self.geo_dim):
-            coefs_data[i]      = (M_mp.dot(self.coefs()[i].reshape(nbasis_tot))).reshape(Vh.nbasis)        
-        return coefs_data
+        if self.nurbs_check:
+            coefs_data.append( (M_mp.dot(self._weights)).reshape(Vh.nbasis))
+            for i in range(self.geo_dim):
+                coefs_data.append( (M_mp.dot(self._weights*self.coefs()[i].reshape(nbasis_tot))).reshape(Vh.nbasis) / coefs_data[0])
+            return coefs_data
+        else:
+            for i in range(self.geo_dim):
+                coefs_data.append( (M_mp.dot(self.coefs()[i].reshape(nbasis_tot))).reshape(Vh.nbasis) )
+            return coefs_data

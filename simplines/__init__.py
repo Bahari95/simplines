@@ -9,10 +9,11 @@ from simplines import results
 from simplines import results_f90
 from simplines import ad_mesh_tools
 from simplines import fast_diag
+from simplines import nurbs_utilities
 
 __all__ = ['bsplines', 'cad',
            'spaces', 'linalg',
-           'quadratures', 'utilities', 'results', 'ad_mesh_tools', 'results_f90', 'api']
+           'quadratures', 'utilities', 'results', 'ad_mesh_tools', 'results_f90', 'api', 'nurbs_utilities']
 
 from simplines.bsplines import ( find_span,
                                  basis_funs,
@@ -97,3 +98,6 @@ from simplines.results_f90 import ( pyccel_sol_field_2d,
                                     paraview_SolutionMultipatch)
 
 from simplines.api import (assemble_matrix, assemble_vector, assemble_scalar, compile_kernel, apply_dirichlet, apply_periodic, apply_zeros)
+
+from simplines.nurbs_utilities import(sol_field_NURBS_2d, sol_field_NURBS_3d, prolongate_NURBS_mapping,
+                                      paraview_nurbsAdMeshMultipatch, paraview_nurbsSolutionMultipatch)
