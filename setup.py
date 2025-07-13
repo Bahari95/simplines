@@ -61,9 +61,9 @@ class RunPyccelCommand(Command):
             'simplines/nurbs_utilities_core.py',
         ]
         for file in files_to_process:
-            print(f"Running pyccel on {file}...")
+            print(f"Running pyccel on {file} with OpenMP...")
             try:
-                subprocess.check_call(['pyccel', file])
+                subprocess.check_call(['pyccel', file, '--openmp'])
             except subprocess.CalledProcessError as e:
                 print(f"Error occurred while processing {file}: {e}")
                 raise
