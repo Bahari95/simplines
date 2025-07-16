@@ -55,6 +55,7 @@ class RunPyccelCommand(Command):
     def run(self):
         # List of files to process
         files_to_process = [
+            'simplines/nurbs_core.py',
             'simplines/ad_mesh_core.py',
             'simplines/results_f90_core.py',
             'simplines/fast_diag_core.py',

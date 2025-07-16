@@ -95,6 +95,7 @@ degree      = 2
 quad_degree = degree+3
 nbpts       = 100 # FOR PLOT
 RefinNumber = 0 # for refinement
+nelements   = 16
 table       = zeros((RefinNumber+1,6))
 i           = 1
 times       = []
@@ -106,31 +107,33 @@ times       = []
 u_exact   = lambda x, y : sin(2.*pi*x)*sin(2.*pi*y)
 # ... function at each part of the boundary
 
-#--------------------------------------------------------------
-#..... Initialisation and computing optimal mapping for 16*16
-#--------------------------------------------------------------
-nelements  = 16
-# create the spline space for each direction
-VH1        = SplineSpace(degree=degree, nelements= nelements, nderiv = 2, quad_degree = quad_degree)
-VH2        = SplineSpace(degree=degree, nelements= nelements, nderiv = 2, quad_degree = quad_degree)
-Vh00       = TensorSpace(VH1, VH2)
-
 #----------------------------------------
-#..... Parameterization from 16*16 elements
+#.....Extract CAD geometry
 #----------------------------------------
 #geometry = '../fields/quart_annulus.xml'
 geometry = '../fields/unitSquare.xml'
+#geometry = '../fields/circle.xml'
 print('#---IN-UNIFORM--MESH-Poisson equation', geometry)
 
 # ... Assembling mapping
 mp             = getGeometryMap(geometry,0)
+mp.nurbs_check = True # activate NURBS if the geometry is defined by NURBS
 
 # ... Prolongation by knots insertion matrix of the initial mapping
-xmp = zeros(Vh00.nbasis)
-ymp = zeros(Vh00.nbasis)
+# if mp.nurbs_check:
+#     xmp, ymp               = mp.RefineGeometryMap(Nelements=(nelements,nelements))
+# else:
+weight, xmp, ymp       = mp.RefineGeometryMap(Nelements=(nelements,nelements))
+wm1, wm2 = weight[:,0], weight[0,:]    
 
-xmp[:,:], ymp[:,:]       = mp.RefineGeometryMap(Nelements=(nelements,nelements))
-
+#--------------------------------------------------------------
+#..... Initialisation and computing optimal mapping for 16*16
+#--------------------------------------------------------------
+# create the spline space for each direction
+VH1        = SplineSpace(degree=degree, nelements= nelements, nderiv = 2, omega = wm1, quad_degree = quad_degree)
+VH2        = SplineSpace(degree=degree, nelements= nelements, nderiv = 2, quad_degree = quad_degree)
+Vh00       = TensorSpace(VH1, VH2)
+print(np.max(VH1.basis- VH2.basis))
 # ...
 u11_mpH        = StencilVector(Vh00.vector_space)
 u12_mpH        = StencilVector(Vh00.vector_space)

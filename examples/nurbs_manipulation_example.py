@@ -20,9 +20,9 @@ import numpy as np
 nbpts    = 100
 RefParm  = 2
 # geometry = '../fields/quart_annulus.xml'
-geometry = '../fields/circle.xml'
+# geometry = '../fields/circle.xml'
 # geometry  = '../fields/egg.xml'
-# geometry  = '../fields/cylinder.xml'
+geometry  = '../fields/cylinder.xml'
 
 print('#---IN-UNIFORM--MESH-Poisson equation', geometry)
 mp              = getGeometryMap(geometry,0)
@@ -38,7 +38,7 @@ for i in range(0, mp.nelements[0]):
     if a != 0. :
         for j in range(1,RefParm):
             grids.append(grids[-1] + a)
-grids.append(1.)
+grids.append(mp.grids[0][-1])
 V1         = SplineSpace(degree = mp.degree[0],  grid= grids)
 grids      = mp.knots[1][mp.degree[1]:-mp.degree[1]]
 grids      = []
@@ -48,7 +48,7 @@ for i in range(0, mp.nelements[1]):
     if a != 0. :
         for j in range(1,RefParm):
             grids.append(grids[-1] + a)
-grids.append(1.)
+grids.append(mp.grids[1][-1])
 V2         = SplineSpace(degree = mp.degree[1],  grid= grids)
 Vh         = TensorSpace(V1, V2)
 
