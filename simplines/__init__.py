@@ -87,6 +87,7 @@ from simplines.ad_mesh_tools import ( quadratures_in_admesh,
 from simplines.fast_diag import ( Poisson)
 
 from simplines.results_f90 import ( pyccel_sol_field_2d,
+                                   pyccel_sol_field_1d,
                                     pyccel_sol_field_3d, 
                                     least_square_Bspline,
                                     plot_SolutionMultipatch,

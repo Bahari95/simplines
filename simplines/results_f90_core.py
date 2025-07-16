@@ -1,4 +1,118 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""
+#Parameters
+----------
+nx : int
+    Number of points in the mesh.
+uh : float[:]
+    Array of control point values.
+Tu : float[:]
+    Knot vector.
+pu : int
+    Degree of the basis functions.
+Q : float[:,:]
+    Output array where the computed solution and its gradient will be stored.
+    Q[:, 0] will contain the solution values, Q[:, 1] will contain the gradients.
+
+Notes
+-----
+This function evaluates the B-spline solution and its derivative at the given mesh points.
+"""
+def sol_field_1D_meshes(nx:'int', uh:'float[:]', Tu:'float[:]', pu:'int', Q:'float[:,:]'):
+    #Computes the solution and its gradient at each point in a 1D mesh.
+    
+    from numpy import zeros
+    from numpy import empty
+
+    nders      = 1
+    # ...
+    leftu      = empty( pu )
+    rightu     = empty( pu )
+    ndu        = empty( (pu+1, pu+1) )
+    au         = empty( (       2, pu+1) )
+    dersu      = zeros( (     nders+1, pu+1) ) 
+    #...
+    for i_x in range(nx):          
+              x = Q[i_x,2]
+              #..
+              xq         = x
+              dersu[:,:] = 0.
+              #~~~~~~~~~~~~~~~
+              # Knot index at left/right boundary
+              low  = pu
+              high = len(Tu)-1-pu
+              # Check if point is exactly on left/right boundary, or outside domain
+              if xq <= Tu[low ]: 
+                   span = low
+              elif xq >= Tu[high]: 
+                  span = high-1
+              else : 
+                # Perform binary search
+                span = (low+high)//2
+                while xq < Tu[span] or xq >= Tu[span+1]:
+                   if xq < Tu[span]:
+                       high = span
+                   else:
+                       low  = span
+                   span = (low+high)//2        
+              ndu[0,0] = 1.0
+              for j in range(0,pu):
+                  leftu [j] = xq - Tu[span-j]
+                  rightu[j] = Tu[span+1+j] - xq
+                  saved    = 0.0
+                  for r in range(0,j+1):
+                      # compute inverse of knot differences and save them into lower triangular part of ndu
+                      ndu[j+1,r] = 1.0 / (rightu[r] + leftu[j-r])
+                      # compute basis functions and save them into upper triangular part of ndu
+                      temp       = ndu[r,j] * ndu[j+1,r]
+                      ndu[r,j+1] = saved + rightu[r] * temp
+                      saved      = leftu[j-r] * temp
+                  ndu[j+1,j+1] = saved	
+
+              # Compute derivatives in 2D output array 'ders'
+              dersu[0,:] = ndu[:,pu]
+              for r in range(0,pu+1):
+                  s1 = 0
+                  s2 = 1
+                  au[0,0] = 1.0
+                  for k in range(1,nders+1):
+                      d  = 0.0
+                      rk = r-k
+                      pk = pu-k
+                      if r >= k:
+                         au[s2,0] = au[s1,0] * ndu[pk+1,rk]
+                         d = au[s2,0] * ndu[rk,pk]
+                      j1 = 1   if (rk  > -1 ) else -rk
+                      j2 = k-1 if (r-1 <= pk) else pu-r
+                      for ij in range(j1,j2+1):
+                          au[s2,ij] = (au[s1,ij] - au[s1,ij-1]) * ndu[pk+1,rk+ij]
+                      for ij in range(j1,j2+1):
+                          d += au[s2,ij]* ndu[rk+ij,pk]
+                      if r <= pk:
+                         au[s2,k] = - au[s1,k-1] * ndu[pk+1,r]
+                         d += au[s2,k] * ndu[r,pk]
+                      dersu[k,r] = d
+                      j  = s1
+                      s1 = s2
+                      s2 = j
+              # Multiply derivatives by correct factors
+              r = pu
+              dersu[1,:] = dersu[1,:] * r
+              basis_x = dersu
+              span_u  = span     
+              #...
+              bu      = basis_x[0,:]    
+              derbu   = basis_x[1,:]
+          
+              c       = 0.
+              cx      = 0.
+              for ku in range(0, pu+1):
+                    c  += bu[ku]*uh[span_u-pu+ku]
+                    cx += derbu[ku]*uh[span_u-pu+ku]
+              #..
+              Q[i_x, 0]   = c
+              Q[i_x, 1]   = cx
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Computes Solution and its gradien In two dimension
 def sol_field_2D_meshes(nx:'int', ny:'int', uh:'float[:,:]', Tu:'float[:]', Tv:'float[:]', pu:'int', pv:'int', Q:'float[:,:,:]'):
     # Using computed control points U we compute solution

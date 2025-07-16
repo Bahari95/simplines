@@ -10,6 +10,43 @@ from   .               import results_f90_core as core
 from numpy import zeros, linspace, meshgrid
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Computes Solution and its gradien In two dimension
+def pyccel_sol_field_1d(knots, uh, Npoints = None, meshes = None, bound_val = None):
+   """
+   Computes the solution and its gradient in one dimension.
+   """
+   Tu = knots
+   nu = uh.shape[0]
+   pu = len(Tu) - nu -1
+   
+   if meshes is None:
+
+      if Npoints is None:
+         nx     = nu-pu+1
+         meshes = Tu[pu:-pu] 
+      else :
+         '''
+         x0_v  : min val in x direction
+         x1_v  : max val in x direction
+         '''
+         nx   = Npoints
+         if bound_val is not None:
+            x0_v = bound_val[0]
+            x1_v = bound_val[1] 
+
+         else :
+            x0_v = Tu[pu]
+            x1_v = Tu[-pu-1]
+         # ...
+         meshes  = linspace(x0_v, x1_v, nx)
+   # ...
+   nx       = meshes.shape[0]
+   Q        = zeros((nx, 3))
+   Q[:,2]   = meshes[:]
+   core.sol_field_1D_meshes(nx, uh, Tu, pu, Q)
+   return Q[:,0], Q[:,1]
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Computes Solution and its gradien In two dimension
 def pyccel_sol_field_2d( Npoints, uh, knots, degree, meshes = None, bound_val = None):
     '''
     Using computed control points uh we compute solution
