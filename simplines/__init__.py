@@ -100,5 +100,6 @@ from simplines.results_f90 import ( pyccel_sol_field_2d,
 
 from simplines.api import (assemble_matrix, assemble_vector, assemble_scalar, compile_kernel, apply_dirichlet, apply_periodic, apply_zeros)
 
-from simplines.nurbs_utilities import(sol_field_NURBS_2d, sol_field_NURBS_3d, prolongate_NURBS_mapping,
+from simplines.nurbs_utilities import(sol_field_NURBS_2d, sol_field_NURBS_3d, 
+                                      prolongate_NURBS_mapping, least_square_NURBspline,
                                       paraview_nurbsAdMeshMultipatch, paraview_nurbsSolutionMultipatch)

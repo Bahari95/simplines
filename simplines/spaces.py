@@ -11,7 +11,7 @@ from .quadratures import gauss_legendre
 from .linalg      import StencilVectorSpace
 from .            import nurbs_core as  core
 
-from numpy import linspace, zeros
+from numpy import linspace, zeros, ones
 
 __all__ = ['SplineSpace', 'TensorSpace']
 
@@ -19,7 +19,8 @@ __all__ = ['SplineSpace', 'TensorSpace']
 class SplineSpace(object):
     def __init__(self, degree, nelements=None, grid=None, nderiv=1,
                  periodic=False, normalization=False, omega = None, sharing_grid = None, quad_degree = None):
-
+        # omega is weights for NURBS function
+        
         if (nelements is None) and (grid is None):
             raise ValueError('Either nelements or grid must be provided')
 
@@ -57,15 +58,17 @@ class SplineSpace(object):
                 grid         = sharing_grid
         else:
             if sharing_grid is None :
+                nelements    = len(grid)-1
                 # for each element on the grid, we create a local quadrature grid
                 points, weights = quadrature_grid( grid, u, w )
                 # for each element and a quadrature points,
                 # we compute the non-vanishing B-Splines
                 basis = zeros((nelements, degree+1, nderiv+1, points.shape[1]))
                 spans = zeros(nelements, dtype=int )
-                nelements    = len(grid)-1
                 core.nurbs_ders_on_quad_grid(nelements, degree, spans, basis, weights, points, knots, omega, nderiv)
             else :
+                nelements    = len(sharing_grid)-1 # corresponds to integration discretization, which may differ from the knot grid
+                grid         = sharing_grid
                 # for each element on the grid, we create a local quadrature grid
                 points, weights = quadrature_grid( sharing_grid, u, w )
                 # for each element and a quadrature points,
@@ -73,8 +76,6 @@ class SplineSpace(object):
                 basis = zeros((nelements, degree+1, nderiv+1, points.shape[1]))
                 spans = zeros((nelements,points.shape[1]), dtype=int )
                 core.nurbs_ders_on_shared_quad_grid(nelements, degree, spans, basis, weights, points, knots, omega, nderiv)
-                nelements    = len(sharing_grid)-1 # corresponds to integration discretization, which may differ from the knot grid
-                grid         = sharing_grid
         self._periodic  = periodic
         self._knots     = knots
         self._spans     = spans
@@ -85,6 +86,7 @@ class SplineSpace(object):
         self._points    = points
         self._weights   = weights
         self._basis     = basis
+        self._omega     = omega
 
         self._vector_space = StencilVectorSpace([nbasis], [degree], [periodic])
 
@@ -131,7 +133,10 @@ class SplineSpace(object):
     @property
     def basis(self):
         return self._basis
-
+    @property
+    def omega(self):
+        return self._omega
+    
     @property
     def dim(self):
         return 1
@@ -192,6 +197,10 @@ class TensorSpace(object):
     def basis(self):
         return [V.basis for V in self.spaces]
 
+    @property
+    def omega(self):
+        return [V.omega for V in self.spaces]
+    
     @property
     def dim(self):
         return sum([V.dim for V in self.spaces])

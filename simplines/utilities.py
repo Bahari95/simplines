@@ -88,20 +88,23 @@ def prolongation_matrix(VH, Vh):
     return M
 
 
-from .linalg      import StencilVector
-from .spaces      import SplineSpace
-from .spaces      import TensorSpace
-from .results_f90 import least_square_Bspline
-from .results_f90 import pyccel_sol_field_2d
-from numpy import exp
-from numpy import cos
-from numpy import sin, sinh
-from numpy import pi
-from numpy import arctan2
-from numpy import sqrt
-from numpy import cosh, tanh
-from numpy import zeros
-from numpy import empty
+from .linalg          import StencilVector
+from .spaces          import SplineSpace
+from .spaces          import TensorSpace
+from .results_f90     import least_square_Bspline
+from .results_f90     import pyccel_sol_field_2d
+from .nurbs_utilities import sol_field_NURBS_2d
+from .nurbs_utilities import least_square_NURBspline
+
+from numpy            import exp
+from numpy            import cos
+from numpy            import sin, sinh
+from numpy            import pi
+from numpy            import arctan2
+from numpy            import sqrt
+from numpy            import cosh, tanh
+from numpy            import zeros
+from numpy            import empty
 def build_dirichlet(V, f, map = None, admap = None):
     '''
     V    : FE space
@@ -132,44 +135,83 @@ def build_dirichlet(V, f, map = None, admap = None):
         fy1      = lambda x,y :  eval(f[0]) 
     u_d          = StencilVector(V.vector_space)
     x_d          = np.zeros(V.nbasis)
-    if V.dim == 2:
-        if map is None:
-            #------------------------------
-            #.. In the parametric domain
-            x_d[ 0 , : ] = least_square_Bspline(V.degree[1], V.knots[1], fx0)
-            x_d[ -1, : ] = least_square_Bspline(V.degree[1], V.knots[1], fx1)
-            x_d[ : , 0 ] = least_square_Bspline(V.degree[0], V.knots[0], fy0)
-            x_d[ : ,-1 ] = least_square_Bspline(V.degree[0], V.knots[0], fy1)
+    if V.omega[0] is None :
+        #... B-spline space
+        if V.dim == 2:
+            if map is None:
+                #------------------------------
+                #.. In the parametric domain
+                x_d[ 0 , : ] = least_square_Bspline(V.degree[1], V.knots[1], fx0)
+                x_d[ -1, : ] = least_square_Bspline(V.degree[1], V.knots[1], fx1)
+                x_d[ : , 0 ] = least_square_Bspline(V.degree[0], V.knots[0], fy0)
+                x_d[ : ,-1 ] = least_square_Bspline(V.degree[0], V.knots[0], fy1)
 
-        elif admap is None :
-            #-------------------------------------------------
-            #.. In the phyisacl domain without adaptive mapping               
-            n_dir        = V.nbasis[0] + V.nbasis[1]+100
-            sX           = pyccel_sol_field_2d((n_dir,n_dir),  map[0] , V.knots, V.degree)[0]
-            sY           = pyccel_sol_field_2d((n_dir,n_dir),  map[1] , V.knots, V.degree)[0]
+            elif admap is None :
+                #-------------------------------------------------
+                #.. In the phyisacl domain without adaptive mapping               
+                n_dir        = V.nbasis[0] + V.nbasis[1]+100
+                sX           = pyccel_sol_field_2d((n_dir,n_dir),  map[0] , V.knots, V.degree)[0]
+                sY           = pyccel_sol_field_2d((n_dir,n_dir),  map[1] , V.knots, V.degree)[0]
 
-            x_d[ 0 , : ] = least_square_Bspline(V.degree[1], V.knots[1], fx0(sX[0, :], sY[ 0,:]), m= n_dir)
-            x_d[ -1, : ] = least_square_Bspline(V.degree[1], V.knots[1], fx1(sX[-1,:], sY[-1,:]), m= n_dir)
-            x_d[ : , 0 ] = least_square_Bspline(V.degree[0], V.knots[0], fy0(sX[:, 0], sY[:, 0]), m= n_dir)
-            x_d[ : ,-1 ] = least_square_Bspline(V.degree[0], V.knots[0], fy1(sX[:,-1], sY[:,-1]), m= n_dir)
+                x_d[ 0 , : ] = least_square_Bspline(V.degree[1], V.knots[1], fx0(sX[0, :], sY[ 0,:]))
+                x_d[ -1, : ] = least_square_Bspline(V.degree[1], V.knots[1], fx1(sX[-1,:], sY[-1,:]))
+                x_d[ : , 0 ] = least_square_Bspline(V.degree[0], V.knots[0], fy0(sX[:, 0], sY[:, 0]))
+                x_d[ : ,-1 ] = least_square_Bspline(V.degree[0], V.knots[0], fy1(sX[:,-1], sY[:,-1]))
 
-        else :
-            #-----------------------------------------------
-            #.. In the phyisacl domain with adaptive mapping               
-            n_dir        = V.nbasis[0] + V.nbasis[1]+100
+            else :
+                #-----------------------------------------------
+                #.. In the phyisacl domain with adaptive mapping               
+                n_dir        = V.nbasis[0] + V.nbasis[1]+100
 
-            Xmae         = pyccel_sol_field_2d((n_dir,n_dir),  admap[0] , admap[2].knots, admap[2].degree)[0]
-            Ymae         = pyccel_sol_field_2d((n_dir,n_dir),  admap[1] , admap[3].knots, admap[3].degree)[0]
-            sX           = pyccel_sol_field_2d( None, map[0], V.knots, V.degree, meshes = (Xmae, Ymae))[0]
-            sY           = pyccel_sol_field_2d( None, map[1], V.knots, V.degree, meshes = (Xmae, Ymae))[0]
+                Xmae         = pyccel_sol_field_2d((n_dir,n_dir),  admap[0] , admap[2].knots, admap[2].degree)[0]
+                Ymae         = pyccel_sol_field_2d((n_dir,n_dir),  admap[1] , admap[3].knots, admap[3].degree)[0]
+                sX           = pyccel_sol_field_2d( None, map[0], V.knots, V.degree, meshes = (Xmae, Ymae))[0]
+                sY           = pyccel_sol_field_2d( None, map[1], V.knots, V.degree, meshes = (Xmae, Ymae))[0]
 
-            x_d[ 0 , : ] = least_square_Bspline(V.degree[1], V.knots[1], fx0(sX[0, :], sY[ 0,:]), m= n_dir)
-            x_d[ -1, : ] = least_square_Bspline(V.degree[1], V.knots[1], fx1(sX[-1,:], sY[-1,:]), m= n_dir)
-            x_d[ : , 0 ] = least_square_Bspline(V.degree[0], V.knots[0], fy0(sX[:, 0], sY[:, 0]), m= n_dir)
-            x_d[ : ,-1 ] = least_square_Bspline(V.degree[0], V.knots[0], fy1(sX[:,-1], sY[:,-1]), m= n_dir)
-    if V.dim == 3 :
-        print("not yet implemented")
-        #.. TODO : USE l2 PROJECTION USING FAST DIAG
+                x_d[ 0 , : ] = least_square_Bspline(V.degree[1], V.knots[1], fx0(sX[0, :], sY[ 0,:]))
+                x_d[ -1, : ] = least_square_Bspline(V.degree[1], V.knots[1], fx1(sX[-1,:], sY[-1,:]))
+                x_d[ : , 0 ] = least_square_Bspline(V.degree[0], V.knots[0], fy0(sX[:, 0], sY[:, 0]))
+                x_d[ : ,-1 ] = least_square_Bspline(V.degree[0], V.knots[0], fy1(sX[:,-1], sY[:,-1]))
+        if V.dim == 3 :
+            raise NotImplementedError("3D Dirichlet boundary conditions are not yet implemented. nd: Use L2 projection using fast diagonalization.")
+    else :
+        if V.dim == 2:
+            if map is None:
+                #------------------------------
+                #.. In the parametric domain
+                x_d[ 0 , : ] = least_square_NURBspline(V.degree[1], V.knots[1], V.omega[1], fx0)
+                x_d[ -1, : ] = least_square_NURBspline(V.degree[1], V.knots[1], V.omega[1], fx1)
+                x_d[ : , 0 ] = least_square_NURBspline(V.degree[0], V.knots[0], V.omega[0], fy0)
+                x_d[ : ,-1 ] = least_square_NURBspline(V.degree[0], V.knots[0], V.omega[0], fy1)
+
+            elif admap is None :
+                #-------------------------------------------------
+                #.. In the phyisacl domain without adaptive mapping               
+                n_dir        = V.nbasis[0] + V.nbasis[1]+100
+                sX           = sol_field_NURBS_2d((n_dir,n_dir),  map[0], V.omega, V.knots, V.degree)[0]
+                sY           = sol_field_NURBS_2d((n_dir,n_dir),  map[1], V.omega, V.knots, V.degree)[0]
+
+                x_d[ 0 , : ] = least_square_NURBspline(V.degree[1], V.knots[1], V.omega[1], fx0(sX[0, :], sY[ 0,:]))
+                x_d[ -1, : ] = least_square_NURBspline(V.degree[1], V.knots[1], V.omega[1], fx1(sX[-1,:], sY[-1,:]))
+                x_d[ : , 0 ] = least_square_NURBspline(V.degree[0], V.knots[0], V.omega[0], fy0(sX[:, 0], sY[:, 0]))
+                x_d[ : ,-1 ] = least_square_NURBspline(V.degree[0], V.knots[0], V.omega[0], fy1(sX[:,-1], sY[:,-1]))
+
+            else :
+                #-----------------------------------------------
+                #.. In the phyisacl domain with adaptive mapping               
+                n_dir        = V.nbasis[0] + V.nbasis[1]+100
+
+                Xmae         = sol_field_NURBS_2d((n_dir,n_dir),  admap[0], V.omega, V.knots, V.degree)[0]
+                Ymae         = sol_field_NURBS_2d((n_dir,n_dir),  admap[1], V.omega, V.knots, V.degree)[0]
+                sX           = sol_field_NURBS_2d( None, map[0], V.knots, V.degree, meshes = (Xmae, Ymae))[0]
+                sY           = sol_field_NURBS_2d( None, map[1], V.knots, V.degree, meshes = (Xmae, Ymae))[0]
+
+                x_d[ 0 , : ] = least_square_NURBspline(V.degree[1], V.knots[1], V.omega[1], fx0(sX[0, :], sY[ 0,:]))
+                x_d[ -1, : ] = least_square_NURBspline(V.degree[1], V.knots[1], V.omega[1], fx1(sX[-1,:], sY[-1,:]))
+                x_d[ : , 0 ] = least_square_NURBspline(V.degree[0], V.knots[0], V.omega[0], fy0(sX[:, 0], sY[:, 0]))
+                x_d[ : ,-1 ] = least_square_NURBspline(V.degree[0], V.knots[0], V.omega[0], fy1(sX[:,-1], sY[:,-1]))
+        if V.dim == 3 :
+            raise NotImplementedError("3D Dirichlet boundary conditions are not yet implemented. nd: Use L2 projection using fast diagonalization.")
     u_d.from_array(V, x_d)
     return x_d, u_d
 
@@ -352,7 +394,19 @@ class getGeometryMap:
     
     def coefs(self):
         return self._coefs      
-        
+    
+    def Refinegrid(self, j_direct, Nelements):
+        grids      = []
+        numElevate = Nelements[j_direct]//self.nelements[j_direct]
+        for i in range(0, self.nelements[j_direct]):
+            a = (self._grids[j_direct][i+1] - self._grids[j_direct][i])/numElevate
+            grids.append(self._grids[j_direct][i])
+            if a != 0. :
+                for j in range(1,numElevate):
+                    grids.append(grids[-1] + a)
+        grids.append(self._grids[j_direct][-1])
+        return grids
+    
     def RefineGeometryMap(self, numElevate=0, Nelements=None):
         """
         getGeometryMap :  Refine the geometry by elevating the DoFs numElevate times.
@@ -367,26 +421,28 @@ class getGeometryMap:
         #... refine the space
         if self.dim == 2:
             #print(f"Refining the geometry map {self.dim}D with {numElevate} times and Nelements = {Nelements}")
-            grids      = []
-            numElevate = Nelements[0]//self.nelements[0]
-            for i in range(0, self.nelements[0]):
-                a = (self._grids[0][i+1] - self._grids[0][i])/numElevate
-                grids.append(self._grids[0][i])
-                if a != 0. :
-                    for j in range(1,numElevate):
-                        grids.append(grids[-1] + a)
-            grids.append(self._grids[0][-1])
+            # grids      = []
+            # numElevate = Nelements[0]//self.nelements[0]
+            # for i in range(0, self.nelements[0]):
+            #     a = (self._grids[0][i+1] - self._grids[0][i])/numElevate
+            #     grids.append(self._grids[0][i])
+            #     if a != 0. :
+            #         for j in range(1,numElevate):
+            #             grids.append(grids[-1] + a)
+            # grids.append(self._grids[0][-1])
+            grids     = self.Refinegrid(0, Nelements)
             Vh1       = SplineSpace(degree=self.degree[0], grid= grids)
 
-            grids      = []
-            numElevate = Nelements[1]//self.nelements[1]
-            for i in range(0, self.nelements[1]):
-                a = (self._grids[1][i+1] - self._grids[1][i])/numElevate
-                grids.append(self._grids[1][i])
-                if a != 0. :
-                    for j in range(1,numElevate):
-                        grids.append(grids[-1] + a)
-            grids.append(self._grids[1][-1])
+            # grids      = []
+            # numElevate = Nelements[1]//self.nelements[1]
+            # for i in range(0, self.nelements[1]):
+            #     a = (self._grids[1][i+1] - self._grids[1][i])/numElevate
+            #     grids.append(self._grids[1][i])
+            #     if a != 0. :
+            #         for j in range(1,numElevate):
+            #             grids.append(grids[-1] + a)
+            # grids.append(self._grids[1][-1])
+            grids     = self.Refinegrid(1, Nelements)
             Vh2       = SplineSpace(degree=self.degree[1], grid= grids)
             Vh        = TensorSpace(Vh1, Vh2)# after refinement
             # Extract knots data and degree
@@ -398,35 +454,38 @@ class getGeometryMap:
             VH         = TensorSpace(VH1, VH2)# after refinement
         else:
             #print(f"Refining the geometry map {self.dim}D with {numElevate} times and Nelements = {Nelements}")
-            grids      = []
-            numElevate = Nelements[0]//self.nelements[0]
-            for i in range(0, self.nelements[0]):
-                a = (self._grids[0][i+1] - self._grids[0][i])/numElevate
-                grids.append(self._grids[0][i])
-                if a != 0. :
-                    for j in range(1,numElevate):
-                        grids.append(grids[-1] + a)
-            grids.append(self._grids[0][-1])
+            # grids      = []
+            # numElevate = Nelements[0]//self.nelements[0]
+            # for i in range(0, self.nelements[0]):
+            #     a = (self._grids[0][i+1] - self._grids[0][i])/numElevate
+            #     grids.append(self._grids[0][i])
+            #     if a != 0. :
+            #         for j in range(1,numElevate):
+            #             grids.append(grids[-1] + a)
+            # grids.append(self._grids[0][-1])
+            grids      = self.Refinegrid(0, Nelements)
             Vh1        = SplineSpace(degree=self.degree[0], grid= grids)
-            grids      = []
-            numElevate = Nelements[1]//self.nelements[1]
-            for i in range(0, self.nelements[1]):
-                a = (self._grids[1][i+1] - self._grids[1][i])/numElevate
-                grids.append(self._grids[1][i])
-                if a != 0. :
-                    for j in range(1,numElevate):
-                        grids.append(grids[-1] + a)
-            grids.append(self._grids[1][-1])
+            # grids      = []
+            # numElevate = Nelements[1]//self.nelements[1]
+            # for i in range(0, self.nelements[1]):
+            #     a = (self._grids[1][i+1] - self._grids[1][i])/numElevate
+            #     grids.append(self._grids[1][i])
+            #     if a != 0. :
+            #         for j in range(1,numElevate):
+            #             grids.append(grids[-1] + a)
+            # grids.append(self._grids[1][-1])
+            grids      = self.Refinegrid(1, Nelements)
             Vh2        = SplineSpace(degree=self.degree[1], grid= grids)
-            grids      = []
-            numElevate = Nelements[2]//self.nelements[2]
-            for i in range(0, self.nelements[2]):
-                a = (self._grids[2][i+1] - self._grids[2][i])/numElevate
-                grids.append(self._grids[2][i])
-                if a != 0. :
-                    for j in range(1,numElevate):
-                        grids.append(grids[-1] + a)
-            grids.append(self._grids[2][-1])
+            # grids      = []
+            # numElevate = Nelements[2]//self.nelements[2]
+            # for i in range(0, self.nelements[2]):
+            #     a = (self._grids[2][i+1] - self._grids[2][i])/numElevate
+            #     grids.append(self._grids[2][i])
+            #     if a != 0. :
+            #         for j in range(1,numElevate):
+            #             grids.append(grids[-1] + a)
+            # grids.append(self._grids[2][-1])
+            grids      = self.Refinegrid(2, Nelements)
             Vh3        = SplineSpace(degree=self.degree[2], grid= grids)            
             Vh         = TensorSpace(Vh1, Vh2, Vh3)# after refinement
             # Extract knots data and degree

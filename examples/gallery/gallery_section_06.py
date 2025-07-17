@@ -5,7 +5,6 @@ __all__ = ['assemble_matrix__un_ex01',
 from pyccel.decorators import types
 
 #... utilities of poisson equation
-
 #==============================================================================
 #---2 : In adapted mesh Matrix
 @types('int', 'int', 'int', 'int', 'int[:]', 'int[:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:,:,:]')
@@ -138,7 +137,7 @@ def assemble_vector_un_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_
     arr_J_mat1  = zeros((k1,k2))
     arr_J_mat2  = zeros((k1,k2))
     arr_J_mat3  = zeros((k1,k2))
-    #lvalues_Jac = zeros((k1, k2))
+    lvalues_Jac = zeros((k1, k2))
     lvalues_udx = zeros((k1, k2))
     lvalues_udy = zeros((k1, k2))
     # ... build rhs
@@ -193,10 +192,13 @@ def assemble_vector_un_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_
                     lvalues_udy[g1, g2]  = (F1x * udy - F1y*udx)
                     lvalues_udy[g1, g2] /= J_mat
                     #.. Test 1
-                    f = 2.*(2.*pi)**2*sin(2.*pi*x)*sin(2.*pi*y)
+                    #f = -4000000*x**2*(x**2 + y**2 - 0.2)**2*exp(-500*(x**2 + y**2 - 0.2)**2) + 4000*x**2*exp(-500*(x**2 + y**2 - 0.2)**2) - 4000000*y**2*(x**2 + y**2 - 0.2)**2*exp(-500*(x**2 + y**2 - 0.2)**2)
+                    #f+= 4000*y**2*exp(-500*(x**2 + y**2 - 0.2)**2) - 2*(-2000*x**2 - 2000*y**2 + 400.0)*exp(-500*(x**2 + y**2 - 0.2)**2)
+                    # Circular domain
+                    f = 3.85749969592784e-18*exp(100.0*x + 100.0*y)/(1.92874984796392e-22*exp(100.0*x + 100.0*y) + 1.0)**2 - 1.48803039040833e-39*exp(200.0*x + 200.0*y)/(1.92874984796392e-22*exp(100.0*x + 100.0*y) + 1.0)**3
 
-                    lvalues_u[g1,g2]   = f * J_mat 
-                    #lvalues_Jac[g1,g2] = J_mat
+                    lvalues_u[g1,g2]   = f 
+                    lvalues_Jac[g1,g2] = J_mat
             for il_1 in range(0, p1+1):
                 for il_2 in range(0, p2+1):
                     i1 = i_span_1 - p1 + il_1
@@ -217,10 +219,9 @@ def assemble_vector_un_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_
                             u     = lvalues_u[g1,g2]
                             udx   = lvalues_udx[g1, g2]
                             udy   = lvalues_udy[g1, g2]
-                            v    += bi_0 * u * wvol -  (udx * bi_x+ udy * bi_y) * wvol
+                            v    += bi_0 * u * wvol * lvalues_Jac[g1,g2] -  (udx * bi_x+ udy * bi_y) * wvol
 
                     rhs[i1+p1,i2+p2] += v
-
 
 #=================================================================================
 # norm in uniform mesh norm
@@ -237,6 +238,8 @@ def assemble_norm_un_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_2,
     # ... sizes
     k1 = weights_1.shape[1]
     k2 = weights_2.shape[1]
+
+    #.. circle
 
     # ...
     lcoeffs_m1 = zeros((p1+1,p2+1))
@@ -255,10 +258,10 @@ def assemble_norm_un_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_2,
         for ie2 in range(0, ne2):
             i_span_2 = spans_2[ie2]
 
-            lvalues_u[ : , : ]   = 0.0
+            lvalues_u[ : , : ]  = 0.0
             lvalues_ux[ : , : ]  = 0.0
             lvalues_uy[ : , : ]  = 0.0
-            lcoeffs_u[ : , : ]   = vector_u[i_span_1 : i_span_1+p1+1, i_span_2 : i_span_2+p2+1]
+            lcoeffs_u[ : , : ] = vector_u[i_span_1 : i_span_1+p1+1, i_span_2 : i_span_2+p2+1]
             for il_1 in range(0, p1+1):
                 for il_2 in range(0, p2+1):
                     coeff_u = lcoeffs_u[il_1,il_2]
@@ -267,7 +270,7 @@ def assemble_norm_un_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_2,
                         b1 = basis_1[ie1,il_1,0,g1]
                         db1 = basis_1[ie1,il_1,1,g1]
                         for g2 in range(0, k2):
-                            b2  = basis_2[ie2,il_2,0,g2]
+                            b2 = basis_2[ie2,il_2,0,g2]
                             db2 = basis_2[ie2,il_2,1,g2]
 
                             lvalues_u[g1,g2]   += coeff_u*b1*b2
@@ -307,22 +310,28 @@ def assemble_norm_un_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_2,
                     det_J = abs(F1x*F2y-F1y*F2x)
                     
                     # ...                              
-                    wvol  = weights_1[ie1, g1] * weights_2[ie2, g2] * det_J
+                    wvol  = weights_1[ie1, g1] * weights_2[ie2, g2]
+                    x1    =  points_1[ie1, g1]
+                    x2    =  points_2[ie2, g2]
 
                     uh    = lvalues_u[g1,g2]
                     sx    = lvalues_ux[g1,g2]
                     sy    = lvalues_uy[g1,g2]
  
-                    #... 
-                    f    = sin(2.*pi*x)*sin(2.*pi*y)
-                    fx   = 2.*pi*cos(2.*pi*x)*sin(2.*pi*y)
-                    fy   = 2.*pi*sin(2.*pi*x)*cos(2.*pi*y)
+                    #... TEST Circlur domain
+                    f    = 1./(1.+exp((x + y  - 0.5)/0.01) )
+                    fx   = -1.92874984796392e-20*exp(100.0*x + 100.0*y)/(1.92874984796392e-22*exp(100.0*x + 100.0*y) + 1.0)**2
+                    fy   = -1.92874984796392e-20*exp(100.0*x + 100.0*y)/(1.92874984796392e-22*exp(100.0*x + 100.0*y) + 1.0)**2
+                    #... TEST 2
+                    #f   = exp(-100.*sin(6.*((y+0.1)**2-0.1*x)-0.05)**2)
+                    #fx  = -120.0*exp(-100.0*sin(0.6*x - 6.0*(y + 0.1)**2 + 0.05)**2)*sin(0.6*x - 6.0*(y + 0.1)**2 + 0.05)*cos(0.6*x - 6.0*(y + 0.1)**2 + 0.05)
+                    #fy  = -200.0*(-12.0*y - 1.2)*exp(-100.0*sin(0.6*x - 6.0*(y + 0.1)**2 + 0.05)**2)*sin(0.6*x - 6.0*(y + 0.1)**2 + 0.05)*cos(0.6*x - 6.0*(y + 0.1)**2 + 0.05)
                     # ...
                     uhx   = (F2y*sx-F2x*sy)/det_J
                     uhy   = (F1x*sy-F1y*sx)/det_J
 
-                    w    += ((uhx-fx)**2 +(uhy-fy)**2)* wvol
-                    v    += (uh-f)**2 * wvol
+                    w    += ((uhx-fx)**2 +(uhy-fy)**2)* wvol * det_J
+                    v    += (uh-f)**2 * wvol * det_J
 
             error_H1      += w
             error_l2      += v

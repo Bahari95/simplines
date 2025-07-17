@@ -1,8 +1,14 @@
+"""
+Utility functions for computing basis functions and spans in the image of quadrature points under adaptive mesh mappings.
+These tools are primarily used for r-refinement algorithms involving adaptive B-spline and NURBS spaces.
+
+Author: M. BAHARI
+"""
 from   .linalg           import StencilVector
 from   numpy             import zeros
 from   numpy             import double
 from   .                 import ad_mesh_core as core
-
+from   .                 import nurbs_core   as nurbscore
 class quadratures_in_admesh(object):
 	'''
 	The provided code calculates B-spline functions and their corresponding spans within the quadrature image using optimal mapping. 
@@ -10,25 +16,39 @@ class quadratures_in_admesh(object):
 	'''
 	def __init__(self, V, reparameterization = False, nders = 2) :
 		# ...
-		sp_dim = V.dim
-		if reparameterization is True : 
-			# ... L2(gradient) mapping
-			self.basis_spans_in_adquadrature_2d = core.assemble_basis_spans_in_adquadrature_L2map
-		elif sp_dim == 1 :
-			# ... 1D reparametrization
-			self.basis_spans_in_adquadrature_1d = core.assemble_basis_spans_in_adquadrature_1DL2map
-		elif sp_dim == 2 :
-			# ... gradient mapping
-			self.basis_spans_in_adquadrature_2d = core.assemble_basis_spans_in_adquadrature_gradmap
-		elif sp_dim == 3:
-			#... L2 mapping in 3D
-			self.basis_spans_in_adquadrature_3d = core.assemble_basis_spans_in_adquadrature_3L2map
-		elif sp_dim == 6 :
-			# ... The Hdiv mapping space can be selected independently of the initial mapping space.
-			self.basis_spans_in_adquadrature_2d = core.assemble_basis_spans_in_adquadrature
-		else :
-			# ... L2-B-spline space (degree-1, degree-1) for Hdiv mapping is the same as for initial mapping.
-			self.basis_spans_in_adquadrature_2d = core.assemble_basis_spans_in_adquadrature_same_space
+		sp_dim      = V.dim
+		nurbs_space = True # ... if the parameterization is given by nurbs
+		if V.omega is None or all(x is None for x in V.omega):
+			nurbs_space = False			
+		if nurbs_space:
+			if sp_dim == 1 :
+				# ... 1D reparametrization
+				self.basis_spans_in_adquadrature_1d = nurbscore.assemble_nurbsbasis_spans_in_adquadrature_1DL2map
+			elif sp_dim == 2:
+				# ... L2(gradient) mapping
+				self.basis_spans_in_adquadrature_2d = nurbscore.assemble_nurbsbasis_spans_in_adquadrature_L2map
+			elif sp_dim == 3:
+				#... L2 mapping in 3D
+				self.basis_spans_in_adquadrature_3d = nurbscore.assemble_nurbsbasis_spans_in_adquadrature_3L2map
+		else:
+			if reparameterization is True : 
+				# ... L2(gradient) mapping
+				self.basis_spans_in_adquadrature_2d = core.assemble_basis_spans_in_adquadrature_L2map
+			elif sp_dim == 1 :
+				# ... 1D reparametrization
+				self.basis_spans_in_adquadrature_1d = core.assemble_basis_spans_in_adquadrature_1DL2map
+			elif sp_dim == 2 :
+				# ... gradient mapping
+				self.basis_spans_in_adquadrature_2d = core.assemble_basis_spans_in_adquadrature_gradmap
+			elif sp_dim == 3:
+				#... L2 mapping in 3D
+				self.basis_spans_in_adquadrature_3d = core.assemble_basis_spans_in_adquadrature_3L2map
+			elif sp_dim == 6 :
+				# ... The Hdiv mapping space can be selected independently of the initial mapping space.
+				self.basis_spans_in_adquadrature_2d = core.assemble_basis_spans_in_adquadrature
+			else :
+				# ... L2-B-spline space (degree-1, degree-1) for Hdiv mapping is the same as for initial mapping.
+				self.basis_spans_in_adquadrature_2d = core.assemble_basis_spans_in_adquadrature_same_space
 		# ...
 		if sp_dim == 1:
 			# ...
@@ -43,6 +63,8 @@ class quadratures_in_admesh(object):
 			p1       = V.degree
 			nx       = V.nelements
 			wx       = V.weights
+			if nurbs_space:
+				args += [V.omega]
 			# ...
 			k1       = wx.shape[1]
 			# ...
@@ -59,6 +81,8 @@ class quadratures_in_admesh(object):
 			args += list(V.weights)
 			args += list(V.points)
 			args += list(V.knots)
+			if nurbs_space:
+				args += list(V.omega)	
 			#...
 			p1, p2, p3   = V.degree[-3:]
 			nx, ny, nz   = V.nelements[-3:]
@@ -86,6 +110,8 @@ class quadratures_in_admesh(object):
 			args += list(V.weights)
 			args += list(V.points)
 			args += list(V.knots)
+			if nurbs_space:
+				args += list(V.omega)	
 			#...
 			p1, p2       = V.degree[-2:]
 			nx, ny       = V.nelements[-2:]
@@ -98,9 +124,9 @@ class quadratures_in_admesh(object):
 			self.nb_vec0 = (nx, ny, p1+1, nders+1, k1, k2)
 			self.nb_vec1 = (nx, ny, p2+1, nders+1, k1, k2)
 			self.ns_vec  = (nx, ny, k1, k2)	
-		self.nders   = nders
-		self.sp_dim	 = sp_dim
-
+		self.nders       = nders
+		self.sp_dim	     = sp_dim
+		self.nurbs_space = nurbs_space
 
 	def ad_Gradmap_quadratures(self, u_mae):
 		'''

@@ -158,9 +158,9 @@ def pyccel_sol_field_3d(Npoints,  uh , knots, degree, meshes = None):
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Computes L2 projection of 1D function
-def least_square_Bspline(degree, knots, f, V_mae = None, x_mae = None, vec_in = None, y = None, m = None):
+def least_square_Bspline(degree, knots, f):
     """
-    Computes the least squares projection of a 1D function onto a B-spline basis.
+    Computes the least squares projection of a 1D function or vector onto a B-spline basis.
     """
     from numpy     import zeros, linspace
     from .bsplines import find_span
@@ -168,40 +168,23 @@ def least_square_Bspline(degree, knots, f, V_mae = None, x_mae = None, vec_in = 
     from scipy.sparse import csc_matrix, linalg as sla
     
     n       = len(knots) - degree - 1
-    Tu      = knots[degree:degree+n]
-    
-    if m is None : 
+
+    if callable(f):
         # ... in the case where f is a function
-
-        m       = n + degree + 100 
+        m       = n + degree + 100
         u_k     = linspace(knots[0], knots[degree+n], m)
-        #...x_mae is not None implies that the Boudary conditions are fulfilled after applying the mapping to the boundary points
-        if x_mae is not None :
-           if y is None:
-                u_kmae = pyccel_sol_field_2d((m,m),  x_mae , V_mae.knots, V_mae.degree)[0][vec_in,:]
-           else :
-                u_kmae = pyccel_sol_field_2d((m,m),  x_mae , V_mae.knots, V_mae.degree)[0][:,vec_in]
-
         # ...
         Pc      = zeros(n)
         Q       = zeros(m)
-        if x_mae is not None :
-           for i in range(0,m):
-               Q[i] = f(u_kmae[i])
-        else :
-           for i in range(0,m):
-               Q[i] = f(u_k[i])
-    else : 
+        for i in range(0,m):
+            Q[i] = f(u_k[i])
+    else:
         # .. in the case of f is a vector
-        # ...
+        m       = len(f)
         u_k     = linspace(knots[0], knots[degree+n], m)
         Pc      = zeros(n)
         Q       = zeros(m)
-        if x_mae is not None:
-           for i in range(0,m):
-               Q[i] = f(x_mae[i])
-        else :        
-               Q[:] = f[:]
+        Q[:]    = f[:]
     
     Pc[0]   = Q[0]
     Pc[n-1] = Q[m-1]  

@@ -29,30 +29,6 @@ mp              = getGeometryMap(geometry,0)
 print("geom dim = ",mp.geo_dim)
 
 #==============================================
-#... spaces
-#==============================================
-grids      = []
-for i in range(0, mp.nelements[0]):
-    a = (mp.grids[0][i+1] - mp.grids[0][i])/RefParm
-    grids.append(mp.grids[0][i])
-    if a != 0. :
-        for j in range(1,RefParm):
-            grids.append(grids[-1] + a)
-grids.append(mp.grids[0][-1])
-V1         = SplineSpace(degree = mp.degree[0],  grid= grids)
-grids      = mp.knots[1][mp.degree[1]:-mp.degree[1]]
-grids      = []
-for i in range(0, mp.nelements[1]):
-    a = (mp.grids[1][i+1] - mp.grids[1][i])/RefParm
-    grids.append(mp.grids[1][i])
-    if a != 0. :
-        for j in range(1,RefParm):
-            grids.append(grids[-1] + a)
-grids.append(mp.grids[1][-1])
-V2         = SplineSpace(degree = mp.degree[1],  grid= grids)
-Vh         = TensorSpace(V1, V2)
-
-#==============================================
 #... prolongate nurbs mapping
 #==============================================
 # mx, my, wm1, wm2 = prolongate_NURBS_mapping(VH, Vh, w, (px, py))
@@ -70,9 +46,33 @@ else :
     wm2         = weight[0,:] 
 
     # print(wm1, wm2,"\n .",  mx[3,:], "\n .",my[3,:], "\n .",mz[3,:])
+#==============================================
+#... spaces
+#==============================================
+grids      = []
+for i in range(0, mp.nelements[0]):
+    a = (mp.grids[0][i+1] - mp.grids[0][i])/RefParm
+    grids.append(mp.grids[0][i])
+    if a != 0. :
+        for j in range(1,RefParm):
+            grids.append(grids[-1] + a)
+grids.append(mp.grids[0][-1])
+
+V1         = SplineSpace(degree = mp.degree[0],  grid= grids, omega = wm1)
+grids      = mp.knots[1][mp.degree[1]:-mp.degree[1]]
+grids      = []
+for i in range(0, mp.nelements[1]):
+    a = (mp.grids[1][i+1] - mp.grids[1][i])/RefParm
+    grids.append(mp.grids[1][i])
+    if a != 0. :
+        for j in range(1,RefParm):
+            grids.append(grids[-1] + a)
+grids.append(mp.grids[1][-1])
+V2         = SplineSpace(degree = mp.degree[1],  grid= grids, omega = wm2)
+Vh         = TensorSpace(V1, V2)
 
 # ... save a solution as .vtm for paraview
 if mp.geo_dim == 2:
-    paraview_nurbsSolutionMultipatch(nbpts, [Vh], [mx], [my], [(wm1,wm2)])
+    paraview_nurbsSolutionMultipatch(nbpts, [Vh], [mx], [my])
 else:
-    paraview_nurbsSolutionMultipatch(nbpts, [Vh], [mx], [my], [(wm1,wm2)], zmp = [mz])
+    paraview_nurbsSolutionMultipatch(nbpts, [Vh], [mx], [my], zmp = [mz])
