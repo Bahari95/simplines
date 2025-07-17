@@ -15,6 +15,13 @@ from   simplines                    import getGeometryMap
 
 #...
 import numpy as np
+import argparse
+#------------------------------------------------------------------------------
+# Argument parser for controlling plotting
+parser = argparse.ArgumentParser(description="Control plot behavior and save control points.")
+parser.add_argument("--plot", action="store_true", help="Enable plotting and saving control points")
+args = parser.parse_args()
+
 #==============================================
 #==============================================
 nbpts    = 100
@@ -76,3 +83,11 @@ if mp.geo_dim == 2:
     paraview_nurbsSolutionMultipatch(nbpts, [Vh], [mx], [my])
 else:
     paraview_nurbsSolutionMultipatch(nbpts, [Vh], [mx], [my], zmp = [mz])
+
+#------------------------------------------------------------------------------
+# Show or close plots depending on argument
+if args.plot :
+    import subprocess
+
+    # Load the multipatch VTM
+    subprocess.run(["paraview", "figs/multipatch_solution.vtm"])

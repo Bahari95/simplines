@@ -37,6 +37,7 @@ from   tabulate                     import tabulate
 import numpy                        as     np
 import timeit
 import time
+import argparse
 
 #------------------------------------------------------------------------------
 # Create directory for figures if it doesn't exist
@@ -74,6 +75,11 @@ def poisson_solve(V, u11_mph, u12_mph, u_d):
     l2_norm = norm[0]
     H1_norm = norm[1]
     return u, x, l2_norm, H1_norm
+#------------------------------------------------------------------------------
+# Argument parser for controlling plotting
+parser = argparse.ArgumentParser(description="Control plot behavior and save control points.")
+parser.add_argument("--plot", action="store_true", help="Enable plotting and saving control points")
+args = parser.parse_args()
 
 #------------------------------------------------------------------------------
 # Parameters and initialization
@@ -204,3 +210,10 @@ solutions = [
     {"name": "Solution", "data": [xuh]}
 ]
 paraview_nurbsSolutionMultipatch(nbpts, [Vh], [xmp], [ymp],  solution = solutions, Func = u_exact)
+#------------------------------------------------------------------------------
+# Show or close plots depending on argument
+if args.plot :
+    import subprocess
+
+    # Load the multipatch VTM
+    subprocess.run(["paraview", "figs/multipatch_solution.vtm"])
