@@ -517,7 +517,7 @@ def plot_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, cp = True, savefig = Non
 #----------------------------------------------------------------------------------------------------------------------------------------
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def paraview_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp = None, xuh = None, Func = None, output_path = "figs/admultipatch_multiblock.vtm", plot = True): 
+def paraview_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp = None, solution = None, Func = None, output_path = "figs/admultipatch_multiblock.vtm", plot = True): 
    """
    Post-processes and exports the solution in the multi-patch domain using Paraview.
 
@@ -535,8 +535,13 @@ def paraview_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp = No
        List of control points for the adaptive mesh in z direction (for 3D).
    zmp : list, optional
        List of control points for the initial mapping in z direction (for 3D).
-   xuh : list, optional
-       List of solution control points for each patch.
+   solution : list, optional
+       List of solution control points for each patch and its name.
+       solutions = [
+         {"name": "displacement", "data": xuh = list},   # e.g., displacement field control points
+         {"name": "velocity", "data": yuh = list},   # e.g., velocity field control points
+         # Add more solution fields as needed
+      ]
    Func : callable, optional
        Analytic function to evaluate on the mesh (signature depends on dimension).
    output_path : str, optional
@@ -556,7 +561,7 @@ def paraview_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp = No
    #...
    #F3 = [] 
    if zmp is None:
-      if xuh is None:
+      if solution is None:
          if Func is None:
             for i in range(numPaches):
                #... computes adaptive mesh
@@ -619,10 +624,7 @@ def paraview_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp = No
                x, F1x, F1y = pyccel_sol_field_2d((None, None), xmp[i], V[i].knots, V[i].degree, meshes=(sx, sy))[0:3]
                y, F2x, F2y = pyccel_sol_field_2d((None, None), ymp[i], V[i].knots, V[i].degree, meshes=(sx, sy))[0:3]
                #...Compute a Jacobian
-               #Jf = (F1x*F2y - F1y*F2x)
                Jf = (sxx*syy-sxy*syx)*(F1x*F2y - F1y*F2x)
-               # .... 
-               U          = pyccel_sol_field_2d((nbpts, nbpts), xuh[i], V[i].knots, V[i].degree)[0]
                #...
                z = np.zeros_like(x)
                points = np.stack((x, y, z), axis=-1)
@@ -634,7 +636,11 @@ def paraview_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp = No
 
                # Flatten the solution and attach as a scalar field
                grid["Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
-               grid["solution"] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
+
+               # .... 
+               for sol in solution:
+                  U          = pyccel_sol_field_2d((nbpts, nbpts), sol["data"][i], V[i].knots, V[i].degree)[0]
+                  grid[sol["name"]] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
 
                multiblock[f"patch_{i}"] = grid
          else:
@@ -645,8 +651,6 @@ def paraview_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp = No
                #---Compute a image by initial mapping
                x, F1x, F1y = pyccel_sol_field_2d((None, None), xmp[i], V[i].knots, V[i].degree, meshes=(sx, sy))[0:3]
                y, F2x, F2y = pyccel_sol_field_2d((None, None), ymp[i], V[i].knots, V[i].degree, meshes=(sx, sy))[0:3]
-               # .... 
-               U          = pyccel_sol_field_2d((nbpts, nbpts), xuh[i], V[i].knots, V[i].degree)[0]
                #...Compute a Jacobian
                #Jf = (F1x*F2y - F1y*F2x)
                Jf = (sxx*syy-sxy*syx)*(F1x*F2y - F1y*F2x)
@@ -664,12 +668,15 @@ def paraview_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp = No
                # Flatten the solution and attach as a scalar field
                grid["Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
                grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
-               grid["solution"] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
+               for sol in solution:
+                  # .... 
+                  U          = pyccel_sol_field_2d((nbpts, nbpts), sol["data"][i], V[i].knots, V[i].degree)[0]
+                  grid[sol["name"]] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
 
                multiblock[f"patch_{i}"] = grid
    else:
       if zad is None :
-         if xuh is None:
+         if solution is None:
             if Func is None:
                for i in range(numPaches):
                   #... computes adaptive mesh
@@ -729,8 +736,6 @@ def paraview_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp = No
                   x = pyccel_sol_field_2d((None, None), xmp[i], V[i].knots, V[i].degree, meshes=(sx, sy))[0]
                   y = pyccel_sol_field_2d((None, None), ymp[i], V[i].knots, V[i].degree, meshes=(sx, sy))[0]
                   z = pyccel_sol_field_2d((None, None), zmp[i], V[i].knots, V[i].degree, meshes=(sx, sy))[0]
-                  # .... 
-                  U          = pyccel_sol_field_2d((nbpts, nbpts), xuh[i], V[i].knots, V[i].degree)[0]
                   #...
                   points = np.stack((x, y, z), axis=-1)
 
@@ -740,7 +745,10 @@ def paraview_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp = No
                   grid.dimensions = [nx, ny, 1]
 
                   # Flatten the solution and attach as a scalar field
-                  grid["solution"] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
+                  for sol in solution:
+                     # .... 
+                     U          = pyccel_sol_field_2d((nbpts, nbpts), sol["data"][i], V[i].knots, V[i].degree)[0]
+                     grid[sol["name"]] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
 
                   multiblock[f"patch_{i}"] = grid
             else:
@@ -753,8 +761,6 @@ def paraview_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp = No
                   y = pyccel_sol_field_2d((None, None), ymp[i], V[i].knots, V[i].degree, meshes=(sx, sy))[0]
                   z = pyccel_sol_field_2d((None, None), zmp[i], V[i].knots, V[i].degree, meshes=(sx, sy))[0]
                   # .... 
-                  # .... 
-                  U          = pyccel_sol_field_2d((nbpts, nbpts), xuh[i], V[i].knots, V[i].degree)[0]
                   # ... image bu analytic function
                   fnc  = Func(x, y, z)
                   #...
@@ -767,11 +773,14 @@ def paraview_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp = No
 
                   # Flatten the solution and attach as a scalar field
                   grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
-                  grid["solution"] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
+                  for sol in solution:
+                     # .... 
+                     U          = pyccel_sol_field_2d((nbpts, nbpts), sol["data"][i], V[i].knots, V[i].degree)[0]
+                     grid[sol["name"]] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
 
                   multiblock[f"patch_{i}"] = grid
       else: #... zad
-         if xuh is None:
+         if solution is None:
             if Func is None:
                for i in range(numPaches):
                   #... computes adaptive mesh
@@ -834,8 +843,6 @@ def paraview_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp = No
                   y           = pyccel_sol_field_3d((nbpts, nbpts, nbpts), ymp[i], V[i].knots, V[i].degree, meshes=(sx, sy, sz))[0]
                   z           = pyccel_sol_field_3d((nbpts, nbpts, nbpts), zmp[i], V[i].knots, V[i].degree, meshes=(sx, sy, sz))[0]
                   # .... 
-                  U          = pyccel_sol_field_3d((nbpts, nbpts, nbpts), xuh[i], V[i].knots, V[i].degree)[0]
-                  # .... 
                   points = np.stack((x, y, z), axis=-1)
 
                   nx, ny, nz = x.shape
@@ -844,7 +851,10 @@ def paraview_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp = No
                   grid.dimensions = [nx, ny, nz]
 
                   # Flatten the solution and attach as a scalar field
-                  grid["solution"] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
+                  for sol in solution:
+                     # .... 
+                     U          = pyccel_sol_field_3d((nbpts, nbpts, nbpts), sol["data"][i], V[i].knots, V[i].degree)[0]
+                     grid[sol["name"]] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
 
                   multiblock[f"patch_{i}"] = grid
             else:
@@ -858,8 +868,6 @@ def paraview_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp = No
                   y           = pyccel_sol_field_3d((nbpts, nbpts, nbpts), ymp[i], V[i].knots, V[i].degree, meshes=(sx, sy, sz))[0]
                   z           = pyccel_sol_field_3d((nbpts, nbpts, nbpts), zmp[i], V[i].knots, V[i].degree, meshes=(sx, sy, sz))[0]
                   # .... 
-                  # .... 
-                  U          = pyccel_sol_field_3d((nbpts, nbpts, nbpts), xuh[i], V[i].knots, V[i].degree)[0]
                   # ... image bu analytic function
                   fnc  = Func(x, y, z)
                   # .... 
@@ -872,7 +880,10 @@ def paraview_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp = No
 
                   # Flatten the solution and attach as a scalar field
                   grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
-                  grid["solution"] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
+                  for sol in solution:
+                     # .... 
+                     U          = pyccel_sol_field_3d((nbpts, nbpts, nbpts), sol["data"][i], V[i].knots, V[i].degree)[0]
+                     grid[sol["name"]] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
 
                   multiblock[f"patch_{i}"] = grid         
    # Save multiblock dataset
@@ -881,7 +892,7 @@ def paraview_AdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp = No
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def paraview_SolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, xuh = None, Func = None, output_path = "figs/multipatch_solution.vtm", plot = True): 
+def paraview_SolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = None, Func = None, output_path = "figs/multipatch_solution.vtm", plot = True): 
    """
    Post-processes and exports the solution in the multi-patch domain using Paraview.
 
@@ -895,7 +906,7 @@ def paraview_SolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, xuh = None, Func
        Lists of control points for the initial mapping in x and y directions.
    zmp : list, optional
        List of control points for the initial mapping in z direction (for 3D).
-   xuh : list, optional
+   solution : list, optional
        List of solution control points for each patch.
    Func : callable, optional
        Analytic function to evaluate on the mesh (signature depends on dimension).
@@ -914,7 +925,7 @@ def paraview_SolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, xuh = None, Func
    os.makedirs("figs", exist_ok=True)
    multiblock = pv.MultiBlock()
    if zmp is None:
-      if xuh is None:
+      if solution is None:
          if Func is None:
             for i in range(numPaches):
                #---Compute a physical domain
@@ -967,8 +978,6 @@ def paraview_SolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, xuh = None, Func
                y, F2x, F2y = pyccel_sol_field_2d((nbpts, nbpts), ymp[i], V[i].knots, V[i].degree)[0:3]
                #...Compute a Jacobian
                Jf = F1x*F2y - F1y*F2x
-               # .... 
-               U          = pyccel_sol_field_2d((nbpts, nbpts), xuh[i], V[i].knots, V[i].degree)[0]
                #...
                z = np.zeros_like(x)
                points = np.stack((x, y, z), axis=-1)
@@ -980,7 +989,10 @@ def paraview_SolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, xuh = None, Func
 
                # Flatten the solution and attach as a scalar field
                grid["Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
-               grid["solution"] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
+               for sol in solution:
+                  # .... 
+                  U          = pyccel_sol_field_2d((nbpts, nbpts), sol["data"][i], V[i].knots, V[i].degree)[0]
+                  grid[sol["name"]] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
 
                multiblock[f"patch_{i}"] = grid
          else:
@@ -992,8 +1004,6 @@ def paraview_SolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, xuh = None, Func
                Jf = F1x*F2y - F1y*F2x
                # ... image bu analytic function
                fnc  = Func(x, y)
-               # .... 
-               U          = pyccel_sol_field_2d((nbpts, nbpts), xuh[i], V[i].knots, V[i].degree)[0]
                #...
                z = np.zeros_like(x)
                points = np.stack((x, y, z), axis=-1)
@@ -1006,11 +1016,14 @@ def paraview_SolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, xuh = None, Func
                # Flatten the solution and attach as a scalar field
                grid["Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
                grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
-               grid["solution"] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
+               for sol in solution:
+                  # .... 
+                  U          = pyccel_sol_field_2d((nbpts, nbpts), sol["data"][i], V[i].knots, V[i].degree)[0]
+                  grid[sol["name"]] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
 
                multiblock[f"patch_{i}"] = grid
    elif V[0].dim == 3: #.. z is not none 3D case
-      if xuh is None:
+      if solution is None:
          if Func is None:
             for i in range(numPaches):
                #---Compute a physical domain
@@ -1061,8 +1074,6 @@ def paraview_SolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, xuh = None, Func
                y = pyccel_sol_field_3d((nbpts, nbpts, nbpts), ymp[i], V[i].knots, V[i].degree)[0]
                z = pyccel_sol_field_3d((nbpts, nbpts, nbpts), zmp[i], V[i].knots, V[i].degree)[0]
                # .... 
-               U = pyccel_sol_field_3d((nbpts, nbpts, nbpts), xuh[i], V[i].knots, V[i].degree)[0]
-               # .... 
                points = np.stack((x, y, z), axis=-1)
 
                nx, ny, nz = x.shape
@@ -1072,7 +1083,10 @@ def paraview_SolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, xuh = None, Func
 
                # Flatten the solution and attach as a scalar field
                # grid["i-Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
-               grid["solution"] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
+               for sol in solution:
+                  # .... 
+                  U = pyccel_sol_field_3d((nbpts, nbpts, nbpts), sol["data"][i], V[i].knots, V[i].degree)[0]
+                  grid[sol["name"]] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
 
                multiblock[f"patch_{i}"] = grid
          else:
@@ -1084,8 +1098,6 @@ def paraview_SolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, xuh = None, Func
                # ... image bu analytic function
                fnc  = Func(x, y, z)
                # .... 
-               U = pyccel_sol_field_3d((nbpts, nbpts, nbpts), xuh[i], V[i].knots, V[i].degree)[0]
-               # .... 
                points = np.stack((x, y, z), axis=-1)
 
                nx, ny, nz = x.shape
@@ -1096,11 +1108,14 @@ def paraview_SolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, xuh = None, Func
                # Flatten the solution and attach as a scalar field
                # grid["i-Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
                grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
-               grid["solution"] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
+               for sol in solution:
+                  # .... 
+                  U = pyccel_sol_field_3d((nbpts, nbpts, nbpts), sol["data"][i], V[i].knots, V[i].degree)[0]
+                  grid[sol["name"]] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
 
                multiblock[f"patch_{i}"] = grid
    else: #.. z is not none
-      if xuh is None:
+      if solution is None:
          if Func is None:
             for i in range(numPaches):
                #---Compute a physical domain
@@ -1150,8 +1165,6 @@ def paraview_SolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, xuh = None, Func
                x = pyccel_sol_field_2d((nbpts, nbpts), xmp[i], V[i].knots, V[i].degree)[0]
                y = pyccel_sol_field_2d((nbpts, nbpts), ymp[i], V[i].knots, V[i].degree)[0]
                z = pyccel_sol_field_2d((nbpts, nbpts), zmp[i], V[i].knots, V[i].degree)[0]
-               # .... 
-               U          = pyccel_sol_field_2d((nbpts, nbpts), xuh[i], V[i].knots, V[i].degree)[0]
                #...
                points = np.stack((x, y, z), axis=-1)
 
@@ -1162,7 +1175,10 @@ def paraview_SolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, xuh = None, Func
 
                # Flatten the solution and attach as a scalar field
                # grid["i-Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
-               grid["solution"] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
+               for sol in solution:
+                  # .... 
+                  U          = pyccel_sol_field_2d((nbpts, nbpts), sol["data"][i], V[i].knots, V[i].degree)[0]
+                  grid[sol["name"]] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
 
                multiblock[f"patch_{i}"] = grid
          else:
@@ -1173,8 +1189,6 @@ def paraview_SolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, xuh = None, Func
                z = pyccel_sol_field_2d((nbpts, nbpts), zmp[i], V[i].knots, V[i].degree)[0]
                # ... image bu analytic function
                fnc  = Func(x, y, z)
-               # .... 
-               U          = pyccel_sol_field_2d((nbpts, nbpts), xuh[i], V[i].knots, V[i].degree)[0]
                #...
                points = np.stack((x, y, z), axis=-1)
 
@@ -1186,7 +1200,10 @@ def paraview_SolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, xuh = None, Func
                # Flatten the solution and attach as a scalar field
                # grid["i-Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
                grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
-               grid["solution"] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
+               for sol in solution:
+                  # .... 
+                  U          = pyccel_sol_field_2d((nbpts, nbpts), sol["data"][i], V[i].knots, V[i].degree)[0]
+                  grid[sol["name"]] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
 
                multiblock[f"patch_{i}"] = grid
    # Save multiblock dataset

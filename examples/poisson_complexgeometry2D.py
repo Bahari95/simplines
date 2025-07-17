@@ -19,7 +19,7 @@ from   simplines                    import least_square_Bspline
 from   simplines                    import getGeometryMap
 from   simplines                    import build_dirichlet
 
-# ... Poisson tools in uniform mesh
+# Import Poisson assembly tools for uniform mesh
 from examples.gallery.gallery_section_06             import assemble_matrix_un_ex01
 from examples.gallery.gallery_section_06             import assemble_vector_un_ex01
 from examples.gallery.gallery_section_06             import assemble_norm_un_ex01
@@ -28,7 +28,6 @@ assemble_matrix_un   = compile_kernel(assemble_matrix_un_ex01, arity=2)
 assemble_rhs_un      = compile_kernel(assemble_vector_un_ex01, arity=1)
 assemble_norm_un     = compile_kernel(assemble_norm_un_ex01, arity=1)
 
-#..
 from   scipy.sparse                 import csr_matrix
 from   scipy.sparse                 import csc_matrix, linalg as sla
 from   numpy                        import zeros, linalg, asarray
@@ -36,151 +35,155 @@ from   numpy                        import cos, sin, pi, exp, sqrt, arctan2
 from   numpy                        import cosh, sinh
 from   tabulate                     import tabulate
 import numpy                        as     np
-#...
 import timeit
 import time
-#==============================================================================
-#  for figures 
+
+#------------------------------------------------------------------------------
+# Create directory for figures if it doesn't exist
+#------------------------------------------------------------------------------
 import os
-# Create the folder
-os.makedirs("figs", exist_ok=True)  # 'exist_ok=True' prevents errors if the folder already exists
+os.makedirs("figs", exist_ok=True)
 
-#==============================================================================
-#.......Poisson ALGORITHM
-#==============================================================================
-def poisson_solve(V, u11_mpH, u12_mpH, u_d):
-
-    # start_pois =  time.time()
+#------------------------------------------------------------------------------
+# Poisson solver algorithm
+#------------------------------------------------------------------------------
+def poisson_solve(V, u11_mph, u12_mph, u_d):
     u   = StencilVector(V.vector_space)
-    stiffness  = assemble_matrix_un(V, fields=[u11_mpH, u12_mpH])
+    # Assemble stiffness matrix
+    stiffness  = assemble_matrix_un(V, fields=[u11_mph, u12_mph])
     stiffness  = apply_dirichlet(V, stiffness)
     M          = stiffness.tosparse()
-    # print("assmebling: ", time.time() - start_pois)
-    # start_pois =  time.time()
-    rhs        = assemble_rhs_un( V, fields=[u11_mpH, u12_mpH, u_d])
+
+    # Assemble right-hand side vector
+    rhs        = assemble_rhs_un( V, fields=[u11_mph, u12_mph, u_d])
     rhs        = apply_dirichlet(V, rhs)
     b          = rhs.toarray()
-    # print("rhs assembing: ", time.time() - start_pois)
-    # start_pois =  time.time()
-    #--Solve a linear system
+    
+    # Solve linear system
     lu         = sla.splu(csc_matrix(M))
     x          = lu.solve(b)
-    # print("solve: ", time.time() - start_pois)
-    # ... assemble dirichlet boundary condition
+
+    # Apply Dirichlet boundary conditions
     x          = x.reshape(V.nbasis)
     x         += (u_d.toarray()).reshape(V.nbasis)
     u.from_array(V, x)
 
-    #--Computes error l2 and H1
-    Norm    = assemble_norm_un(V, fields=[u11_mpH, u12_mpH, u])
+    # Compute L2 and H1 errors
+    Norm    = assemble_norm_un(V, fields=[u11_mph, u12_mph, u])
     norm    = Norm.toarray()
     l2_norm = norm[0]
     H1_norm = norm[1]
     return u, x, l2_norm, H1_norm
 
-
-nbpts       = 100 # FOR PLOT
-RefinNumber = 2 # for refinement
-nelements   = 16
+#------------------------------------------------------------------------------
+# Parameters and initialization
+#------------------------------------------------------------------------------
+nbpts       = 100 # Number of points for plotting
+RefinNumber = 2   # Number of global mesh refinements
+nelements   = 16  # Initial mesh size
 table       = zeros((RefinNumber+1,5))
 i           = 1
 times       = []
 
-#--------------------------------------------------------------
-#..... Exact slution if offered or Dirichlet boundary condition
-#--------------------------------------------------------------
-#.. test 0
+print("(#=assembled Dirichlet, #=solve poisson)\n")
+
+#------------------------------------------------------------------------------
+# Define exact solution and Dirichlet boundary condition
+#------------------------------------------------------------------------------
+# Test 0
 # u_exact   = lambda x, y : sin(2.*pi*x)*sin(2.*pi*y)
 # g         = ['sin(2.*pi*x)*sin(2.*pi*y)']
-#.. test 1
+# Test 1
 u_exact   = lambda x, y : 1./(1.+exp((x + y  - 0.5)/0.01) )
 g         = ['1./(1.+exp((x + y  - 0.5)/0.01) )']
 
-#----------------------------------------
-#.....Extract CAD geometry
-#----------------------------------------
+#------------------------------------------------------------------------------
+# Load CAD geometry
+#------------------------------------------------------------------------------
 #geometry = '../fields/quart_annulus.xml'
 #geometry = '../fields/unitSquare.xml'
 geometry = '../fields/circle.xml'
 print('#---IN-UNIFORM--MESH-Poisson equation', geometry)
+print("Dirichlet boundary conditions", g)
 
-# ... Assembling mapping
+# Extract geometry mapping
 mp             = getGeometryMap(geometry,0)
-degree         = mp.degree
-quad_degree    = max(degree[0],degree[1])+3
-mp.nurbs_check = True # activate NURBS if the geometry is defined by NURBS
+degree         = mp.degree # Use same degree as geometry
+quad_degree    = max(degree[0],degree[1])+3 # Quadrature degree
+mp.nurbs_check = True # Activate NURBS if geometry uses NURBS
 
-# ... Prolongation by knots insertion matrix of the initial mapping
-Nelements=(nelements,nelements)
-weight, xmp, ymp       = mp.RefineGeometryMap(Nelements=Nelements)
-wm1, wm2 = weight[:,0], weight[0,:]    
+#------------------------------------------------------------------------------
+# Initialize spaces and mapping for initial mesh
+#------------------------------------------------------------------------------
+Nelements        = (nelements,nelements)
+weight, xmp, ymp = mp.RefineGeometryMap(Nelements=Nelements)
+wm1, wm2         = weight[:,0], weight[0,:]    
 
-#--------------------------------------------------------------
-#..... Initialisation and computing optimal mapping for 16*16
-#--------------------------------------------------------------
-# create the spline space for each direction
+# Create spline spaces for each direction
 V1 = SplineSpace(degree=degree[0], grid = mp.Refinegrid(0,Nelements), nderiv = 1, omega = wm1, quad_degree = quad_degree)
 V2 = SplineSpace(degree=degree[1], grid = mp.Refinegrid(1,Nelements), nderiv = 1, omega = wm2, quad_degree = quad_degree)
-# create the tensor space
-Vh00 = TensorSpace(V1, V2)
+# Create tensor product space
+Vh = TensorSpace(V1, V2)
 
-# ...
-u11_mpH        = StencilVector(Vh00.vector_space)
-u12_mpH        = StencilVector(Vh00.vector_space)
-u11_mpH.from_array(Vh00, xmp)
-u12_mpH.from_array(Vh00, ymp)
-#--------------------------------------------------------------
-# ...Assembling Dirichlet boundary condition
-#--------------------------------------------------------------
-print("(#=assembled Dirichlet, #=solve poisson)\n")
-u_d = build_dirichlet(Vh00, g, map = (xmp, ymp))[1]
+# Initialize mapping vectors
+u11_mph        = StencilVector(Vh.vector_space)
+u12_mph        = StencilVector(Vh.vector_space)
+u11_mph.from_array(Vh, xmp)
+u12_mph.from_array(Vh, ymp)
+
+#------------------------------------------------------------------------------
+# Assemble Dirichlet boundary conditions
+#------------------------------------------------------------------------------
+u_d = build_dirichlet(Vh, g, map = (xmp, ymp))[1]
 print('#')
 
-#...solve poisson
+# Solve Poisson equation on coarse grid
 start = time.time()
-u_pH, xuh, l2_error, H1_error = poisson_solve(Vh00, u11_mpH, u12_mpH, u_d)
+u_pH, xuh, l2_error, H1_error = poisson_solve(Vh, u11_mph, u12_mph, u_d)
 times.append(time.time()- start)
 xuh_uni = xuh
 print('#')
 
-# ... 
+# Store results in table
 table[0,:] = [degree[0], nelements, l2_error, H1_error, times[-1]]
-#..for cpu time
+
+#------------------------------------------------------------------------------
+# Mesh refinement loop
+#------------------------------------------------------------------------------
 i_save = 1
 for nbne in range(RefinNumber):
+    # Refine mesh
     nelements = 2**(5+nbne)
     Nelements = (nelements,nelements)
     print('#---IN-UNIFORM--MESH', nelements)
-    #---------------------------------------------------------------
-    #.. Prologation by knots insertion matrix of the initial mapping
-    #---------------------------------------------------------------
-    weight, xmp, ymp       = mp.RefineGeometryMap(Nelements=Nelements)
+    # Refine geometry mapping
+    weight, xmp, ymp  = mp.RefineGeometryMap(Nelements=Nelements)
     wm1, wm2 = weight[:,0], weight[0,:] 
-    print('#refine geometry')
+    # Create spline spaces for refined mesh
     V1 = SplineSpace(degree=degree[0], grid = mp.Refinegrid(0,Nelements), nderiv = 1, omega = wm1, quad_degree = quad_degree)
     V2 = SplineSpace(degree=degree[1], grid = mp.Refinegrid(1,Nelements), nderiv = 1, omega = wm2, quad_degree = quad_degree)
-    # create the tensor space
-    Vh00 = TensorSpace(V1, V2)
+    Vh = TensorSpace(V1, V2)
     print('#spces')
-    # ...
-    u11_mph         = StencilVector(Vh00.vector_space)
-    u12_mph         = StencilVector(Vh00.vector_space)
-    u11_mph.from_array(Vh00, xmp)
-    u12_mph.from_array(Vh00, ymp)	
-    #-----------------------------------------
-    u_d   = build_dirichlet(Vh00, g, map = (xmp, ymp))[1]
+    # Update mapping vectors
+    u11_mph         = StencilVector(Vh.vector_space)
+    u12_mph         = StencilVector(Vh.vector_space)
+    u11_mph.from_array(Vh, xmp)
+    u12_mph.from_array(Vh, ymp)	
+    # Assemble Dirichlet boundary conditions
+    u_d   = build_dirichlet(Vh, g, map = (xmp, ymp))[1]
     print('#')
-    # ...
+    # Solve Poisson equation on refined mesh
     start = time.time()
-    u, xuh, l2_error,  H1_error         = poisson_solve(Vh00, u11_mph, u12_mph, u_d)
+    u, xuh, l2_error,  H1_error         = poisson_solve(Vh, u11_mph, u12_mph, u_d)
     times.append(time.time()- start)
     print('#')
-    # ... Update table and iteration
+    # Store results
     table[i_save,:]                     = [degree[0], nelements, l2_error, H1_error, times[-1]]
     i_save                             += 1
 
-#---print errror results
-#~~~~~~~~~~~~
+#------------------------------------------------------------------------------
+# Print error results in LaTeX table format
+#------------------------------------------------------------------------------
 if True :
     print("	\subcaption{Degree $p =",degree,"$}")
     print("	\\begin{tabular}{c|ccc|ccc}")
@@ -193,46 +196,11 @@ if True :
     print("	\end{tabular}")
 print('\n')
 
-# -----------------------------END OF THE SHARED PART FOR ALL GEOMETRY
+#------------------------------------------------------------------------------
+# Export solution for visualization
+#------------------------------------------------------------------------------
 from simplines    import paraview_nurbsSolutionMultipatch
-paraview_nurbsSolutionMultipatch(nbpts, [Vh00], [xmp], [ymp],  xuh = [xuh], Func = u_exact)
-
-"""
-#from matplotlib.pyplot import plot, show
-import matplotlib.pyplot            as     plt
-from   mpl_toolkits.axes_grid1      import make_axes_locatable
-from   mpl_toolkits.mplot3d         import axes3d
-from   matplotlib                   import cm
-from   mpl_toolkits.mplot3d.axes3d  import get_test_data
-from   matplotlib.ticker            import LinearLocator, FormatStrFormatter
-font = {'family': 'serif', 
-         'color':  'k', 
-         'weight': 'normal', 
-         'size': 15, 
-         } 
-#---Solution in uniform mesh
-u, ux, uy, X, Y = pyccel_sol_field_2d((nbpts,nbpts),  xuh , Vh00.knots, Vh00.degree)
-#.. circle 
-#---Compute a mapping
-F1 = pyccel_sol_field_2d((nbpts,nbpts),  xmp, Vh00.knots, Vh00.degree)[0]
-F2 = pyccel_sol_field_2d((nbpts,nbpts),  ymp, Vh00.knots, Vh00.degree)[0]
-#===============
-# ... test 2
-Sol_un = u_exact( F1 , F2)
-fig, axes =plt.subplots() 
-levelsc_un= np.linspace(np.min(u), np.max(u), 100)
-im2 = plt.contourf( F1, F2, u, levelsc_un, cmap= 'jet')
-divider = make_axes_locatable(axes) 
-cax   = divider.append_axes("right", size="5%", pad=0.05, aspect = 40) 
-cbar = plt.colorbar(im2, cax=cax) 
-cbar.ax.tick_params(labelsize=15) 
-cbar.ax.yaxis.label.set_fontweight('bold')
-# Set axes (ticks) font weight
-for label in axes.get_xticklabels() + axes.get_yticklabels():
-    label.set_fontweight('bold') 
-fig.tight_layout()
-plt.savefig('figs/solution.png')
-plt.show(block=False)
-plt.close()
-print("Plotting is disabled. No files were saved, run in your terminal open ./figs/solution.png")
-"""
+solutions = [
+    {"name": "Solution", "data": [xuh]}
+]
+paraview_nurbsSolutionMultipatch(nbpts, [Vh], [xmp], [ymp],  solution = solutions, Func = u_exact)

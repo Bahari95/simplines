@@ -420,71 +420,22 @@ class getGeometryMap:
             assert(len(Nelements) == self.dim and Nelements[0]%self.nelements[0]==0 and Nelements[1]%self.nelements[1]==0)
         #... refine the space
         if self.dim == 2:
-            #print(f"Refining the geometry map {self.dim}D with {numElevate} times and Nelements = {Nelements}")
-            # grids      = []
-            # numElevate = Nelements[0]//self.nelements[0]
-            # for i in range(0, self.nelements[0]):
-            #     a = (self._grids[0][i+1] - self._grids[0][i])/numElevate
-            #     grids.append(self._grids[0][i])
-            #     if a != 0. :
-            #         for j in range(1,numElevate):
-            #             grids.append(grids[-1] + a)
-            # grids.append(self._grids[0][-1])
             grids     = self.Refinegrid(0, Nelements)
             Vh1       = SplineSpace(degree=self.degree[0], grid= grids)
-
-            # grids      = []
-            # numElevate = Nelements[1]//self.nelements[1]
-            # for i in range(0, self.nelements[1]):
-            #     a = (self._grids[1][i+1] - self._grids[1][i])/numElevate
-            #     grids.append(self._grids[1][i])
-            #     if a != 0. :
-            #         for j in range(1,numElevate):
-            #             grids.append(grids[-1] + a)
-            # grids.append(self._grids[1][-1])
             grids     = self.Refinegrid(1, Nelements)
             Vh2       = SplineSpace(degree=self.degree[1], grid= grids)
             Vh        = TensorSpace(Vh1, Vh2)# after refinement
             # Extract knots data and degree
-            #print(f"Refined space : {self.nelements[0]} x {self.nelements[1]} Nelements")
             VH1       = SplineSpace(degree=self.degree[0], grid= self._grids[0])
             VH2       = SplineSpace(degree=self.degree[1], grid= self._grids[1])
 
             nbasis_tot = self._nbasis[0]*self._nbasis[1]
             VH         = TensorSpace(VH1, VH2)# after refinement
         else:
-            #print(f"Refining the geometry map {self.dim}D with {numElevate} times and Nelements = {Nelements}")
-            # grids      = []
-            # numElevate = Nelements[0]//self.nelements[0]
-            # for i in range(0, self.nelements[0]):
-            #     a = (self._grids[0][i+1] - self._grids[0][i])/numElevate
-            #     grids.append(self._grids[0][i])
-            #     if a != 0. :
-            #         for j in range(1,numElevate):
-            #             grids.append(grids[-1] + a)
-            # grids.append(self._grids[0][-1])
             grids      = self.Refinegrid(0, Nelements)
             Vh1        = SplineSpace(degree=self.degree[0], grid= grids)
-            # grids      = []
-            # numElevate = Nelements[1]//self.nelements[1]
-            # for i in range(0, self.nelements[1]):
-            #     a = (self._grids[1][i+1] - self._grids[1][i])/numElevate
-            #     grids.append(self._grids[1][i])
-            #     if a != 0. :
-            #         for j in range(1,numElevate):
-            #             grids.append(grids[-1] + a)
-            # grids.append(self._grids[1][-1])
             grids      = self.Refinegrid(1, Nelements)
             Vh2        = SplineSpace(degree=self.degree[1], grid= grids)
-            # grids      = []
-            # numElevate = Nelements[2]//self.nelements[2]
-            # for i in range(0, self.nelements[2]):
-            #     a = (self._grids[2][i+1] - self._grids[2][i])/numElevate
-            #     grids.append(self._grids[2][i])
-            #     if a != 0. :
-            #         for j in range(1,numElevate):
-            #             grids.append(grids[-1] + a)
-            # grids.append(self._grids[2][-1])
             grids      = self.Refinegrid(2, Nelements)
             Vh3        = SplineSpace(degree=self.degree[2], grid= grids)            
             Vh         = TensorSpace(Vh1, Vh2, Vh3)# after refinement
