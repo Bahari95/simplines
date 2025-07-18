@@ -349,7 +349,7 @@ class getGeometryMap:
           nurbs_check     = True
           weights_text = weights_element.text.strip()
           weights_data = np.array([
-              float(line.strip()) for line in weights_text.split("\n") if line.strip()
+              float(w) for line in weights_text.split("\n") for w in line.strip().split() if w
           ])
       else:
           weights_data = np.ones(len(coefs_data[:,0]))
