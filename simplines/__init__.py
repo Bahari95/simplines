@@ -102,4 +102,5 @@ from simplines.api import (assemble_matrix, assemble_vector, assemble_scalar, co
 
 from simplines.nurbs_utilities import(sol_field_NURBS_2d, sol_field_NURBS_3d, 
                                       prolongate_NURBS_mapping, least_square_NURBspline,
-                                      paraview_nurbsAdMeshMultipatch, paraview_nurbsSolutionMultipatch)
+                                      paraview_nurbsAdMeshMultipatch, paraview_nurbsSolutionMultipatch,
+                                      ViewGeo)

@@ -476,7 +476,7 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
                   if precomputed is not None :
                      for sol in precomputed:
                         grid[sol["name"]] = sol["data"][i].flatten(order='C')  # or 'F' if needed (check your ordering)
-               multiblock[f"patch_{i}"] = grid
+                  multiblock[f"patch_{i}"] = grid
             else:
                for i in range(numPaches):
                   #... computes adaptive mesh
@@ -503,7 +503,7 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
                   if precomputed is not None :
                      for sol in precomputed:
                         grid[sol["name"]] = sol["data"][i].flatten(order='C')  # or 'F' if needed (check your ordering)
-               multiblock[f"patch_{i}"] = grid
+                  multiblock[f"patch_{i}"] = grid
 
          else:
             if Func is None:
@@ -532,7 +532,7 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
                   if precomputed is not None :
                      for sol in precomputed:
                         grid[sol["name"]] = sol["data"][i].flatten(order='C')  # or 'F' if needed (check your ordering)
-               multiblock[f"patch_{i}"] = grid
+                  multiblock[f"patch_{i}"] = grid
             else:
                for i in range(numPaches):
                   #... computes adaptive mesh
@@ -563,7 +563,7 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
                   if precomputed is not None :
                      for sol in precomputed:
                         grid[sol["name"]] = sol["data"][i].flatten(order='C')  # or 'F' if needed (check your ordering)
-               multiblock[f"patch_{i}"] = grid
+                  multiblock[f"patch_{i}"] = grid
       else: #... zad
          if solution is None:
             if Func is None:
@@ -592,7 +592,7 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
                   if precomputed is not None :
                      for sol in precomputed:
                         grid[sol["name"]] = sol["data"][i].flatten(order='C')  # or 'F' if needed (check your ordering)
-               multiblock[f"patch_{i}"] = grid
+                  multiblock[f"patch_{i}"] = grid
             else:
                for i in range(numPaches):
                   #... computes adaptive mesh
@@ -620,7 +620,7 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
                   if precomputed is not None :
                      for sol in precomputed:
                         grid[sol["name"]] = sol["data"][i].flatten(order='C')  # or 'F' if needed (check your ordering)
-               multiblock[f"patch_{i}"] = grid
+                  multiblock[f"patch_{i}"] = grid
 
          else:
             if Func is None:
@@ -642,15 +642,15 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
                   grid.dimensions = [nx, ny, nz]
 
                   # Flatten the solution and attach as a scalar field
-               # .... 
-               for sol in solution:
-                  U                 = sol_field_NURBS_3d((nbpts, nbpts, nbpts), sol["data"][i], V[i].omega, V[i].knots, V[i].degree)[0]
-                  grid[sol["name"]] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
+                  # .... 
+                  for sol in solution:
+                     U                 = sol_field_NURBS_3d((nbpts, nbpts, nbpts), sol["data"][i], V[i].omega, V[i].knots, V[i].degree)[0]
+                     grid[sol["name"]] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
 
-               if precomputed is not None :
-                     for sol in precomputed:
-                        grid[sol["name"]] = sol["data"][i].flatten(order='C')  # or 'F' if needed (check your ordering)
-               multiblock[f"patch_{i}"] = grid
+                  if precomputed is not None :
+                        for sol in precomputed:
+                           grid[sol["name"]] = sol["data"][i].flatten(order='C')  # or 'F' if needed (check your ordering)
+                  multiblock[f"patch_{i}"] = grid
             else:
                for i in range(numPaches):
                   #... computes adaptive mesh
@@ -682,7 +682,7 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
                   if precomputed is not None :
                      for sol in precomputed:
                         grid[sol["name"]] = sol["data"][i].flatten(order='C')  # or 'F' if needed (check your ordering)
-               multiblock[f"patch_{i}"] = grid         
+                  multiblock[f"patch_{i}"] = grid         
    # Save multiblock dataset
    multiblock.save(output_path)
    print(f"Saved all patches with solution to {output_path}")
@@ -733,6 +733,11 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
    """
    #---Compute a solution
    numPaches = len(V)
+   # for j in range(numPaches):
+   #    if V[j].omega is None or all(x is None for x in V[j].omega):
+   #       for i in range(V[j].dim):
+   #          V[j].spaces[i]._omega = np.ones(V[j].nbasis[i])
+
    os.makedirs("figs", exist_ok=True)
    multiblock = pv.MultiBlock()
    if zmp is None:
@@ -1050,3 +1055,100 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
    # Save multiblock dataset
    multiblock.save(output_path)
    print(f"Saved all patches with solution to {output_path}")
+
+def ViewGeo(geometry, RefParm, Nump, nbpts=50, f = None, plot = True):
+   """
+   Example on how one can use nurbs mapping and prolongate it in fine grid
+   """
+
+   from   simplines                    import SplineSpace
+   from   simplines                    import TensorSpace   
+   from .utilities import getGeometryMap
+
+   print('#---: ', geometry)
+   mp             = getGeometryMap(geometry,0)
+   degree         = mp.degree # Use same degree as geometry
+   mp.nurbs_check = True # Activate NURBS if geometry uses NURBS
+   print("geom dim = ",mp.geo_dim)
+
+   V   = []# containes spaces
+   xmp = []# control points in x direction
+   ymp = []# control points in y direction
+   zmp = []# control points in z direction
+   #==============================================
+   #... prolongate nurbs mapping
+   #==============================================
+   if mp.dim == 3:
+      for i in range(Nump):
+         mp             = getGeometryMap(geometry,i)
+         mp.nurbs_check = True # Activate NURBS if geometry uses NURBS
+         weight, mx, my, mz  = mp.RefineGeometryMap(numElevate= RefParm)
+         wm1, wm2, wm3 = weight[:,0,0], weight[0,:,0], weight[0,0,:]
+         xmp.append(mx)
+         ymp.append(my)
+         zmp.append(mz)
+         #==============================================
+         #... space
+         #==============================================
+         # Create spline spaces for each direction
+         V1 = SplineSpace(degree=degree[0], grid = mp.Refinegrid(0,None, numElevate=RefParm), omega = wm1)
+         V2 = SplineSpace(degree=degree[1], grid = mp.Refinegrid(1,None, numElevate=RefParm), omega = wm2)
+         V3 = SplineSpace(degree=degree[2], grid = mp.Refinegrid(2,None, numElevate=RefParm), omega = wm3)
+         Vh = TensorSpace(V1, V2, V3)
+         V.append(Vh)
+   elif mp.geo_dim == 2 :
+      for i in range(Nump):
+         mp             = getGeometryMap(geometry,i)
+         mp.nurbs_check = True # Activate NURBS if geometry uses NURBS
+         weight, mx, my  = mp.RefineGeometryMap(numElevate= RefParm)
+         wm1, wm2 = weight[:,0], weight[0,:]
+         xmp.append(mx)
+         ymp.append(my)
+         #==============================================
+         #... spaces
+         #==============================================
+         # Create spline spaces for each direction
+         V1 = SplineSpace(degree=degree[0], grid = mp.Refinegrid(0,None, numElevate=RefParm), omega = wm1)
+         V2 = SplineSpace(degree=degree[1], grid = mp.Refinegrid(1,None, numElevate=RefParm), omega = wm2)
+         Vh              = TensorSpace(V1, V2)
+         V.append(Vh)
+
+   else :
+      for i in range(Nump):
+         mp             = getGeometryMap(geometry,i)
+         mp.nurbs_check = True # Activate NURBS if geometry uses NURBS
+         weight, mx, my, mz  = mp.RefineGeometryMap(numElevate= RefParm)
+         wm1         = weight[:,0] 
+         wm2         = weight[0,:] 
+         xmp.append(mx)
+         ymp.append(my)
+         zmp.append(mz)
+         #==============================================
+         #... spaces
+         #==============================================
+         # Create spline spaces for each direction
+         V1 = SplineSpace(degree=degree[0], grid = mp.Refinegrid(0,None, numElevate=RefParm), omega = wm1)
+         V2 = SplineSpace(degree=degree[1], grid = mp.Refinegrid(1,None, numElevate=RefParm), omega = wm2)
+         Vh = TensorSpace(V1, V2)
+         V.append(Vh)
+   # ... save a solution as .vtm for paraview
+   if f is None :
+      if mp.geo_dim == 2:
+         paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp)
+      else:
+         paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = zmp)
+   else:
+      if mp.geo_dim == 2:
+         g = lambda x,y : eval(f)
+         paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, Func = f)
+      else:
+
+         g = lambda x,y,z :  eval(f)
+         paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = zmp, Func = f)      
+   #------------------------------------------------------------------------------
+   # Show or close plots depending on argument
+   if plot :
+      import subprocess
+
+      # Load the multipatch VTM
+      subprocess.run(["paraview", "figs/multipatch_solution.vtm"])

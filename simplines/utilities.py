@@ -395,7 +395,13 @@ class getGeometryMap:
     def coefs(self):
         return self._coefs      
     
-    def Refinegrid(self, j_direct, Nelements):
+    def Refinegrid(self, j_direct, Nelements, numElevate = 1):
+        assert(numElevate >= 1)
+        #... refine the grid numElevate times
+        if Nelements is None:
+            Nelements = [self.nelements[n]*numElevate for n in range(self.dim)]
+        else :
+            assert(len(Nelements) == self.dim and Nelements[0]%self.nelements[0]==0 and Nelements[1]%self.nelements[1]==0)
         grids      = []
         numElevate = Nelements[j_direct]//self.nelements[j_direct]
         for i in range(0, self.nelements[j_direct]):
@@ -407,15 +413,14 @@ class getGeometryMap:
         grids.append(self._grids[j_direct][-1])
         return grids
     
-    def RefineGeometryMap(self, numElevate=0, Nelements=None):
+    def RefineGeometryMap(self, numElevate=1, Nelements=None):
         """
         getGeometryMap :  Refine the geometry by elevating the DoFs numElevate times.
         """
-        assert(numElevate >= 0)
+        assert(numElevate >= 1)
         #... refine the grid numElevate times
         if Nelements is None:
-            if Vh is None:
-                Nelements = [self.nelements[n]**numElevate for n in range(self.dim)]
+            Nelements = [self.nelements[n]*numElevate for n in range(self.dim)]
         else :
             assert(len(Nelements) == self.dim and Nelements[0]%self.nelements[0]==0 and Nelements[1]%self.nelements[1]==0)
         #... refine the space
