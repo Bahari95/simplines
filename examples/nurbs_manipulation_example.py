@@ -25,6 +25,11 @@ RefParm  = args.el
 Nump     = args.mp
 # geometry = '../fields/quart_annulus.xml'
 # geometry = '../fields/circle.xml'
-# geometry  = '../fields/egg.xml'
-geometry  = args.name
-ViewGeo(geometry, RefParm, Nump, nbpts = nbpts, plot = args.plot)
+geometry  = '../fields/egg.xml'
+#geometry  = args.name
+
+functions = [
+    {"name": "density", "expression": '1./(2.+np.cos(10.*np.pi*np.sqrt((x-0.5-0.25*0.)**2+(y-0.5)**2+(z-0.5)**2)))'},
+]
+
+ViewGeo(geometry, RefParm, Nump, nbpts = nbpts, functions= functions, plot = args.plot)

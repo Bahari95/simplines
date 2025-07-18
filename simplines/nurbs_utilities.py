@@ -273,7 +273,7 @@ import os
 #----------------------------------------------------------------------------------------------------------------------------------------
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp = None, solution = None, Func = None, precomputed = None, output_path = "figs/admultipatch_multiblock.vtm", plot = True): 
+def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp = None, solution = None, functions = None, precomputed = None, output_path = "figs/admultipatch_multiblock.vtm", plot = True): 
    """
    Post-processes and exports the solution in the multi-patch domain using Paraview.
 
@@ -298,8 +298,13 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
          {"name": "velocity", "data": yuh = list},   # e.g., velocity field control points
          # Add more solution fields as needed
       ]
-   Func : callable, optional
+   functions : callable, optional
        Analytic function to evaluate on the mesh (signature depends on dimension).
+       functions = [
+         {"name": "solution", "expression": 'cos(x)+sin(y)'},
+         {"name": "rhs", "data": 'cos(x)+sin(y)' },
+         # Add more solution fields as needed
+      ]    
    output_path : str, optional
        Path to save the output VTM file (default: "figs/admultipatch_multiblock.vtm").
    plot : bool, optional
@@ -323,7 +328,7 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
    #F3 = [] 
    if zmp is None:
       if solution is None:
-         if Func is None:
+         if functions is None:
             for i in range(numPaches):
                #... computes adaptive meshV[i].omega, 
                sx, sxx, sxy = sol_field_NURBS_2d((nbpts, nbpts), xad[i], V[i].omega, V[i].knots, V[i].degree)[0:3]
@@ -361,8 +366,6 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
                #...Compute a Jacobian
                #Jf = (F1x*F2y - F1y*F2x)
                Jf = (sxx*syy-sxy*syx)*(F1x*F2y - F1y*F2x)
-               # ... image bu analytic function
-               fnc  = Func(x, y)
                #...
                z = np.zeros_like(x)
                points = np.stack((x, y, z), axis=-1)
@@ -374,7 +377,10 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
 
                # Flatten the solution and attach as a scalar field
                grid["Jacobain"]          = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
-               grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
+               # ... image bu analytic function
+               for Funct in functions:
+                  fnc = eval(Funct["expression"])
+                  grid[Funct["name"]] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
 
                if precomputed is not None :
                   for sol in precomputed:
@@ -382,7 +388,7 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
                multiblock[f"patch_{i}"] = grid
 
       else:
-         if Func is None:
+         if functions is None:
             for i in range(numPaches):
                #... computes adaptive mesh
                sx, sxx, sxy = sol_field_NURBS_2d((nbpts, nbpts), xad[i], V[i].omega, V[i].knots, V[i].degree)[0:3]
@@ -425,8 +431,6 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
                #...Compute a Jacobian
                #Jf = (F1x*F2y - F1y*F2x)
                Jf = (sxx*syy-sxy*syx)*(F1x*F2y - F1y*F2x)
-               # ... image bu analytic function
-               fnc  = Func(x, y)
                #...
                z = np.zeros_like(x)
                points = np.stack((x, y, z), axis=-1)
@@ -438,7 +442,10 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
 
                # Flatten the solution and attach as a scalar field
                grid["Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
-               grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
+               # ... image bu analytic function
+               for Funct in functions:
+                  fnc = eval(Funct["expression"])
+                  grid[Funct["name"]] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
                for sol in solution:
                   U                 = sol_field_NURBS_2d((nbpts, nbpts), sol["data"][i], V[i].omega, V[i].knots, V[i].degree)[0]
                   grid[sol["name"]] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
@@ -450,7 +457,7 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
    else:
       if zad is None :
          if solution is None:
-            if Func is None:
+            if functions is None:
                for i in range(numPaches):
                   #... computes adaptive mesh
                   sx, sxx, sxy = sol_field_NURBS_2d((nbpts, nbpts), xad[i], V[i].omega, V[i].knots, V[i].degree)[0:3]
@@ -487,9 +494,6 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
                   y = sol_field_NURBS_2d((None, None), ymp[i], V[i].omega, V[i].knots, V[i].degree, meshes=(sx, sy))[0]
                   z = sol_field_NURBS_2d((None, None), zmp[i], V[i].omega, V[i].knots, V[i].degree, meshes=(sx, sy))[0]
                   # .... 
-                  # ... image bu analytic function
-                  fnc  = Func(x, y, z)
-                  #...
                   points = np.stack((x, y, z), axis=-1)
 
                   nx, ny = x.shape
@@ -498,7 +502,10 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
                   grid.dimensions = [nx, ny, 1]
 
                   # Flatten the solution and attach as a scalar field
-                  grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
+                  # ... image bu analytic function
+                  for Funct in functions:
+                     fnc = eval(Funct["expression"])
+                     grid[Funct["name"]] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
 
                   if precomputed is not None :
                      for sol in precomputed:
@@ -506,7 +513,7 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
                   multiblock[f"patch_{i}"] = grid
 
          else:
-            if Func is None:
+            if functions is None:
                for i in range(numPaches):
                   #... computes adaptive mesh
                   sx = sol_field_NURBS_2d((nbpts, nbpts), xad[i], V[i].omega, V[i].knots, V[i].degree)[0]
@@ -543,9 +550,6 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
                   y = sol_field_NURBS_2d((None, None), ymp[i], V[i].omega, V[i].knots, V[i].degree, meshes=(sx, sy))[0]
                   z = sol_field_NURBS_2d((None, None), zmp[i], V[i].omega, V[i].knots, V[i].degree, meshes=(sx, sy))[0]
                   # .... 
-                  # ... image bu analytic function
-                  fnc  = Func(x, y, z)
-                  #...
                   points = np.stack((x, y, z), axis=-1)
 
                   nx, ny = x.shape
@@ -554,7 +558,10 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
                   grid.dimensions = [nx, ny, 1]
 
                   # Flatten the solution and attach as a scalar field
-                  grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
+                  # ... image bu analytic function
+                  for Funct in functions:
+                     fnc = eval(Funct["expression"])
+                     grid[Funct["name"]] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
                   # .... 
                   for sol in solution:
                      U                 = sol_field_NURBS_2d((nbpts, nbpts), sol["data"][i], V[i].omega, V[i].knots, V[i].degree)[0]
@@ -566,7 +573,7 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
                   multiblock[f"patch_{i}"] = grid
       else: #... zad
          if solution is None:
-            if Func is None:
+            if functions is None:
                for i in range(numPaches):
                   #... computes adaptive mesh
                   sx, uxx, uxy, uxz = sol_field_NURBS_3d((nbpts, nbpts, nbpts), xad[i], V[i].omega, V[i].knots, V[i].degree)[0:4]
@@ -604,9 +611,6 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
                   y           = sol_field_NURBS_3d((nbpts, nbpts, nbpts), ymp[i], V[i].omega, V[i].knots, V[i].degree, meshes=(sx, sy, sz))[0]
                   z           = sol_field_NURBS_3d((nbpts, nbpts, nbpts), zmp[i], V[i].omega, V[i].knots, V[i].degree, meshes=(sx, sy, sz))[0]
                   # .... 
-                  # ... image by analytic function
-                  fnc  = Func(x, y, z)
-                  # .... 
                   points = np.stack((x, y, z), axis=-1)
 
                   nx, ny, nz = x.shape
@@ -615,7 +619,10 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
                   grid.dimensions = [nx, ny, nz]
 
                   # Flatten the solution and attach as a scalar field
-                  grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
+                  # ... image bu analytic function
+                  for Funct in functions:
+                     fnc = eval(Funct["expression"])
+                     grid[Funct["name"]] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
 
                   if precomputed is not None :
                      for sol in precomputed:
@@ -623,7 +630,7 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
                   multiblock[f"patch_{i}"] = grid
 
          else:
-            if Func is None:
+            if functions is None:
                for i in range(numPaches):
                   #... computes adaptive mesh
                   sx          = sol_field_NURBS_3d((nbpts, nbpts, nbpts), xad[i], V[i].omega, V[i].knots, V[i].degree)[0]
@@ -662,9 +669,6 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
                   y           = sol_field_NURBS_3d((nbpts, nbpts, nbpts), ymp[i], V[i].omega, V[i].knots, V[i].degree, meshes=(sx, sy, sz))[0]
                   z           = sol_field_NURBS_3d((nbpts, nbpts, nbpts), zmp[i], V[i].omega, V[i].knots, V[i].degree, meshes=(sx, sy, sz))[0]
                   # .... 
-                  # ... image bu analytic function
-                  fnc  = Func(x, y, z)
-                  # .... 
                   points = np.stack((x, y, z), axis=-1)
 
                   nx, ny, nz = x.shape
@@ -673,7 +677,10 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
                   grid.dimensions = [nx, ny, nz]
 
                   # Flatten the solution and attach as a scalar field
-                  grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
+                  # ... image bu analytic function
+                  for Funct in functions:
+                     fnc = eval(Funct["expression"])
+                     grid[Funct["name"]] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
                   # .... 
                   for sol in solution:
                      U                 = sol_field_NURBS_3d((nbpts, nbpts, nbpts), sol["data"][i], V[i].omega, V[i].knots, V[i].degree)[0]
@@ -689,7 +696,7 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = None, Func = None, precomputed = None, output_path = "figs/multipatch_solution.vtm", plot = True): 
+def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = None, functions = None, precomputed = None, output_path = "figs/multipatch_solution.vtm", plot = True): 
    """
    Post-processes and exports the solution in the multi-patch domain using Paraview.
 
@@ -712,8 +719,13 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
          {"name": "velocity", "data": yuh},   # e.g., velocity field control points
          # Add more solution fields as needed
       ]
-   Func : callable, optional
+   functions : callable, optional
        Analytic function to evaluate on the mesh (signature depends on dimension).
+       functions = [
+         {"name": "solution", "expression": 'cos(x)+sin(y)'},
+         {"name": "rhs", "data": 'cos(x)+sin(y)' },
+         # Add more solution fields as needed
+      ]   
    output_path : str, optional
        Path to save the output VTM file (default: "figs/multipatch_solution.vtm").
    plot : bool, optional
@@ -742,7 +754,7 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
    multiblock = pv.MultiBlock()
    if zmp is None:
       if solution is None:
-         if Func is None:
+         if functions is None:
             for i in range(numPaches):
                #---Compute a physical domain
                x, F1x, F1y = sol_field_NURBS_2d((nbpts, nbpts), xmp[i], V[i].omega, V[i].knots, V[i].degree)[0:3]
@@ -772,8 +784,6 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
                y, F2x, F2y = sol_field_NURBS_2d((nbpts, nbpts), ymp[i], V[i].omega, V[i].knots, V[i].degree)[0:3]
                #...Compute a Jacobian
                Jf = F1x*F2y - F1y*F2x
-               # ... image bu analytic function
-               fnc  = Func(x, y)
                #...
                z = np.zeros_like(x)
                points = np.stack((x, y, z), axis=-1)
@@ -785,7 +795,11 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
 
                # Flatten the solution and attach as a scalar field
                grid["Jacobain"]  = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
-               grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
+               grid[Funct["name"]] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
+               # ... image bu analytic function
+               for Funct in functions:
+                  fnc = eval(Funct["expression"])
+                  grid[Funct["name"]] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
 
                if precomputed is not None :
                   for sol in precomputed:
@@ -793,7 +807,7 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
                multiblock[f"patch_{i}"] = grid
 
       else:
-         if Func is None:
+         if functions is None:
             for i in range(numPaches):
                #---Compute a physical domain
                x, F1x, F1y = sol_field_NURBS_2d((nbpts, nbpts), xmp[i], V[i].omega, V[i].knots, V[i].degree)[0:3]
@@ -826,8 +840,6 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
                y, F2x, F2y = sol_field_NURBS_2d((nbpts, nbpts), ymp[i], V[i].omega, V[i].knots, V[i].degree)[0:3]
                #...Compute a Jacobian
                Jf = F1x*F2y - F1y*F2x
-               # ... image bu analytic function
-               fnc  = Func(x, y)
                #...
                z = np.zeros_like(x)
                points = np.stack((x, y, z), axis=-1)
@@ -839,7 +851,11 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
 
                # Flatten the solution and attach as a scalar field
                grid["Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
-               grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
+               # ... image bu analytic function
+               for Funct in functions:
+                  fnc = eval(Funct["expression"])
+                  grid[Funct["name"]] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
+
                for sol in solution:
                   U                 = sol_field_NURBS_2d((nbpts, nbpts), sol["data"][i], V[i].omega, V[i].knots, V[i].degree)[0]
                   grid[sol["name"]] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
@@ -850,7 +866,7 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
                multiblock[f"patch_{i}"] = grid
    elif V[0].dim == 3: #.. z is not none 3D case
       if solution is None:
-         if Func is None:
+         if functions is None:
             for i in range(numPaches):
                #---Compute a physical domain
                x, uxx, uxy, uxz = sol_field_NURBS_3d((nbpts, nbpts, nbpts), xmp[i], V[i].omega, V[i].knots, V[i].degree)[0:4]
@@ -879,8 +895,6 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
                x = sol_field_NURBS_3d((nbpts, nbpts, nbpts), xmp[i], V[i].omega, V[i].knots, V[i].degree)[0]
                y = sol_field_NURBS_3d((nbpts, nbpts, nbpts), ymp[i], V[i].omega, V[i].knots, V[i].degree)[0]
                z = sol_field_NURBS_3d((nbpts, nbpts, nbpts), zmp[i], V[i].omega, V[i].knots, V[i].degree)[0]
-               # ... image bu analytic function
-               fnc  = Func(x, y, z)
                # .... 
                points = np.stack((x, y, z), axis=-1)
 
@@ -890,8 +904,10 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
                grid.dimensions = [nx, ny, nz]
 
                # Flatten the solution and attach as a scalar field
-               # grid["i-Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
-               grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
+               # ... image bu analytic function
+               for Funct in functions:
+                  fnc = eval(Funct["expression"])
+                  grid[Funct["name"]] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
 
                if precomputed is not None :
                   for sol in precomputed:
@@ -899,7 +915,7 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
                multiblock[f"patch_{i}"] = grid
 
       else:
-         if Func is None:
+         if functions is None:
             for i in range(numPaches):
                #---Compute a physical domain
                x = sol_field_NURBS_3d((nbpts, nbpts, nbpts), xmp[i], V[i].omega, V[i].knots, V[i].degree)[0]
@@ -929,8 +945,6 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
                x = sol_field_NURBS_3d((nbpts, nbpts, nbpts), xmp[i], V[i].omega, V[i].knots, V[i].degree)[0]
                y = sol_field_NURBS_3d((nbpts, nbpts, nbpts), ymp[i], V[i].omega, V[i].knots, V[i].degree)[0]
                z = sol_field_NURBS_3d((nbpts, nbpts, nbpts), zmp[i], V[i].omega, V[i].knots, V[i].degree)[0]
-               # ... image bu analytic function
-               fnc  = Func(x, y, z)
                # .... 
                points = np.stack((x, y, z), axis=-1)
 
@@ -940,8 +954,10 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
                grid.dimensions = [nx, ny, nz]
 
                # Flatten the solution and attach as a scalar field
-               # grid["i-Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
-               grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
+               # ... image bu analytic function
+               for Funct in functions:
+                  fnc = eval(Funct["expression"])
+                  grid[Funct["name"]] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
                # .... 
                for sol in solution:
                   U                 = sol_field_NURBS_3d((nbpts, nbpts, nbpts), sol["data"][i], V[i].omega, V[i].knots, V[i].degree)[0]
@@ -953,7 +969,7 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
                multiblock[f"patch_{i}"] = grid
    else: #.. z is not none
       if solution is None:
-         if Func is None:
+         if functions is None:
             for i in range(numPaches):
                #---Compute a physical domain
                x, F1x, F1y = sol_field_NURBS_2d((nbpts, nbpts), xmp[i], V[i].omega, V[i].knots, V[i].degree)[0:3]
@@ -982,8 +998,6 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
                x = sol_field_NURBS_2d((nbpts, nbpts), xmp[i], V[i].omega, V[i].knots, V[i].degree)[0]
                y = sol_field_NURBS_2d((nbpts, nbpts), ymp[i], V[i].omega, V[i].knots, V[i].degree)[0]
                z = sol_field_NURBS_2d((nbpts, nbpts), zmp[i], V[i].omega, V[i].knots, V[i].degree)[0]
-               # ... image bu analytic function
-               fnc  = Func(x, y, z)
                #...
                points = np.stack((x, y, z), axis=-1)
 
@@ -993,8 +1007,10 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
                grid.dimensions = [nx, ny, 1]
 
                # Flatten the solution and attach as a scalar field
-               # grid["i-Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
-               grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
+               # ... image bu analytic function
+               for Funct in functions:
+                  fnc = eval(Funct["expression"])
+                  grid[Funct["name"]] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
 
                if precomputed is not None :
                   for sol in precomputed:
@@ -1002,7 +1018,7 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
                multiblock[f"patch_{i}"] = grid
 
       else:
-         if Func is None:
+         if functions is None:
             for i in range(numPaches):
                #---Compute a physical domain
                x = sol_field_NURBS_2d((nbpts, nbpts), xmp[i], V[i].omega, V[i].knots, V[i].degree)[0]
@@ -1030,8 +1046,6 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
                x = sol_field_NURBS_2d((nbpts, nbpts), xmp[i], V[i].omega, V[i].knots, V[i].degree)[0]
                y = sol_field_NURBS_2d((nbpts, nbpts), ymp[i], V[i].omega, V[i].knots, V[i].degree)[0]
                z = sol_field_NURBS_2d((nbpts, nbpts), zmp[i], V[i].omega, V[i].knots, V[i].degree)[0]
-               # ... image bu analytic function
-               fnc  = Func(x, y, z)
                #...
                points = np.stack((x, y, z), axis=-1)
 
@@ -1041,8 +1055,10 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
                grid.dimensions = [nx, ny, 1]
 
                # Flatten the solution and attach as a scalar field
-               # grid["i-Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
-               grid["Analytic Function"] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
+               # ... image bu analytic function
+               for Funct in functions:
+                  fnc = eval(Funct["expression"])
+                  grid[Funct["name"]] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
                for sol in solution:
                   U                 = sol_field_NURBS_2d((nbpts, nbpts), sol["data"][i], V[i].omega, V[i].knots, V[i].degree)[0]
                   grid[sol["name"]] = U.flatten(order='C')  # or 'F' if needed (check your ordering)
@@ -1056,7 +1072,7 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
    multiblock.save(output_path)
    print(f"Saved all patches with solution to {output_path}")
 
-def ViewGeo(geometry, RefParm, Nump, nbpts=50, f = None, plot = True):
+def ViewGeo(geometry, RefParm, Nump, nbpts=50, functions = None, plot = True):
    """
    Example on how one can use nurbs mapping and prolongate it in fine grid
    """
@@ -1132,19 +1148,16 @@ def ViewGeo(geometry, RefParm, Nump, nbpts=50, f = None, plot = True):
          Vh = TensorSpace(V1, V2)
          V.append(Vh)
    # ... save a solution as .vtm for paraview
-   if f is None :
+   if functions is None :
       if mp.geo_dim == 2:
          paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp)
       else:
          paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = zmp)
    else:
       if mp.geo_dim == 2:
-         g = lambda x,y : eval(f)
-         paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, Func = f)
+         paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, functions = functions)
       else:
-
-         g = lambda x,y,z :  eval(f)
-         paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = zmp, Func = f)      
+         paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = zmp, functions = functions)      
    #------------------------------------------------------------------------------
    # Show or close plots depending on argument
    if plot :
