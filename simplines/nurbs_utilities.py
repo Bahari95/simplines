@@ -322,6 +322,12 @@ def paraview_nurbsAdMeshMultipatch(nbpts, V, xmp, ymp, xad, yad, zad = None, zmp
        The function saves the multi-block dataset to the specified output path.
    """
    numPaches = len(V)
+   # Handle the case where the user uses a B-spline space and wants to plot using this function
+   for j in range(numPaches):
+      if V[j].omega is None or all(x is None for x in V[j].omega):
+         for i in range(V[j].dim):
+            V[j].spaces[i]._omega = np.ones(V[j].nbasis[i])
+
    os.makedirs("figs", exist_ok=True)
    multiblock = pv.MultiBlock()
    #...
@@ -745,11 +751,11 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
    """
    #---Compute a solution
    numPaches = len(V)
-   # for j in range(numPaches):
-   #    if V[j].omega is None or all(x is None for x in V[j].omega):
-   #       for i in range(V[j].dim):
-   #          V[j].spaces[i]._omega = np.ones(V[j].nbasis[i])
-
+   # Handle the case where the user uses a B-spline space and wants to plot using this function
+   for j in range(numPaches):
+      if V[j].omega is None or all(x is None for x in V[j].omega):
+         for i in range(V[j].dim):
+            V[j].spaces[i]._omega = np.ones(V[j].nbasis[i])
    os.makedirs("figs", exist_ok=True)
    multiblock = pv.MultiBlock()
    if zmp is None:
@@ -794,8 +800,6 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
                grid.dimensions = [nx, ny, 1]
 
                # Flatten the solution and attach as a scalar field
-               grid["Jacobain"]  = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
-               grid[Funct["name"]] = fnc.flatten(order='C')  # or 'F' if needed (check your ordering)
                # ... image bu analytic function
                for Funct in functions:
                   fnc = eval(Funct["expression"])
@@ -850,7 +854,6 @@ def paraview_nurbsSolutionMultipatch(nbpts, V, xmp, ymp, zmp = None, solution = 
                grid.dimensions = [nx, ny, 1]
 
                # Flatten the solution and attach as a scalar field
-               grid["Jacobain"] = Jf.flatten(order='C')  # or 'F' if needed (check your ordering)
                # ... image bu analytic function
                for Funct in functions:
                   fnc = eval(Funct["expression"])

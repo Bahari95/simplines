@@ -97,11 +97,9 @@ print("(#=assembled Dirichlet, #=solve poisson)\n")
 # Define exact solution and Dirichlet boundary condition
 #------------------------------------------------------------------------------
 # Test 0
-# u_exact   = lambda x, y : sin(2.*pi*x)*sin(2.*pi*y)
-# g         = ['sin(2.*pi*x)*sin(2.*pi*y)']
+# g         = ['np.sin(2.*np.pi*x)*np.sin(2.*np.pi*y)']
 # Test 1
-u_exact   = lambda x, y : 1./(1.+exp((x + y  - 0.5)/0.01) )
-g         = ['1./(1.+exp((x + y  - 0.5)/0.01) )']
+g         = ['1./(1.+np.exp((x + y  - 0.5)/0.01) )']
 
 #------------------------------------------------------------------------------
 # Load CAD geometry
@@ -209,7 +207,10 @@ from simplines    import paraview_nurbsSolutionMultipatch
 solutions = [
     {"name": "Solution", "data": [xuh]}
 ]
-paraview_nurbsSolutionMultipatch(nbpts, [Vh], [xmp], [ymp],  solution = solutions, Func = u_exact)
+functions = [
+    {"name": "Exact solution", "expression": g[0]},
+]
+paraview_nurbsSolutionMultipatch(nbpts, [Vh], [xmp], [ymp],  solution = solutions, functions = functions)
 #------------------------------------------------------------------------------
 # Show or close plots depending on argument
 if args.plot :

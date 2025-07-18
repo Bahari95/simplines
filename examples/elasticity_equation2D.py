@@ -212,11 +212,17 @@ sigma_xx = ( (2.*mu+lanbda) * uElx_1 + lanbda * uEly_2 )/det
 #------------------------------------------------------------------------------
 from simplines    import paraview_nurbsSolutionMultipatch
 precomputed = [
+    {"name": "sigma_xx", "data": [sigma_xx]},
     {"name": "displacement_x", "data": [uEl_1]},
-    {"name": "displacement_y", "data": [uEl_2]},
-    {"name": "sigma_xx$", "data": [sigma_xx]}
+    {"name": "displacement_y", "data": [uEl_2]}
 ]
-paraview_nurbsSolutionMultipatch(nbpts, [Vh], [xmp], [ymp], precomputed = precomputed)
+
+# ...
+functions = [
+    {"name": "Exact stress_xx", "expression": '(x**2/(x**2+y**2))*(5.*(1.-1./(x**2+y**2 ) + (1.-4.*1./(x**2+y**2 )+3./(x**2+y**2)**2)*(x**2-y**2)/(x**2+y**2)))+ (y**2/(x**2+y**2))*(5.*(1.+1./(x**2+y**2 ) - (1.+3./(x**2+y**2)**2)*(x**2-y**2)/(x**2+y**2))) - 2.*(x*y/(x**2+y**2))*(-5.*(1.+2.*1./(x**2+y**2 ) -3./(x**2+y**2)**2)*(2.*x*y)/(x**2+y**2))'},
+]
+
+paraview_nurbsSolutionMultipatch(nbpts, [Vh], [xmp], [ymp], functions = functions, precomputed = precomputed)
 
 #------------------------------------------------------------------------------
 # Show or close plots depending on argument
